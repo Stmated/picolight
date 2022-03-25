@@ -17,14 +17,15 @@ int getPatternCount();
 void pattern_execute(int patternIndex, uint16_t len, uint32_t t, void* data);
 void pattern_update_data(int patternIndex, float intensity);
 
-inline pattern getPattern(int patternIndex);
-inline pattern_data_creator getPatternCreator(int patternIndex);
-inline pattern_data_destroyer getPatternDestroyer(int patternIndex);
+pattern getPattern(int patternIndex);
+pattern_data_creator getPatternCreator(int patternIndex);
+pattern_data_destroyer getPatternDestroyer(int patternIndex);
 
 struct pattern_instance;
 typedef struct s_state
 {
     int patternIndex;
+    bool mutex;
     void* patternData;
     bool disabled;
     int clickCount;

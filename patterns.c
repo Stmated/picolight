@@ -136,16 +136,19 @@ void *pattern_random_data_destroyer(void *data)
     if (instance->pixels)
     {
         free(instance->pixels);
+        instance->pixels = 0;
     }
 
     if (instance->data1_destroyer)
     {
         instance->data1_destroyer(instance->data1);
+        instance->data1 = 0;
     }
 
     if (instance->data2_destroyer)
     {
         instance->data2_destroyer(instance->data2);
+        instance->data2 = 0;
     }
 
     free(data);
@@ -156,10 +159,14 @@ void *pattern_random_data(uint16_t len, float intensity)
     struct pattern_random_data_instance *instance = calloc(1, sizeof(struct pattern_random_data_instance));
 
     instance->intensity = intensity;
-    instance->period = randint_probability(500, 30000, intensity);
+    instance->period = randint_probability(500, 20000, intensity);
     instance->updatedAt = 0;
-    instance->patternIndex1 = 1 + randint(getPatternCount() - 1);
-    instance->patternIndex2 = 1 + randint(getPatternCount() - 1);
+    instance->patternIndex1 = 1 + randint(getPatternCount() - 2);
+    instance->patternIndex2 = 1 + randint(getPatternCount() - 2);
+    instance->data1 = getPatternCreator(instance->patternIndex1)(len, instance->intensity);
+    instance->data2 = getPatternCreator(instance->patternIndex2)(len, instance->intensity);
+    instance->data1_destroyer = getPatternDestroyer(instance->patternIndex1);
+    instance->data2_destroyer = getPatternDestroyer(instance->patternIndex2);
     instance->pixels = calloc(len, sizeof(struct RgbwColor)); // Allocate memory for each pixel, which we will need to blend
 
     return instance;
@@ -169,30 +176,30 @@ void *pattern_random_data(uint16_t len, float intensity)
 // TODO: Figure out if there is a good way of being able to send either RGB or HSI or both!
 void pattern_random_data_printer(uint16_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w, void *data)
 {
-    struct pattern_random_data_instance *instance = data;
+    // Important to use the global data here, since "data" is from the sub-pattern
+    struct pattern_random_data_instance *instance = state.patternData;
 
-    // TODO: WE NEED SOME WAY OF GETTING OUR ORIGINAL DATA POINTER HERE! IT IS LOST IN TRANSIT!
-    RgbwColor pixel = instance->pixels[index];
+    // RgbwColor pixel = ;
 
     if (instance->subsequent)
     {
         // Blend. FIX SO THIS CAN HANDLE HSI AND NOT NEED TO CONVERT BACK AND FORTH!
 
         float p = 1 - instance->progress;
-        float invp = p;
+        float invp = instance->progress;
 
-        pixel.r = ((pixel.r * p) + (r * invp)) / 2;
-        pixel.g = ((pixel.g * p) + (g * invp)) / 2;
-        pixel.b = ((pixel.b * p) + (b * invp)) / 2;
-        pixel.w = ((pixel.w * p) + (w * invp)) / 2;
+        instance->pixels[index].r = ((instance->pixels[index].r * p) + (r * invp)) / 2;
+        instance->pixels[index].g = ((instance->pixels[index].g * p) + (g * invp)) / 2;
+        instance->pixels[index].b = ((instance->pixels[index].b * p) + (b * invp)) / 2;
+        instance->pixels[index].w = ((instance->pixels[index].w * p) + (w * invp)) / 2;
     }
     else
     {
         // Just assign it
-        pixel.r = r;
-        pixel.g = g;
-        pixel.b = b;
-        pixel.w = w;
+        instance->pixels[index].r = r;
+        instance->pixels[index].g = g;
+        instance->pixels[index].b = b;
+        instance->pixels[index].w = w;
     }
 }
 
@@ -208,6 +215,8 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
         instance->updatedAt = t;
         instance->progress = 0;
 
+        //pattern_random_data_destroyer(data);
+
         if (instance->data1)
         {
             instance->data1_destroyer(instance->data1);
@@ -216,10 +225,10 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
         instance->patternIndex1 = instance->patternIndex2;
         instance->patternIndex2 = 1 + randint(getPatternCount() - 1);
 
-        instance->data1 = instance->data2 ? instance->data2 : getPatternCreator(instance->patternIndex1)(len, instance->intensity);
+        instance->data1 = instance->data2;
         instance->data2 = getPatternCreator(instance->patternIndex2)(len, instance->intensity);
 
-        instance->data1_destroyer = instance->data2_destroyer ? instance->data2_destroyer : getPatternDestroyer(instance->patternIndex1);
+        instance->data1_destroyer = instance->data2_destroyer;
         instance->data2_destroyer = getPatternDestroyer(instance->patternIndex2);
     }
 
@@ -230,7 +239,7 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
     instance->subsequent = false;
     getPattern(instance->patternIndex1)(len, t, instance->data1, pattern_random_data_printer);
     instance->subsequent = true;
-    getPattern(instance->patternIndex2)(len, t, instance->data1, pattern_random_data_printer);
+    getPattern(instance->patternIndex2)(len, t, instance->data2, pattern_random_data_printer);
 
     for (int i = 0; i < len; i++)
     {
@@ -604,6 +613,7 @@ void pattern_sparkle(uint16_t len, uint32_t t, void *data, printer printer)
 
 void *noop(uint16_t len, float intensity)
 {
+    return malloc(0);
 }
 
 void *default_destroyer(void *data)
@@ -645,17 +655,17 @@ inline int getPatternCount()
     return count_of(pattern_table);
 }
 
-inline pattern getPattern(int patternIndex)
+pattern getPattern(int patternIndex)
 {
     return pattern_table[patternIndex].pat;
 }
 
-inline pattern_data_creator getPatternCreator(int patternIndex)
+pattern_data_creator getPatternCreator(int patternIndex)
 {
     return pattern_table[patternIndex].creator;
 }
 
-inline pattern_data_destroyer getPatternDestroyer(int patternIndex)
+pattern_data_destroyer getPatternDestroyer(int patternIndex)
 {
     return pattern_table[patternIndex].destroyer;
 }
@@ -680,6 +690,11 @@ void pattern_execute(int patternIndex, uint16_t len, uint32_t t, void *data)
 
 void pattern_update_data(int patternIndex, float intensity)
 {
+    while (state.mutex)
+    {
+    }
+    state.mutex = true;
+
     // Destroy/free any previous memory allocations
     pattern_table[patternIndex].destroyer(state.patternData);
 
@@ -689,4 +704,6 @@ void pattern_update_data(int patternIndex, float intensity)
     // Set to the new (or same) pattern index, and new data
     state.patternIndex = patternIndex;
     state.patternData = data;
+
+    state.mutex = false;
 }
