@@ -25,13 +25,15 @@ struct pattern_instance;
 typedef struct s_state
 {
     int patternIndex;
-    bool mutex;
     void* patternData;
     bool disabled;
     int clickCount;
     bool clicking;
     float speed;
     bool withOffset;
+
+    int nextPatternIndex;
+    float nextIntensity;
 } t_state;
 
 extern t_state state;

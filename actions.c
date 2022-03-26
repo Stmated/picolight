@@ -111,18 +111,16 @@ void button_intensity(t_state *state, bool isDown, uint32_t sinceLastDown, uint3
             {
                 // TODO: Replace this with calling a pattern factory that gives a version of the theme
                 float intensity = (state->clickCount > 10 ? 10 : state->clickCount) / (float) 10;
-                pattern_update_data((state->patternIndex + 1) % getPatternCount(), intensity);
+                state->nextPatternIndex = (state->patternIndex + 1) % getPatternCount();
+                state->nextIntensity = intensity;
             }
             else
             {
                 // More than 2 clicks, so we change some properties based on intensity.
                 // TODO: Replace this with calling a pattern factory that gives a new version of the current pattern theme
                 float intensity = (state->clickCount > 10 ? 10 : state->clickCount) / (float) 10;
-                pattern_update_data(state->patternIndex, intensity);
-
-                //float speed = getRandomChance(0.25, 3, intensity);
-                //int patternCount = getPatternCount();
-                //state->speed = getRandomChance(0.25, 3, state->intensity);
+                state->nextPatternIndex = state->nextPatternIndex;
+                state->nextIntensity = intensity;
             }
         }
     }

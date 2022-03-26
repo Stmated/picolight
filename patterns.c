@@ -9,8 +9,6 @@ const uint32_t pattern_sweeping_length = 40;
 const uint32_t pattern_sweeping_speed = 1000;
 const float pattern_sweeping_per_step = 6.375; // 255 / (float)pattern_sweeping_length;
 
-// typedef void (*pattern)(uint16_t len, uint32_t t);
-
 int randint(int n)
 {
     if ((n - 1) == RAND_MAX)
@@ -126,6 +124,7 @@ struct pattern_random_data_instance
     int patternIndex2;
     RgbwColor *pixels;
     float progress;
+    bool progressReversed;
     bool subsequent;
 };
 
@@ -215,11 +214,10 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
         instance->updatedAt = t;
         instance->progress = 0;
 
-        //pattern_random_data_destroyer(data);
-
         if (instance->data1)
         {
             instance->data1_destroyer(instance->data1);
+            instance->data1 = 0;
         }
 
         instance->patternIndex1 = instance->patternIndex2;
@@ -230,11 +228,19 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
 
         instance->data1_destroyer = instance->data2_destroyer;
         instance->data2_destroyer = getPatternDestroyer(instance->patternIndex2);
+
+        // Ugly workaround so progress goes 0->1,1->0, and so on.
+        // This way there should not be an instant JUMP when we switch to next pattern.
+        instance->progressReversed = !instance->progressReversed;
     }
 
     // Set the progress so we can calculate the proper crossover
     int age = t - instance->updatedAt;
     instance->progress = age / (float)instance->period;
+    if (instance->progressReversed)
+    {
+        instance->progress = 1 - instance->progress;
+    }
 
     instance->subsequent = false;
     getPattern(instance->patternIndex1)(len, t, instance->data1, pattern_random_data_printer);
@@ -571,6 +577,7 @@ void *pattern_sparkle_data_destroyer(void *data)
     {
         struct pattern_sparkle_data_instance *instance = data;
         free(instance->values);
+        instance->values = 0;
         free(data);
     }
 }
@@ -631,7 +638,7 @@ const struct
     pattern_data_destroyer destroyer;
 } pattern_table[] = {
 
-    {pattern_random, pattern_random_data, default_destroyer},
+    {pattern_random, pattern_random_data, pattern_random_data_destroyer},
 
     {pattern_sparkle, pattern_sparkle_data, pattern_sparkle_data_destroyer},
 
@@ -677,6 +684,13 @@ void pattern_put_pixel_default(uint16_t index, uint8_t r, uint8_t g, uint8_t b, 
 
 void pattern_execute(int patternIndex, uint16_t len, uint32_t t, void *data)
 {
+    if (state.nextPatternIndex >= 0)
+    {
+        pattern_update_data(state.nextPatternIndex, state.nextIntensity);
+        state.nextPatternIndex = -1;
+        state.nextIntensity = -1;
+    }
+
     // Execute the current pattern inside state
     if (!state.disabled)
     {
@@ -690,13 +704,9 @@ void pattern_execute(int patternIndex, uint16_t len, uint32_t t, void *data)
 
 void pattern_update_data(int patternIndex, float intensity)
 {
-    while (state.mutex)
-    {
-    }
-    state.mutex = true;
-
     // Destroy/free any previous memory allocations
     pattern_table[patternIndex].destroyer(state.patternData);
+    state.patternData = 0;
 
     // Create the new pattern data
     void *data = pattern_table[patternIndex].creator(LED_COUNT, intensity); // TODO: Do not use LED_COUNT, could be different strips
@@ -704,6 +714,4 @@ void pattern_update_data(int patternIndex, float intensity)
     // Set to the new (or same) pattern index, and new data
     state.patternIndex = patternIndex;
     state.patternData = data;
-
-    state.mutex = false;
 }

@@ -65,10 +65,7 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
         time_dilated += (pinIndex * 123456);
     }
 
-    while (state.mutex) {}
-    state.mutex = true;
     pattern_execute(state.patternIndex, LED_COUNT, time_dilated, state.patternData);
-    state.mutex = false;
 }
 
 int main()
@@ -78,6 +75,8 @@ int main()
     state.patternIndex = 0;
     state.speed = 1;
     state.withOffset = false;
+    state.nextPatternIndex = -1;
+    state.nextIntensity = -1;
 
     for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_END; i++)
     {
