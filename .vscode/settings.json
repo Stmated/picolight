@@ -28,7 +28,12 @@
         "threads.h": "c",
         "stdint.h": "c",
         "pwm.h": "c",
-        "limits": "c"
+        "limits": "c",
+        "stdbool.h": "c",
+        "flash.h": "c",
+        "_locale.h": "c",
+        "double.h": "c",
+        "float.h": "c"
     },
     "cmake.buildBeforeRun": true,
 }

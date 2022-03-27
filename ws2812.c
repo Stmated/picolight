@@ -3,8 +3,6 @@
 #include <math.h>
 
 #include "actions.h"
-#include "patterns.h"
-#include "environment.h"
 
 t_state state;
 
@@ -65,7 +63,7 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
         time_dilated += (pinIndex * 123456);
     }
 
-    pattern_execute(state.patternIndex, LED_COUNT, time_dilated, state.patternData);
+    pattern_execute(LED_COUNT, time_dilated);
 }
 
 int main()
@@ -75,8 +73,8 @@ int main()
     state.patternIndex = 0;
     state.speed = 1;
     state.withOffset = false;
-    state.nextPatternIndex = -1;
-    state.nextIntensity = -1;
+    state.nextPatternIndex = 0;
+    state.nextIntensity = 0.1;
 
     for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_END; i++)
     {
@@ -90,7 +88,9 @@ int main()
 
     uint32_t time_start = get_running_ms();
 
-    pattern_update_data(state.patternIndex, 0.1);
+    findAndRegisterPatterns();
+    state.nextPatternIndex = 0;
+    //pattern_update_data(LED_COUNT, state.patternIndex, 0.1);
 
     if (count_of(PIN_TX) > 1)
     {
@@ -116,7 +116,7 @@ int main()
             execute_for_led_pin(time_start, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and just wait if we're done too early
-            sleep_us(200); // minimum is 50us, but need safety margins
+            sleep_us(300); // minimum is 50us, but need safety margins
         }
     }
 }

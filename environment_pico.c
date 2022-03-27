@@ -1,6 +1,6 @@
 #include "environment_pico.h"
 
-inline void put_pixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w)
+void put_pixel(uint16_t index, RgbwColor *c)
 {
     // TODO: Rewrite all this so you can run the code in simulation! Without the pico!
     //          Maybe an ugly web view that keeps polling for updates extremely quickly?
@@ -9,18 +9,20 @@ inline void put_pixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w
     // TODO: Remake this so that we point to a reference to a method instead, and switch it once we move into a new pixel area!
 
     // TODO: Will this branching slow down the processing? Branching == bad, no? Need performance tests!
+
+    // TODO: Add dithering
     if (isRgbw(index))
     {
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)g) << 24u);
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)r) << 24u);
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)b) << 24u);
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)w) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->g) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->r) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->b) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->w) << 24u);
     }
     else
     {
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)g) << 24u);
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)r) << 24u);
-        pio_sm_put_blocking(pio0, 0, ((uint32_t)b) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->g) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->r) << 24u);
+        pio_sm_put_blocking(pio0, 0, ((uint32_t)c->b) << 24u);
     }
 }
 

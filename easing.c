@@ -1,120 +1,119 @@
 #include "easing.h"
 
-float None(float p) { return 1; }
-float Zero(float p) { return 0; }
-float Linear(float p) { return p; }
-float Flip(float p) { return 1 - p; }
-float FlipEasing(easing easing, float p) { return Flip(easing(Flip(p))); }
-float InOut(easing in, easing out, float p) { return p < 0.5 ? in(2 * p) : out(2 * Flip(p)); }
-float InLinear(float p) { return Linear(p); }
-float OutLinear(float p) { return FlipEasing(Linear, p); }
-float InQuadratic(float p) { return p * p; }
-float InCubic(float p) { return p * p * p; }
-float InQuartic(float p) { return p * p * p * p; }
-float InQuintic(float p) { return p * p * p * p * p; }
-float InSextic(float p) { return p * p * p * p * p * p; }
-float InSeptic(float p) { return p * p * p * p * p * p * p; }
-float InOctic(float p) { return p * p * p * p * p * p * p * p; }
-float OutQuadratic(float p) { return FlipEasing(InQuadratic, p); }
-float OutCubic(float p) { return FlipEasing(InCubic, p); }
-float OutQuartic(float p) { return FlipEasing(InQuartic, p); }
-float OutQuintic(float p) { return FlipEasing(InQuintic, p); }
-float OutSextic(float p) { return FlipEasing(InSextic, p); }
-float OutSeptic(float p) { return FlipEasing(InSeptic, p); }
-float OutOctic(float p) { return FlipEasing(InOctic, p); }
-float InOutQuadratic(float p) { return InOut(InQuadratic, OutQuadratic, p); }
-float InOutCubic(float p) { return InOut(InCubic, OutCubic, p); }
-float InOutQuartic(float p) { return InOut(InQuartic, OutQuartic, p); }
-float InOutQuintic(float p) { return InOut(InQuintic, OutQuintic, p); }
-float InOutSextic(float p) { return InOut(InSextic, OutSextic, p); }
-float InOutSeptic(float p) { return InOut(InSeptic, OutSeptic, p); }
-float InOutOctic(float p) { return InOut(InOctic, OutOctic, p); }
+inline float None(float p) { return 1; }
+inline float Zero(float p) { return 0; }
+inline float Linear(float p) { return p; }
+inline float Flip(float p) { return 1 - p; }
+inline float FlipEasing(easing easing, float p) { return Flip(easing(Flip(p))); }
+inline float InOut(easing in, easing out, float p) { return p < 0.5 ? in(2 * p) : out(2 * Flip(p)); }
+inline float InLinear(float p) { return Linear(p); }
+inline float OutLinear(float p) { return FlipEasing(Linear, p); }
+inline float InQuadratic(float p) { return p * p; }
+inline float InCubic(float p) { return p * p * p; }
+inline float InQuartic(float p) { return p * p * p * p; }
+inline float InQuintic(float p) { return p * p * p * p * p; }
+inline float InSextic(float p) { return p * p * p * p * p * p; }
+inline float InSeptic(float p) { return p * p * p * p * p * p * p; }
+inline float InOctic(float p) { return p * p * p * p * p * p * p * p; }
+inline float OutQuadratic(float p) { return FlipEasing(InQuadratic, p); }
+inline float OutCubic(float p) { return FlipEasing(InCubic, p); }
+inline float OutQuartic(float p) { return FlipEasing(InQuartic, p); }
+inline float OutQuintic(float p) { return FlipEasing(InQuintic, p); }
+inline float OutSextic(float p) { return FlipEasing(InSextic, p); }
+inline float OutSeptic(float p) { return FlipEasing(InSeptic, p); }
+inline float OutOctic(float p) { return FlipEasing(InOctic, p); }
+inline float InOutQuadratic(float p) { return InOut(InQuadratic, OutQuadratic, p); }
+inline float InOutCubic(float p) { return InOut(InCubic, OutCubic, p); }
+inline float InOutQuartic(float p) { return InOut(InQuartic, OutQuartic, p); }
+inline float InOutQuintic(float p) { return InOut(InQuintic, OutQuintic, p); }
+inline float InOutSextic(float p) { return InOut(InSextic, OutSextic, p); }
+inline float InOutSeptic(float p) { return InOut(InSeptic, OutSeptic, p); }
+inline float InOutOctic(float p) { return InOut(InOctic, OutOctic, p); }
 
-float InOutLinear(float p) { return InOut(InLinear, OutLinear, p); }
+inline float InOutLinear(float p) { return InOut(InLinear, OutLinear, p); }
 
 // Standard -- grouped by Type
-float InBack(float p) { return p * p * (p * (1.70158 + 1) - 1.70158); }
-float OutBack(float p)
+inline float InBack(float p) { return p * p * (p * (1.70158 + 1) - 1.70158); }
+inline float OutBack(float p)
 {
     float m = p - 1;
     return 1 + m * m * (m * (1.70158 + 1) + 1.70158);
 }
 
-float InOutBack(float p) { return InOut(InBack, OutBack, p); }
+inline float InOutBack(float p) { return InOut(InBack, OutBack, p); }
 
-float OutBounce(float p)
+const float r = 1 / 2.75;   // reciprocal
+const float k1 = r;         // 36.36%
+const float k2 = 2 * r;     // 72.72%
+const float k3 = 1.5 * r;   // 54.54%
+const float k4 = 2.5 * r;   // 90.90%
+const float k5 = 2.25 * r;  // 81.81%
+const float k6 = 2.625 * r; // 95.45%
+const float k0 = 7.5625;
+
+inline float OutBounce(float p)
 {
-    float r = 1 / 2.75;   // reciprocal
-    float k1 = r;         // 36.36%
-    float k2 = 2 * r;     // 72.72%
-    float k3 = 1.5 * r;   // 54.54%
-    float k4 = 2.5 * r;   // 90.90%
-    float k5 = 2.25 * r;  // 81.81%
-    float k6 = 2.625 * r; // 95.45%
-    float k0 = 7.5625;
-    float t;
-
-    /**/ if (p < k1)
+    if (p < k1)
     {
         return k0 * p * p;
     }
     else if (p < k2)
     {
-        t = p - k3;
+        float t = p - k3;
         return k0 * t * t + 0.75;
-    } // 48/64
+    }
     else if (p < k4)
     {
-        t = p - k5;
+        float t = p - k5;
         return k0 * t * t + 0.9375;
-    } // 60/64
+    }
     else
     {
-        t = p - k6;
+        float t = p - k6;
         return k0 * t * t + 0.984375;
-    } // 63/64
+    }
 }
-float InBounce(float p) { return FlipEasing(OutBounce, p); }
-float InOutBounce(float p) { return InOut(InBounce, OutBounce, p); }
+inline float InBounce(float p) { return FlipEasing(OutBounce, p); }
+inline float InOutBounce(float p) { return InOut(InBounce, OutBounce, p); }
 
-float InCircle(float p) { return 1 - sqrt(1 - p * p); }
-float OutCircle(float p)
+inline float InCircle(float p) { return 1 - sqrt(1 - p * p); }
+inline float OutCircle(float p)
 {
     float m = p - 1;
     return sqrt(1 - m * m);
 }
-float InOutCircle(float p) { return InOut(InCircle, OutCircle, p); }
+inline float InOutCircle(float p) { return InOut(InCircle, OutCircle, p); }
 
-float InElastic(float p)
+inline float InElastic(float p)
 {
     float m = p - 1;
     return -pow(2, 10 * m) * sin((m * 40 - 3) * M_PI / 6);
 }
-float OutElastic(float p) { return 1 + (pow(2, 10 * -p) * sin((-p * 40 - 3) * M_PI / 6)); }
-float InOutElastic(float p) { return InOut(InElastic, OutElastic, p); }
+inline float OutElastic(float p) { return 1 + (pow(2, 10 * -p) * sin((-p * 40 - 3) * M_PI / 6)); }
+inline float InOutElastic(float p) { return InOut(InElastic, OutElastic, p); }
 
 // NOTE: 'Exponent2' needs clamping for 0 and 1 respectively
-float InExponent2(float p) { return (p <= 0) ? 0 : pow(2, 10 * (p - 1)); }
-float OutExponent2(float p) { return (p >= 1) ? 1 : 1 - pow(2, -10 * p); }
-float InOutExponent2(float p) { return InOut(InExponent2, OutExponent2, p); }
+inline float InExponent2(float p) { return (p <= 0) ? 0 : pow(2, 10 * (p - 1)); }
+inline float OutExponent2(float p) { return (p >= 1) ? 1 : 1 - pow(2, -10 * p); }
+inline float InOutExponent2(float p) { return InOut(InExponent2, OutExponent2, p); }
 
-float InSine(float p) { return 1 - cos(p * M_PI * 0.5); }
-float OutSine(float p) { return sin(p * M_PI * 0.5); }
-float InOutSine(float p) { return 0.5 * (1 - cos(p * M_PI)); }
+inline float InSine(float p) { return 1 - cos(p * M_PI * 0.5); }
+inline float OutSine(float p) { return sin(p * M_PI * 0.5); }
+inline float InOutSine(float p) { return 0.5 * (1 - cos(p * M_PI)); }
 
 // Non-Standard
 // Scale 0..1 -> p^-10 .. p^0
-float InExponentE(float p) { return (p <= 0) ? 0 : pow(M_E, -10 * (1 - p)); }
-float OutExponentE(float p) { return FlipEasing(InExponentE, p); }
-float InOutExponentE(float p) { return InOut(InExponentE, OutExponentE, p); }
+inline float InExponentE(float p) { return (p <= 0) ? 0 : pow(M_E, -10 * (1 - p)); }
+inline float OutExponentE(float p) { return FlipEasing(InExponentE, p); }
+inline float InOutExponentE(float p) { return InOut(InExponentE, OutExponentE, p); }
 
 // Scale 0..1 -> Log10( 1 ) .. Log10( 10 )
-float OutLog10(float p) { return log10((p * 9) + 1); }
-float InLog10(float p) { return FlipEasing(OutLog10, p); }
-float InOutLog10(float p) { return InOut(InLog10, OutLog10, p); }
-float OutSquareRoot(float p) { return sqrt(p); }
-float InSquareRoot(float p) { return FlipEasing(OutSquareRoot, p); }
-float InOutSquareRoot(float p) { return InOut(InSquareRoot, OutSquareRoot, p); }
+inline float OutLog10(float p) { return log10((p * 9) + 1); }
+inline float InLog10(float p) { return FlipEasing(OutLog10, p); }
+inline float InOutLog10(float p) { return InOut(InLog10, OutLog10, p); }
+inline float OutSquareRoot(float p) { return sqrt(p); }
+inline float InSquareRoot(float p) { return FlipEasing(OutSquareRoot, p); }
+inline float InOutSquareRoot(float p) { return InOut(InSquareRoot, OutSquareRoot, p); }
 
 const easing list_in[] = {
     InLinear,
@@ -128,13 +127,13 @@ const easing list_in[] = {
     InExponent2,
     InExponentE,
     InLog10,
-    //InOctic,
+    // InOctic,
     InQuadratic,
     InQuartic,
-    //InQuintic,
-    //InSeptic,
-    //InSextic,
-    //Zero
+    // InQuintic,
+    // InSeptic,
+    // InSextic,
+    // Zero
 };
 
 const easing list_out[] = {
@@ -149,13 +148,13 @@ const easing list_out[] = {
     OutExponent2,
     OutExponentE,
     OutLog10,
-    //OutOctic,
+    // OutOctic,
     OutQuadratic,
     OutQuartic,
-    //OutQuintic,
-    //OutSeptic,
-    //OutSextic,
-    //Zero
+    // OutQuintic,
+    // OutSeptic,
+    // OutSextic,
+    // Zero
 };
 
 const int list_in_size = (sizeof list_in / sizeof list_in[0]);

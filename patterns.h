@@ -2,30 +2,58 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
+#include <string.h>
 
-#include "colors.h"
+#include "global.h"
+#include "environment.h"
+#include "easing.h"
+#include "options.h"
 
-RgbColor HsvToRgb(HsvColor hsv);
+typedef void (*printer)(uint16_t index, HsiColor *c, void *data);
 
-typedef void (*printer)(uint16_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w, void* data);
+typedef void (*pattern)(uint16_t len, uint32_t t, void *data, printer printer);
+typedef void *(*pattern_data_creator)(uint16_t len, float intensity);
+typedef void (*pattern_data_destroyer)(void *data);
 
-typedef void (*pattern)(uint16_t len, uint32_t t, void* data, printer printer);
-typedef void* (*pattern_data_creator)(uint16_t len, float intensity);
-typedef void* (*pattern_data_destroyer)(void* data);
+typedef void *(*pattern_registrator)(void);
 
 int getPatternCount();
-void pattern_execute(int patternIndex, uint16_t len, uint32_t t, void* data);
-void pattern_update_data(int patternIndex, float intensity);
+void pattern_execute(uint16_t len, uint32_t t);
+void pattern_update_data(uint16_t len, int patternIndex, float intensity);
 
-pattern getPattern(int patternIndex);
-pattern_data_creator getPatternCreator(int patternIndex);
-pattern_data_destroyer getPatternDestroyer(int patternIndex);
+typedef struct pattern_module
+{
+    pattern pat;
+    pattern_data_creator creator;
+    pattern_data_destroyer destroyer;
+} pattern_module;
 
-struct pattern_instance;
+pattern_module getPattern(int patternIndex);
+// pattern_data_creator getPatternCreator(int patternIndex);
+// pattern_data_destroyer getPatternDestroyer(int patternIndex);
+
+void *pattern_creator_default(uint16_t len, float intensity);
+void pattern_destroyer_default(void *data);
+
+void setAll(uint16_t len, HsiColor *c, void *data, printer printer);
+
+void findAndRegisterPatterns();
+
+void pattern_register(pattern pattern, pattern_data_creator creator, pattern_data_destroyer destroyer);
+
+void pattern_register_bouncer();
+void pattern_register_fade_between();
+void pattern_register_fill_sway();
+void pattern_register_rainbow_wave();
+void pattern_register_random();
+void pattern_register_snakes();
+void pattern_register_sparkle();
+void pattern_register_strobe();
+
 typedef struct s_state
 {
     int patternIndex;
-    void* patternData;
+    void *patternData;
     bool disabled;
     int clickCount;
     bool clicking;
@@ -34,6 +62,8 @@ typedef struct s_state
 
     int nextPatternIndex;
     float nextIntensity;
+    pattern_module *modules;
+    int modules_size;
 } t_state;
 
 extern t_state state;

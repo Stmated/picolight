@@ -1,8 +1,4 @@
-#include "global.h"
-
-/*
-
-*/
+#include "patterns.h"
 
 /*
 void button_increment_pattern_index(t_state *state);

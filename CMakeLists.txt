@@ -23,8 +23,11 @@ else()
     pico_sdk_init()
 endif()
 
+
 set (SRC_LIST
     global.h
+    storage.h
+    storage.c
     led_math.h
     led_math.c
     options.h
@@ -39,6 +42,16 @@ set (SRC_LIST
     actions.c
     patterns.h
     patterns.c
+
+    # Figure out how to include these dynamically
+    patterns/pattern_bouncer.c
+    patterns/pattern_fade_between.c
+    patterns/pattern_fill_sway.c
+    patterns/pattern_rainbow_wave.c
+    patterns/pattern_random.c
+    patterns/pattern_snakes.c
+    patterns/pattern_sparkle.c
+    patterns/pattern_strobe.c
     ws2812.c
 )
 
@@ -67,6 +80,8 @@ else()
         hardware_pio
         hardware_adc
         hardware_pwm
+        hardware_flash
+        hardware_sync
         pico_multicore
     )
 

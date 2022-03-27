@@ -1,5 +1,5 @@
 #include "actions.h"
-#include "patterns.h"
+#include "pico/float.h"
 
 void button_increment_pattern_index(t_state *state, bool isDown, uint32_t sinceLastDown, uint32_t sinceLastUp)
 {
@@ -72,7 +72,7 @@ void button_toggle_strobe(t_state *state, bool isDown, uint32_t sinceLastDown, u
 float getRandomChance(float min, float max, float strength)
 {
     // TODO: Need to improve!
-    float r = (rand() / (float)RAND_MAX);
+    float r = (rand() / (int)RAND_MAX);
     return min + ((max * strength) * r);
 }
 
@@ -110,7 +110,7 @@ void button_intensity(t_state *state, bool isDown, uint32_t sinceLastDown, uint3
             else if (state->clickCount == 2)
             {
                 // TODO: Replace this with calling a pattern factory that gives a version of the theme
-                float intensity = (state->clickCount > 10 ? 10 : state->clickCount) / (float) 10;
+                float intensity = (state->clickCount > 10 ? 10 : state->clickCount) / (int) 10;
                 state->nextPatternIndex = (state->patternIndex + 1) % getPatternCount();
                 state->nextIntensity = intensity;
             }

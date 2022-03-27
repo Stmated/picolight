@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "options.h"
+#include "colors.h"
 
-void put_pixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
+void put_pixel(uint16_t index, RgbwColor *c);
 
 void init_pin_button(int gpio);
 
@@ -31,13 +32,13 @@ void program_init(int offset, int gpio);
 
 // TODO: Move below to only be included when compiling for local dev?
 #ifndef count_of
-#define count_of(a) (sizeof(a)/sizeof((a)[0]))
+#define count_of(a) (sizeof(a) / sizeof((a)[0]))
 #endif
 
 #ifndef MAX
-#define MAX(a, b) ((a)>(b)?(a):(b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
 #ifndef MIN
-#define MIN(a, b) ((b)>(a)?(a):(b))
+#define MIN(a, b) ((b) > (a) ? (a) : (b))
 #endif
