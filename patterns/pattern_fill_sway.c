@@ -56,9 +56,6 @@ void pattern_fill_sway(uint16_t len, uint32_t t, void *data, printer printer)
 
     HsiColor hsi = {h, instance->sat + (ps * instance->sat_width), instance->brightness + (pi * instance->brightness_width)};
 
-    //RgbwColor c;
-    //hsi2rgbw(hsi.h, hsi.s, hsi.i, &c);
-
     setAll(len, &hsi, data, printer);
 }
 

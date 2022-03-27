@@ -32,7 +32,7 @@ void *pattern_sparkle_data(uint16_t len, float intensity)
         int i = 0;
     }
 
-    instance->chanceToLightUp = randint_probability(10, 10000000, 1 - intensity) / (float)1000000000;
+    instance->chanceToLightUp = randint_probability(10, 10000000, 1 - intensity) / (float)10000000000;
     instance->chanceToGoOut = randint_probability(1000, 5000, 1 - intensity) / (float)100000;
     instance->values = bools;
 

@@ -58,20 +58,20 @@ pattern_module getPattern(int patternIndex)
     return state.modules[patternIndex];
 }
 
-void findAndRegisterPatterns()
+void pattern_find_and_register_patterns()
 {
-    pattern_register_bouncer();
+    pattern_register_random();
+
+    pattern_register_bouncer(); // Bad name
     pattern_register_fade_between();
     pattern_register_fill_sway();
     pattern_register_rainbow_wave();
     pattern_register_snakes();
     pattern_register_sparkle();
     pattern_register_strobe();
-
-    pattern_register_random();
 }
 
-void registerPattern(pattern pattern, pattern_data_creator creator, pattern_data_destroyer destroyer)
+void pattern_register(pattern pattern, pattern_data_creator creator, pattern_data_destroyer destroyer)
 {
     // Do magic here. Add to the table, and expand it if needed
 
@@ -79,9 +79,13 @@ void registerPattern(pattern pattern, pattern_data_creator creator, pattern_data
     //int scnd_array[] = {8, 14, 69, 23, 5};
 
     // 5 is the number of the elements which are going to be appended
-    pattern_module *new = calloc(state.modules_size + 1, sizeof(pattern_module));
-    memcpy(new, state.modules, state.modules_size * sizeof(pattern_module));
-    state.modules = new;
+    pattern_module *array_new = calloc(state.modules_size + 1, sizeof(pattern_module));
+    memcpy(array_new, state.modules, state.modules_size * sizeof(pattern_module));
+
+    pattern_module module = {pattern, creator, destroyer};
+    array_new[state.modules_size] = module;
+
+    state.modules = array_new;
     state.modules_size++;
 }
 

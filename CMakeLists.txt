@@ -41,8 +41,7 @@ set (SRC_LIST
     actions.h
     actions.c
     patterns.h
-    patterns.c
-
+    
     # Figure out how to include these dynamically
     patterns/pattern_bouncer.c
     patterns/pattern_fade_between.c
@@ -52,6 +51,9 @@ set (SRC_LIST
     patterns/pattern_snakes.c
     patterns/pattern_sparkle.c
     patterns/pattern_strobe.c
+    
+    patterns.c
+
     ws2812.c
 )
 

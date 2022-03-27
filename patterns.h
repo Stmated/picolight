@@ -37,7 +37,7 @@ void pattern_destroyer_default(void *data);
 
 void setAll(uint16_t len, HsiColor *c, void *data, printer printer);
 
-void findAndRegisterPatterns();
+void pattern_find_and_register_patterns();
 
 void pattern_register(pattern pattern, pattern_data_creator creator, pattern_data_destroyer destroyer);
 

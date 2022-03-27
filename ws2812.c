@@ -88,7 +88,7 @@ int main()
 
     uint32_t time_start = get_running_ms();
 
-    findAndRegisterPatterns();
+    pattern_find_and_register_patterns();
     state.nextPatternIndex = 0;
     //pattern_update_data(LED_COUNT, state.patternIndex, 0.1);
 

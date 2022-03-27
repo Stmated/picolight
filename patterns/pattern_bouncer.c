@@ -6,6 +6,7 @@ typedef struct pattern_red_bouncer_smooth_struct
     int easing;
     int hue;
     int period;
+    int width;
 } pattern_red_bouncer_smooth_struct;
 
 static void *pattern_bouncer_data(uint16_t len, float intensity)
@@ -13,8 +14,9 @@ static void *pattern_bouncer_data(uint16_t len, float intensity)
     pattern_red_bouncer_smooth_struct *instance = calloc(1, sizeof(pattern_red_bouncer_smooth_struct));
 
     instance->easing = randint(getEasingCount());
-    instance->hue = 45 + randint_probability(0, 315, 1 - intensity);
+    instance->hue = randint_probability(0, 360, 1 - intensity);
     instance->period = 500 + randint_probability(0, 10000, intensity);
+    instance->width = 1 + randint(6);
 
     return instance;
 }
@@ -30,9 +32,9 @@ static void pattern_bouncer(uint16_t len, uint32_t t, void *data, printer printe
     {
         float distance = fabsf(i - p);
 
-        if (distance <= 2)
+        if (distance <= instance->width)
         {
-            HsiColor hsi = {instance->hue, 1, (1 - (distance / (float)2))};
+            HsiColor hsi = {instance->hue, 1, (1 - (distance / (float)instance->width))};
             printer(i, &hsi, data);
         }
         else

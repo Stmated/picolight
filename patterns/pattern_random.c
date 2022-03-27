@@ -48,7 +48,8 @@ void *pattern_random_data(uint16_t len, float intensity)
     pattern_random_data_struct *instance = calloc(1, sizeof(pattern_random_data_struct));
 
     instance->intensity = intensity;
-    instance->period = randint_probability(10000, 60000, intensity);
+    //instance->period = randint_probability(10000, 60000, intensity);
+    instance->period = randint_probability(5000, 6000, intensity);
     instance->updatedAt = 0;
     instance->patternIndex1 = 1 + randint(getPatternCount() - 2);
     instance->patternIndex2 = 1 + randint(getPatternCount() - 2);
@@ -70,10 +71,6 @@ void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
     // Important to use the global data here, since "data" is from the sub-pattern
     struct pattern_random_data_struct *instance = state.patternData;
 
-    // TODO: Use the HsiLerp here instead! Might be a bit more accurate/smooth!
-
-    // qweqwe
-
     if (instance->subsequent)
     {
         // Blend. FIX SO THIS CAN HANDLE HSI AND NOT NEED TO CONVERT BACK AND FORTH!
@@ -86,7 +83,16 @@ void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
             invp = 1 - invp;
         }
 
-        instance->pixels[index] = LerpHSI(&instance->pixels[index], c, (instance->progressReversed ? p : 1 - p));
+        // TODO: LerpHSI does not look good. It lerps the saturation too much, so it all becomes just a white blur
+        // TODO: Figure out a good middle-ground between dividing by 2 and using LerpHSI. Maybe only ever LERP the hue and brightness?
+        // TODO: Maybe add functionality where we have a random easing between the two patterns? Even more diversity == Good
+
+        HsiColor lerped = LerpHSI(&instance->pixels[index], c, (instance->progressReversed ? p : 1 - p));
+        lerped.s = MAX(instance->pixels[index].s, c->s); // Use the max saturation between the two. Is this up for randomization?
+
+        instance->pixels[index] = lerped;
+
+        // TODO: Maybe add functionality where we have a random easing between the two patterns? Even more diversity == Good
 
         /*
         instance->pixels[index].r = ((instance->pixels[index].r * p) + (c->r * invp)) / 2;
@@ -94,16 +100,12 @@ void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
         instance->pixels[index].b = ((instance->pixels[index].b * p) + (c->b * invp)) / 2;
         instance->pixels[index].w = ((instance->pixels[index].w * p) + (c->w * invp)) / 2;
         */
+
     }
     else
     {
         // Just assign it
         instance->pixels[index] = *c;
-        /*
-        instance->pixels[index].g = c->g;
-        instance->pixels[index].b = c->b;
-        instance->pixels[index].w = c->w;
-        */
     }
 }
 

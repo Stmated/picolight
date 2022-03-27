@@ -40,9 +40,9 @@ void *pattern_snakes_data(uint16_t len, float intensity)
     instance->easing3 = randint(getEasingCount());
 
     // Periods
-    instance->period1 = randint_probability(5000, 20000, 1 - intensity);
-    instance->period1 = randint_probability(3000, 20000, 1 - intensity);
-    instance->period1 = randint_probability(2000, 25000, 1 - intensity);
+    instance->period1 = randint_probability(6000, 25000, 1 - intensity);
+    instance->period2 = randint_probability(4000, 25000, 1 - intensity);
+    instance->period3 = randint_probability(3000, 25000, 1 - intensity);
 
     // Width
     instance->width1 = (float)randint_probability(len / 8, len / 4, 1 - intensity);
