@@ -29,19 +29,20 @@ int getCoPrime(int a)
     return coprime;
 }
 
-double getAverageAngle(double *angles, int length)
+// TODO: This can be simplified if we change hue into float? Or should everything else become ints?
+float getAverageAngle(float *angles, int length)
 {
-    double x = 0;
-    double y = 0;
+    float x = 0;
+    float y = 0;
 
     for (int i = 0; i < length; i++)
     {
-        double r = angles[i] * (M_PI / 180.0);
+        float r = angles[i] * (M_PI / 180.0);
         x += cos(r);
         y += sin(r);
     }
 
-    double radians = atan2(y, x);
+    float radians = atan2f(y, x);
     int degrees = (int)round(radians * (180.0 / M_PI));
     int fixedDegreees = (degrees + 360) % 360;
     return fixedDegreees;
@@ -89,6 +90,11 @@ int randint_weighted_towards_max(int min, int max, float weight)
     if (weight > 1)
     {
         // If weight is above 1, then we should go further below 1 the higher the number.
+        weight = 1 / weight;
+    }
+    else if (weight < 1)
+    {
+        // If weight is under 1, then we should go further ABOVE 1.
         weight = 1 / weight;
     }
 

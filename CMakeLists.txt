@@ -45,7 +45,7 @@ set (SRC_LIST
     math/simplerandom.c
     
     # Figure out how to include these dynamically
-    patterns/pattern_bouncer.c
+    patterns/pattern_snake.c
     patterns/pattern_fade_between.c
     patterns/pattern_fill_sway.c
     patterns/pattern_rainbow.c
@@ -61,14 +61,14 @@ set (SRC_LIST
 )
 
 if(OPTION_ENVIRONMENT_LOCAL)
-   set (SRC_LIST environment_local.h environment_local.c ${SRC_LIST})
+   set (SRC_LIST environment/environment_local.h environment/environment_local.c ${SRC_LIST})
 else()
-    set (SRC_LIST environment_pico.h environment_pico.c ${SRC_LIST})
+    set (SRC_LIST environment/environment_pico.h environment/environment_pico.c ${SRC_LIST})
 endif()
 
 add_executable(${PROJECT_NAME}
-    environment.h
-    environment.c
+    environment/environment.h
+    environment/environment.c
     ${SRC_LIST}
 )
 

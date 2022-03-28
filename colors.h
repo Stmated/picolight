@@ -17,6 +17,7 @@ typedef struct RgbwColor
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255
 typedef struct HsiColor
 {
+    // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations
     uint16_t h;
     float s;
     float i;

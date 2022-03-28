@@ -51,5 +51,5 @@ void pattern_rainbow_wave(uint16_t len, uint32_t t, void *data, PatternPrinter p
 
 void pattern_register_rainbow_wave()
 {
-    pattern_register(pattern_rainbow_wave, pattern_rainbow_wave_data, pattern_destroyer_default, &(PatternOptions){1});
+    pattern_register("rainbow_wave", pattern_rainbow_wave, pattern_rainbow_wave_data, pattern_destroyer_default, &(PatternOptions){1});
 }

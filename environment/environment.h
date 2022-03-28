@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "options.h"
-#include "colors.h"
+#include "../options.h"
+#include "../colors.h"
 
 void put_pixel(uint16_t index, RgbwColor *c);
 

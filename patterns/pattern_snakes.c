@@ -1,75 +1,96 @@
 #include "../patterns.h"
 #include "../led_math.h"
 
-// Should "sweep" more -- from mid brightness to max brightness, and pulse fast, to give feeling of weird shadows in room
-
-typedef struct pattern_snakes_data_struct
+typedef struct data_struct
 {
-    int easing1;
-    int easing2;
-    int easing3;
+    data_pixels_struct base;
 
-    int period1;
-    int period2;
-    int period3;
+    void *snake1data;
+    void *snake2data;
+    void *snake3data;
 
-    float width1;
-    float width2;
-    float width3;
+} data_struct;
 
-    int hue1;
-    int hue2;
-    int hue3;
-
-    float sat1;
-    float sat2;
-    float sat3;
-
-    float int1;
-    float int2;
-    float int3;
-} pattern_snakes_data_struct;
-
-void *pattern_snakes_data(uint16_t len, float intensity)
+static void data_destroyer(void *dataPtr)
 {
-    struct pattern_snakes_data_struct *instance = malloc(sizeof(struct pattern_snakes_data_struct));
+    data_struct *data = (data_struct *)dataPtr;
 
-    // Easings
-    instance->easing1 = randint(getEasingCount());
-    instance->easing2 = randint(getEasingCount());
-    instance->easing3 = randint(getEasingCount());
+    PatternModule *module = getPatternByName("snake");
 
-    // Periods
-    instance->period1 = randint_weighted_towards_max(6000, 25000, intensity);
-    instance->period2 = randint_weighted_towards_max(4000, 25000, intensity);
-    instance->period3 = randint_weighted_towards_max(3000, 25000, intensity);
+    if (data->snake1data)
+    {
+        module->destroyer(data->snake1data);
+        data->snake1data = NULL;
+    }
 
-    // Width
-    instance->width1 = (float)randint_weighted_towards_max(len / 8, len / 4, intensity);
-    instance->width2 = (float)randint_weighted_towards_max(len / 16, len / 8, intensity);
-    instance->width3 = (float)randint_weighted_towards_max(3, 5, intensity);
+    if (data->snake2data)
+    {
+        module->destroyer(data->snake2data);
+        data->snake2data = NULL;
+    }
 
-    // Hue
-    instance->hue1 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
-    instance->hue2 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
-    instance->hue3 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
+    if (data->snake3data)
+    {
+        module->destroyer(data->snake3data);
+        data->snake3data = NULL;
+    }
 
-    // Saturation
-    instance->sat1 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
-    instance->sat2 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
-    instance->sat3 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
-
-    // Intensity
-    instance->int1 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
-    instance->int2 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
-    instance->int3 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
-
-    return instance;
+    if (data->base.pixels)
+    {
+        free(data->base.pixels);
+        data->base.pixels = NULL;
+    }
 }
 
-void pattern_snakes(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void *data_creator(uint16_t len, float intensity)
 {
-    struct pattern_snakes_data_struct *instance = data;
+    struct data_struct *data = malloc(sizeof(struct data_struct));
+
+    PatternModule *module = getPatternByName("snake");
+
+    data->snake1data = module->creator(len, intensity * 4);
+    data->snake2data = module->creator(len, intensity * 2);
+    data->snake3data = module->creator(len, intensity);
+    data->base.pixels = calloc(len, sizeof(HsiColor));
+
+    return data;
+}
+
+/*
+void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr)
+{
+    data_struct *data = (data_struct *)dataPtr;
+
+    //default
+
+    pattern_printer_default(index, c, dataPtr);
+}
+*/
+
+void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
+{
+    data_struct *data = (data_struct *)dataPtr;
+    PatternModule *module = getPatternByName("snake");
+
+    // TODO: Abstract out the aggregating printer from Random pattern, and use it here as well.
+    // TODO: Can we create different types of printers, which can stream one pixel through different executors?
+
+    data->base.progress = 1;
+    module->executor(len, t, data->snake1data, pattern_printer_merging);
+    data->base.progress = 0.5;
+    //data->base.progress = 0.5;
+    module->executor(len, t, data->snake2data, pattern_printer_merging);
+    //data->base.progress = 0.5;
+    module->executor(len, t, data->snake3data, pattern_printer_merging);
+
+    for (int i = 0; i < len; i++)
+    {
+        // Now let's send the data to the original printer
+        printer(i, &data->base.pixels[i], data);
+    }
+
+    /*
+    struct data_struct *instance = data;
 
     float p1 = len * executeEasing(instance->easing1, (t % instance->period1) / (float)instance->period1);
     float p2 = len * executeEasing(instance->easing2, (t % instance->period2) / (float)instance->period2);
@@ -128,19 +149,16 @@ void pattern_snakes(uint16_t len, uint32_t t, void *data, PatternPrinter printer
 
         HsiColor hsi = {v_h % 360, 1, v_i};
         colors[i] = hsi;
-        // uint8_t rgbw[4];
-        /// hsi2rgbw(hsi.h, hsi.s, hsi.i, rgbw);
-
-        //hsi2rgbw(hsi.h, hsi.s, hsi.i, &rgbw[i]);
     }
 
     for (int i = 0; i < len; i++)
     {
         printer(i, &colors[i], data);
     }
+    */
 }
 
 void pattern_register_snakes()
 {
-    pattern_register(pattern_snakes, pattern_snakes_data, pattern_destroyer_default, &(PatternOptions){1});
+    pattern_register("snakes", executor, data_creator, data_destroyer, &(PatternOptions){1});
 }

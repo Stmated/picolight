@@ -34,7 +34,8 @@
         "_locale.h": "c",
         "double.h": "c",
         "float.h": "c",
-        "led_math.h": "c"
+        "led_math.h": "c",
+        "strings.h": "c"
     },
     "cmake.buildBeforeRun": true,
 }

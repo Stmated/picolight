@@ -116,7 +116,7 @@ int main()
             execute_for_led_pin(time_start, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and just wait if we're done too early
-            sleep_us(300); // minimum is 50us, but need safety margins
+            sleep_us(150); // minimum is 50us, but need safety margins
         }
     }
 }

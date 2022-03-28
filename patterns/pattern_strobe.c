@@ -25,5 +25,5 @@ void pattern_strobe(uint16_t len, uint32_t t, void *data, PatternPrinter printer
 
 void pattern_register_strobe()
 {
-    pattern_register(pattern_strobe, pattern_creator_default, pattern_destroyer_default, &(PatternOptions){0.25});
+    pattern_register("strobe", pattern_strobe, pattern_creator_default, pattern_destroyer_default, &(PatternOptions){0.25});
 }

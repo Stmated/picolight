@@ -5,15 +5,16 @@
 #include <string.h>
 
 #include "global.h"
-#include "environment.h"
+#include "environment/environment.h"
 #include "easing.h"
 #include "options.h"
+#include "led_math.h"
 
-typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *data);
+typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr);
 
-typedef void (*PatternExecutor)(uint16_t len, uint32_t t, void *data, PatternPrinter printer);
+typedef void (*PatternExecutor)(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
-typedef void (*PatternDataDestroyer)(void *data);
+typedef void (*PatternDataDestroyer)(void *dataPtr);
 
 typedef void *(*PatternRegistrator)(void);
 
@@ -24,28 +25,49 @@ void pattern_update_data(uint16_t len, int patternIndex, float intensity);
 typedef struct PatternOptions
 {
     float randomChance;
+    int randomMultiplier;
 } PatternOptions;
 
 typedef struct PatternModule
 {
+    const char *name;
     PatternExecutor executor;
     PatternDataCreator creator;
     PatternDataDestroyer destroyer;
-    PatternOptions options;
+    PatternOptions *options;
 } PatternModule;
 
-PatternModule getPattern(int patternIndex);
+typedef struct data_pixels_struct
+{
+    HsiColor *pixels;
+
+    // TODO: Remove this -- instead rename "progress" to "blend" and use only that to set the 100% the first pixels
+    // DEPRECATED! NOT USED!
+    bool subsequent;
+
+    // TODO: This needs to be rewritten somehow, so it can handle X amounts of different merging printers.
+    float progress;
+
+    // TODO: Remove this -- instead rename "progress" to "blend" and use that correctly to decide how to assign pixels
+    bool progressReversed;
+
+} data_pixels_struct;
+
+PatternModule *getPatternByIndex(int index);
+PatternModule *getPatternByName(const char* name);
 
 void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);
+void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr);
+void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr);
 
 void setAll(uint16_t len, HsiColor *c, void *data, PatternPrinter printer);
 
 void pattern_find_and_register_patterns();
 
-void pattern_register(PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternOptions *options);
+void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternOptions *options);
 
-void pattern_register_bouncer();
+void pattern_register_snake();
 void pattern_register_fade_between();
 void pattern_register_fill_sway();
 void pattern_register_rainbow();
