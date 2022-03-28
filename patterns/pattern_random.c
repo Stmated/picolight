@@ -5,8 +5,8 @@ typedef struct pattern_random_data_struct
 {
     void *data1;
     void *data2;
-    pattern_data_destroyer data1_destroyer;
-    pattern_data_destroyer data2_destroyer;
+    PatternDataDestroyer data1_destroyer;
+    PatternDataDestroyer data2_destroyer;
     int period;
     uint32_t updatedAt;
     float intensity;
@@ -18,7 +18,7 @@ typedef struct pattern_random_data_struct
     bool subsequent;
 } pattern_random_data_struct;
 
-void pattern_random_data_destroyer(void *data)
+static void pattern_random_data_destroyer(void *data)
 {
     pattern_random_data_struct *instance = data;
 
@@ -43,20 +43,20 @@ void pattern_random_data_destroyer(void *data)
     free(data);
 }
 
-void *pattern_random_data(uint16_t len, float intensity)
+static void *pattern_random_data(uint16_t len, float intensity)
 {
     pattern_random_data_struct *instance = calloc(1, sizeof(pattern_random_data_struct));
 
     instance->intensity = intensity;
     //instance->period = randint_probability(10000, 60000, intensity);
-    instance->period = randint_probability(5000, 6000, intensity);
+    instance->period = randint_weighted_towards_min(5000, 6000, intensity);
     instance->updatedAt = 0;
-    instance->patternIndex1 = 1 + randint(getPatternCount() - 2);
-    instance->patternIndex2 = 1 + randint(getPatternCount() - 2);
-    instance->data1 = getPattern(instance->patternIndex1).creator(len, instance->intensity);
-    instance->data2 = getPattern(instance->patternIndex2).creator(len, instance->intensity);
-    instance->data1_destroyer = getPattern(instance->patternIndex1).destroyer;
-    instance->data2_destroyer = getPattern(instance->patternIndex2).destroyer;
+    instance->patternIndex1 = -1; // 1 + randint(getPatternCount() - 2);
+    instance->patternIndex2 = -1, // 1 + randint(getPatternCount() - 2);
+    //instance->data1 = getPattern(instance->patternIndex1).creator(len, instance->intensity);
+    //instance->data2 = getPattern(instance->patternIndex2).creator(len, instance->intensity);
+    //instance->data1_destroyer = getPattern(instance->patternIndex1).destroyer;
+    //instance->data2_destroyer = getPattern(instance->patternIndex2).destroyer;
 
     // This is... a lot of data. Can we shrink it?
     instance->pixels = calloc(len, sizeof(HsiColor)); // Allocate memory for each pixel, which we will need to blend
@@ -66,7 +66,7 @@ void *pattern_random_data(uint16_t len, float intensity)
 
 // TODO: Currently pretty ugly that we do not get the HSI here. Double conversions and everything.
 // TODO: Figure out if there is a good way of being able to send either RGB or HSI or both!
-void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
+static void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
 {
     // Important to use the global data here, since "data" is from the sub-pattern
     struct pattern_random_data_struct *instance = state.patternData;
@@ -109,7 +109,36 @@ void pattern_random_data_printer(uint16_t index, HsiColor *c, void *data)
     }
 }
 
-void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
+
+static int getNextPatternIndex(int previous, int other)
+{
+    // TODO: This is bad. Does not take chance into account, and not that got the same twice, or the same as the other pattern
+    int chances = 3;
+    float f100 = (float) 100;
+    while (chances > 0)
+    {
+        int next = randint(getPatternCount());
+        PatternModule module = getPattern(next);
+
+        float ourChance = randint(100) / f100;
+        if (ourChance >= module.options.randomChance)
+        {
+            // That module had too low chance to be picked this time (or ever).
+            continue;
+        }
+
+        if (next == previous || next == other)
+        {
+            // Give it another chance.
+            chances--;
+            continue;
+        }
+
+        return next;
+    }
+}
+
+static void pattern_random(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     // TODO: Delegate to a random pattern
     // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
@@ -126,13 +155,14 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
             instance->data1 = NULL;
         }
 
-        instance->patternIndex1 = instance->patternIndex2;
-        instance->patternIndex2 = 1 + randint(getPatternCount() - 2);
-        if (instance->patternIndex1 == instance->patternIndex2)
+        if (!instance->patternIndex2 == -1)
         {
-            // Give one more chance to be different
-            instance->patternIndex2 = 1 + randint(getPatternCount() - 2);
+            // This is the first time. So assign pattern 2, which will be moved to 1 straight away.
+            instance->patternIndex2 = getNextPatternIndex(instance->patternIndex2, instance->patternIndex1);
         }
+
+        instance->patternIndex1 = instance->patternIndex2;
+        instance->patternIndex2 = getNextPatternIndex(instance->patternIndex2, instance->patternIndex1); // 1 + randint(getPatternCount() - 2);
 
         instance->data1 = instance->data2;
         instance->data2 = getPattern(instance->patternIndex2).creator(len, instance->intensity);
@@ -150,9 +180,9 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
     instance->progress = age / (float)instance->period;
 
     instance->subsequent = false;
-    getPattern(instance->patternIndex1).pat(len, t, instance->data1, pattern_random_data_printer);
+    getPattern(instance->patternIndex1).executor(len, t, instance->data1, pattern_random_data_printer);
     instance->subsequent = true;
-    getPattern(instance->patternIndex2).pat(len, t, instance->data2, pattern_random_data_printer);
+    getPattern(instance->patternIndex2).executor(len, t, instance->data2, pattern_random_data_printer);
 
     for (int i = 0; i < len; i++)
     {
@@ -163,5 +193,5 @@ void pattern_random(uint16_t len, uint32_t t, void *data, printer printer)
 
 void pattern_register_random()
 {
-    pattern_register(pattern_random, pattern_random_data, pattern_random_data_destroyer);
+    pattern_register(pattern_random, pattern_random_data, pattern_random_data_destroyer, &(PatternOptions){0});
 }

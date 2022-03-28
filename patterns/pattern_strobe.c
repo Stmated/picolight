@@ -2,7 +2,7 @@
 
 int a = 10;
 
-void pattern_strobe(uint16_t len, uint32_t t, void *data, printer printer)
+void pattern_strobe(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     uint32_t remainder = t % 100;
     if (remainder < 50)
@@ -25,5 +25,5 @@ void pattern_strobe(uint16_t len, uint32_t t, void *data, printer printer)
 
 void pattern_register_strobe()
 {
-    pattern_register(pattern_strobe, pattern_creator_default, pattern_destroyer_default);
+    pattern_register(pattern_strobe, pattern_creator_default, pattern_destroyer_default, &(PatternOptions){0.25});
 }

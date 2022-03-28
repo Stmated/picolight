@@ -40,34 +40,34 @@ void *pattern_snakes_data(uint16_t len, float intensity)
     instance->easing3 = randint(getEasingCount());
 
     // Periods
-    instance->period1 = randint_probability(6000, 25000, 1 - intensity);
-    instance->period2 = randint_probability(4000, 25000, 1 - intensity);
-    instance->period3 = randint_probability(3000, 25000, 1 - intensity);
+    instance->period1 = randint_weighted_towards_max(6000, 25000, intensity);
+    instance->period2 = randint_weighted_towards_max(4000, 25000, intensity);
+    instance->period3 = randint_weighted_towards_max(3000, 25000, intensity);
 
     // Width
-    instance->width1 = (float)randint_probability(len / 8, len / 4, 1 - intensity);
-    instance->width2 = (float)randint_probability(len / 16, len / 8, 1 - intensity);
-    instance->width3 = (float)randint_probability(3, 5, 1 - intensity);
+    instance->width1 = (float)randint_weighted_towards_max(len / 8, len / 4, intensity);
+    instance->width2 = (float)randint_weighted_towards_max(len / 16, len / 8, intensity);
+    instance->width3 = (float)randint_weighted_towards_max(3, 5, intensity);
 
     // Hue
-    instance->hue1 = (intensity > 0.5 ? randint_probability(0, 360, 1 - intensity) : randint(360));
-    instance->hue2 = (intensity > 0.5 ? randint_probability(0, 360, 1 - intensity) : randint(360));
-    instance->hue3 = (intensity > 0.5 ? randint_probability(0, 360, 1 - intensity) : randint(360));
+    instance->hue1 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
+    instance->hue2 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
+    instance->hue3 = (intensity > 0.5 ? randint_weighted_towards_max(0, 360, intensity) : randint(360));
 
     // Saturation
-    instance->sat1 = randint_probability(0, 1000, 1 - intensity) / (float)1000;
-    instance->sat2 = randint_probability(0, 1000, 1 - intensity) / (float)1000;
-    instance->sat3 = randint_probability(0, 1000, 1 - intensity) / (float)1000;
+    instance->sat1 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
+    instance->sat2 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
+    instance->sat3 = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
 
     // Intensity
-    instance->int1 = randint_probability(200, 500, 1 - intensity) / (float)1000;
-    instance->int2 = randint_probability(200, 500, 1 - intensity) / (float)1000;
-    instance->int3 = randint_probability(200, 500, 1 - intensity) / (float)1000;
+    instance->int1 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
+    instance->int2 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
+    instance->int3 = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
 
     return instance;
 }
 
-void pattern_snakes(uint16_t len, uint32_t t, void *data, printer printer)
+void pattern_snakes(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     struct pattern_snakes_data_struct *instance = data;
 
@@ -142,5 +142,5 @@ void pattern_snakes(uint16_t len, uint32_t t, void *data, printer printer)
 
 void pattern_register_snakes()
 {
-    pattern_register(pattern_snakes, pattern_snakes_data, pattern_destroyer_default);
+    pattern_register(pattern_snakes, pattern_snakes_data, pattern_destroyer_default, &(PatternOptions){1});
 }

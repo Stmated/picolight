@@ -14,14 +14,14 @@ static void *pattern_bouncer_data(uint16_t len, float intensity)
     pattern_red_bouncer_smooth_struct *instance = calloc(1, sizeof(pattern_red_bouncer_smooth_struct));
 
     instance->easing = randint(getEasingCount());
-    instance->hue = randint_probability(0, 360, 1 - intensity);
-    instance->period = 500 + randint_probability(0, 10000, intensity);
+    instance->hue = randint_weighted_towards_max(0, 360, intensity);
+    instance->period = 500 + randint_weighted_towards_min(0, 10000, intensity);
     instance->width = 1 + randint(6);
 
     return instance;
 }
 
-static void pattern_bouncer(uint16_t len, uint32_t t, void *data, printer printer)
+static void pattern_bouncer(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     pattern_red_bouncer_smooth_struct *instance = data;
 
@@ -46,5 +46,5 @@ static void pattern_bouncer(uint16_t len, uint32_t t, void *data, printer printe
 
 void pattern_register_bouncer()
 {
-    pattern_register(pattern_bouncer, pattern_bouncer_data, pattern_destroyer_default);
+    pattern_register(pattern_bouncer, pattern_bouncer_data, pattern_destroyer_default, &(PatternOptions){1});
 }

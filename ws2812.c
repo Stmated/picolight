@@ -4,7 +4,7 @@
 
 #include "actions.h"
 
-t_state state;
+GlobalState state;
 
 void core1_entry()
 {

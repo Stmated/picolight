@@ -1,6 +1,6 @@
 #include "patterns.h"
 
-void setAll(uint16_t len, HsiColor *c, void *data, printer printer)
+void setAll(uint16_t len, HsiColor *c, void *data, PatternPrinter printer)
 {
     for (uint16_t i = 0; i < len; i++)
     {
@@ -24,65 +24,39 @@ void pattern_destroyer_default(void *data)
     }
 }
 
-
-
-/*
-pattern_table[] = {
-
-    {pattern_random, pattern_random_data, pattern_random_data_destroyer},
-
-    {pattern_red_bouncer_smooth, pattern_red_bouncer_smooth_data, default_destroyer},
-
-    {pattern_sparkle, pattern_sparkle_data, pattern_sparkle_data_destroyer},
-
-    {pattern_snakes, pattern_snakes_data, default_destroyer},
-
-    {pattern_fade_between, pattern_fade_between_data, default_destroyer},
-
-    {pattern_fill_sway, pattern_fill_sway_data, default_destroyer},
-    {pattern_rainbow_wave, pattern_rainbow_wave_data, default_destroyer},
-
-    {pattern_strobe, noop, default_destroyer},
-};
-*/
-
-// TODO: Fix pattern factory by reading https://github.com/huawenyu/Design-Patterns-in-C/tree/master/auto-gen/factory/simple_factory
-
 int getPatternCount()
 {
     return state.modules_size;
 }
 
-pattern_module getPattern(int patternIndex)
+PatternModule getPattern(int patternIndex)
 {
     return state.modules[patternIndex];
 }
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_rainbow_wave();
+
+    pattern_register_rainbow();
+
     pattern_register_random();
 
     pattern_register_bouncer(); // Bad name
     pattern_register_fade_between();
     pattern_register_fill_sway();
-    pattern_register_rainbow_wave();
+    
     pattern_register_snakes();
     pattern_register_sparkle();
     pattern_register_strobe();
 }
 
-void pattern_register(pattern pattern, pattern_data_creator creator, pattern_data_destroyer destroyer)
+void pattern_register(PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternOptions *options)
 {
-    // Do magic here. Add to the table, and expand it if needed
+    PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
+    memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
-    //int first_array[10] = {45, 2, 48, 3, 6};
-    //int scnd_array[] = {8, 14, 69, 23, 5};
-
-    // 5 is the number of the elements which are going to be appended
-    pattern_module *array_new = calloc(state.modules_size + 1, sizeof(pattern_module));
-    memcpy(array_new, state.modules, state.modules_size * sizeof(pattern_module));
-
-    pattern_module module = {pattern, creator, destroyer};
+    PatternModule module = {pattern, creator, destroyer};
     array_new[state.modules_size] = module;
 
     state.modules = array_new;
@@ -124,7 +98,7 @@ void pattern_execute(uint16_t len, uint32_t t)
     // Execute the current pattern inside state
     if (!state.disabled)
     {
-        getPattern(state.patternIndex).pat(len, t, state.patternData, pattern_put_pixel_default);
+        getPattern(state.patternIndex).executor(len, t, state.patternData, pattern_put_pixel_default);
     }
     else
     {

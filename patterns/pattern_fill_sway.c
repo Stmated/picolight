@@ -43,7 +43,7 @@ void *pattern_fill_sway_data(uint16_t len, float intensity)
     return instance; // TODO: Improve this so there's a great range, and much more INTENSE when intensity goes up, and no white
 }
 
-void pattern_fill_sway(uint16_t len, uint32_t t, void *data, printer printer)
+void pattern_fill_sway(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     struct pattern_fill_sway_struct *instance = data;
 
@@ -61,5 +61,5 @@ void pattern_fill_sway(uint16_t len, uint32_t t, void *data, printer printer)
 
 void pattern_register_fill_sway()
 {
-    pattern_register(pattern_fill_sway, pattern_fill_sway_data, pattern_destroyer_default);
+    pattern_register(pattern_fill_sway, pattern_fill_sway_data, pattern_destroyer_default, &(PatternOptions){1});
 }

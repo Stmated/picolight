@@ -32,14 +32,14 @@ void *pattern_sparkle_data(uint16_t len, float intensity)
         int i = 0;
     }
 
-    instance->chanceToLightUp = randint_probability(10, 10000000, 1 - intensity) / (float)10000000000;
-    instance->chanceToGoOut = randint_probability(1000, 5000, 1 - intensity) / (float)100000;
+    instance->chanceToLightUp = randint_weighted_towards_max(10, 10000000, intensity) / (float)10000000000;
+    instance->chanceToGoOut = randint_weighted_towards_max(1000, 5000, intensity) / (float)100000;
     instance->values = bools;
 
     return instance;
 }
 
-void pattern_sparkle(uint16_t len, uint32_t t, void *data, printer printer)
+void pattern_sparkle(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
 {
     pattern_sparkle_data_struct *instance = data;
 
@@ -67,5 +67,5 @@ void pattern_sparkle(uint16_t len, uint32_t t, void *data, printer printer)
 
 void pattern_register_sparkle()
 {
-    pattern_register(pattern_sparkle, pattern_sparkle_data, pattern_sparkle_data_destroyer);
+    pattern_register(pattern_sparkle, pattern_sparkle_data, pattern_sparkle_data_destroyer, &(PatternOptions){1});
 }

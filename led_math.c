@@ -71,10 +71,43 @@ int randint(int n)
 }
 
 /**
- * Higher power means higher probability to be lower
+ * Higher power means higher probability to be lower.
+ * Weight can be anything from 0 to Inf.
  * */
-int randint_probability(int min, int max, float probabilityPower)
+int randint_weighted_towards_min(int min, int max, float weight)
 {
-    float random = randint(100000) / (float)100000;
-    return (int)floorf(min + (max - min) * (powf(random, probabilityPower)));
+    float random = randint(100000) / (float)100000; // 0..1
+    return (int)floorf(min + (max - min) * (powf(random, weight)));
+}
+
+/**
+ * Higher power means higher probability to be higher
+ * Weight can be anything from 0 to Inf. 
+ * */
+int randint_weighted_towards_max(int min, int max, float weight)
+{
+    if (weight > 1)
+    {
+        // If weight is above 1, then we should go further below 1 the higher the number.
+        weight = 1 / weight;
+    }
+
+    float random = randint(100000) / (float)100000; // 0..1
+    return (int)floorf(min + (max - min) * (powf(random, weight)));
+}
+
+/**
+ * Gives a value where 0 is the most likely, and numbers below and above that become increasingly unlikely.
+ * The regular result is a complete tapering off after -3 and +3.
+ * */
+double rand_gaussian() {
+	double a = ((double)(rand()))/((double)RAND_MAX);
+	double b = ((double)(rand()))/((double)RAND_MAX);
+
+	double R0 = sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
+	/*
+		double R1 = sqrt(-2.0 * log(a)) * sin(2 * M_PI * b);
+	*/
+
+	return R0;
 }

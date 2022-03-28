@@ -9,6 +9,8 @@ int getCoPrime(int a);
 
 int randint(int n);
 
-int randint_probability(int min, int max, float probabilityPower);
+int randint_weighted_towards_min(int min, int max, float weight);
+
+int randint_weighted_towards_max(int min, int max, float weight);
 
 double getAverageAngle(double *angles, int length);
