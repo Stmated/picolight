@@ -53,5 +53,8 @@ static void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, v
 
 void pattern_register_snake()
 {
-    pattern_register("snake", executor, data_creator, pattern_destroyer_default, &(PatternOptions){1, 3});
+    pattern_register("snake", executor,
+                     data_creator, pattern_destroyer_default,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){1, 3});
 }

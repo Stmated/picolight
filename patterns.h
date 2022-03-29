@@ -77,7 +77,7 @@ void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *cyc
 
 void pattern_find_and_register_patterns();
 
-void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternOptions *options);
+void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternCycleDataCreator cycleCreator, PatternCycleDataDestroyer cycleDestroyer, PatternOptions *options);
 
 void pattern_register_snake();
 void pattern_register_fade_between();

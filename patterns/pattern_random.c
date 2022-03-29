@@ -13,7 +13,7 @@ typedef struct data_struct
     float intensity;
     int patternIndex1;
     int patternIndex2;
-    
+
 } data_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -199,5 +199,8 @@ static void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, v
 
 void pattern_register_random()
 {
-    pattern_register("random", executor, data_creator, data_destroyer, &(PatternOptions){0});
+    pattern_register("random", executor,
+                     data_creator, data_destroyer,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){0});
 }

@@ -159,5 +159,8 @@ void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cy
 
 void pattern_register_snakes()
 {
-    pattern_register("snakes", executor, data_creator, data_destroyer, &(PatternOptions){1});
+    pattern_register("snakes", executor,
+                     data_creator, data_destroyer,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){1});
 }

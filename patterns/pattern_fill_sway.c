@@ -36,11 +36,11 @@ void *pattern_fill_sway_data(uint16_t len, float intensity)
     instance->easing_i = randint(getEasingCount());
 
     // TODO: The values MUST NOT GO OVER 1! The calculations become WONKY!!!!
-    instance->sat_from = 0.8 + (0.2 * (randint_weighted_towards_max(0, 100, intensity) / (float) 100));
-    instance->brightness_from = 0.2 + (0.1 * (randint_weighted_towards_max(0, 100, intensity) / (float) 100));
+    instance->sat_from = 0.8 + (0.2 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    instance->brightness_from = 0.2 + (0.1 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
-    float sat_to = MIN(1, instance->sat_from + 0.1 + (0.4 * (randint_weighted_towards_max(0, 100, intensity) / (float) 100)));
-    float brightness_to = MIN(1, instance->brightness_from + 0.2 + (0.10 * (randint_weighted_towards_max(0, 100, intensity) / (float) 100)));
+    float sat_to = MIN(1, instance->sat_from + 0.1 + (0.4 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
+    float brightness_to = MIN(1, instance->brightness_from + 0.2 + (0.10 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
 
     instance->sat_width = (sat_to - instance->sat_from);
     instance->brightness_width = (brightness_to - instance->brightness_from);
@@ -65,5 +65,8 @@ void pattern_fill_sway(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr,
 
 void pattern_register_fill_sway()
 {
-    pattern_register("sway", pattern_fill_sway, pattern_fill_sway_data, pattern_destroyer_default, &(PatternOptions){1});
+    pattern_register("sway", pattern_fill_sway,
+                     pattern_fill_sway_data, pattern_destroyer_default,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){1});
 }

@@ -63,5 +63,8 @@ void pattern_fade_between(uint16_t offset, uint16_t len, uint32_t t, void *dataP
 
 void pattern_register_fade_between()
 {
-    pattern_register("fade", pattern_fade_between, pattern_fade_between_data, pattern_fade_between_data_destroyer, &(PatternOptions){1});
+    pattern_register("fade", pattern_fade_between,
+                     pattern_fade_between_data, pattern_fade_between_data_destroyer,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){1});
 }

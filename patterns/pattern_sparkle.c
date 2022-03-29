@@ -67,5 +67,8 @@ void pattern_sparkle(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, v
 
 void pattern_register_sparkle()
 {
-    pattern_register("sparkle", pattern_sparkle, pattern_sparkle_data, pattern_sparkle_data_destroyer, &(PatternOptions){1});
+    pattern_register("sparkle", pattern_sparkle,
+                     pattern_sparkle_data, pattern_sparkle_data_destroyer,
+                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+                     &(PatternOptions){1});
 }

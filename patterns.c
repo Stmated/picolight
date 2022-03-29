@@ -78,12 +78,12 @@ void pattern_find_and_register_patterns()
     pattern_register_strobe();
 }
 
-void pattern_register(const char *name, PatternExecutor executor, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternOptions *options)
+void pattern_register(const char *name, PatternExecutor executor, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternCycleDataCreator cycleCreator, PatternCycleDataDestroyer cycleDestroyer, PatternOptions *options)
 {
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
     memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
-    PatternModule module = {name, executor, creator, destroyer, options};
+    PatternModule module = {name, executor, creator, destroyer, cycleCreator, cycleDestroyer, options};
     array_new[state.modules_size] = module;
 
     state.modules = array_new;
