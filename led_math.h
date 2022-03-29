@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include "types.h"
 
+// Disable this define if you do not want to waste memory on 
+#define PRECOMPUTE_HSI2RGBW
+
 bool gcd(int a, int b);
 
 int getCoPrime(int a);
@@ -16,8 +19,9 @@ int randint_weighted_towards_max(int min, int max, float weight);
 float getAverageAngle(float *angles, int length);
 
 HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t);
-void hsi2rgb(float H, float S, float I, uint8_t *rgb);
 void hsi2rgbw(HsiColor *hsi, RgbwColor *c);
+
+void math_precompute();
 
 #define HSI_H_MIN 0
 #define HSI_H_MAX 255

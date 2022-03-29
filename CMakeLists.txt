@@ -73,6 +73,10 @@ add_executable(${PROJECT_NAME}
 
 if(OPTION_ENVIRONMENT_LOCAL)
 else()
+    # Make sure we use the fast float and double implementations
+    pico_set_float_implementation(${PROJECT_NAME} pico)
+    pico_set_double_implementation(${PROJECT_NAME} pico)
+
     pico_enable_stdio_usb(${PROJECT_NAME} 0)
     pico_enable_stdio_uart(${PROJECT_NAME} 1)
     pico_generate_pio_header(${PROJECT_NAME}

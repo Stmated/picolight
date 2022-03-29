@@ -16,11 +16,11 @@ void *pattern_creator_default(uint16_t len, float intensity)
     return NULL;
 }
 
-void pattern_destroyer_default(void *data)
+void pattern_destroyer_default(void *dataPtr)
 {
-    if (data)
+    if (dataPtr)
     {
-        free(data);
+        free(dataPtr);
     }
 }
 
@@ -29,11 +29,11 @@ void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr)
     return NULL;
 }
 
-void pattern_cycle_destroyer_default(void *data)
+void pattern_cycle_destroyer_default(void *cycleDataPtr)
 {
-    if (data)
+    if (cycleDataPtr)
     {
-        free(data);
+        free(cycleDataPtr);
     }
 }
 

@@ -139,7 +139,7 @@ static void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, v
 {
     // TODO: Delegate to a random pattern
     // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
-    struct data_struct *data = dataPtr;
+    data_struct *data = dataPtr;
 
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {

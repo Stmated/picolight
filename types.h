@@ -18,14 +18,15 @@ typedef struct HsiColor
 {
     float s;
     float i;
-    // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
     uint16_t h;
 } HsiColor;
 
+// TODO: Convert S and I into an uint8_t, with range being 0 to 255
 typedef struct HsiColorWide
 {
     float s;
     float i;
-    // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
     uint64_t h;
 } HsiColorWide;
+
+// TODO: Build a benchmark for float vs int -- see how fast it is to do all the normal operations that are needed for colors. Implement using #define entries

@@ -1,7 +1,5 @@
 #include "../patterns.h"
 
-int a = 10;
-
 void pattern_strobe(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     uint32_t remainder = t % 100;

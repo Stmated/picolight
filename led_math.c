@@ -104,18 +104,19 @@ int randint_weighted_towards_max(int min, int max, float weight)
 
 /**
  * Gives a value where 0 is the most likely, and numbers below and above that become increasingly unlikely.
- * The regular result is a complete tapering off after -3 and +3.
+ * The regular result is an almost complete tapering off after -3 and +3.
  * */
-double rand_gaussian() {
-	double a = ((double)(rand()))/((double)RAND_MAX);
-	double b = ((double)(rand()))/((double)RAND_MAX);
+double rand_gaussian()
+{
+    double a = ((double)(rand())) / ((double)RAND_MAX);
+    double b = ((double)(rand())) / ((double)RAND_MAX);
 
-	double R0 = sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
-	/*
+    double R0 = sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
+    /*
 		double R1 = sqrt(-2.0 * log(a)) * sin(2 * M_PI * b);
 	*/
 
-	return R0;
+    return R0;
 }
 
 #define DEG_TO_RAD(X) (M_PI * (X) / 180)
@@ -129,78 +130,100 @@ double rand_gaussian() {
 
 // Need a way of converting HSV to RGBW -- where the W has dynamic warmth!
 
-void hsi2rgb(float H, float S, float I, uint8_t *rgb)
-{
-    uint8_t r, g, b;
-    H = fmod(H, 360);                // cycle H around to 0-360 degrees
-    H = 3.14159 * H / (float)180;    // Convert to radians.
-    S = S > 0 ? (S < 1 ? S : 1) : 0; // clamp S and I to interval [0,1]
-    I = I > 0 ? (I < 1 ? I : 1) : 0;
+#ifdef PRECOMPUTE_HSI2RGBW
+const float lookup_hsi2rgbw_cos_120[360];
+const float lookup_hsi2rgbw_cos_240[360];
+const float lookup_hsi2rgbw_cos_360[360];
+#endif
 
-    // Math! Thanks in part to Kyle Miller.
-    if (H < 2.09439)
+void math_precompute()
+{
+#ifdef PRECOMPUTE_HSI2RGBW
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
     {
-        r = 255 * I / 3 * (1 + S * cos(H) / cos(1.047196667 - H));
-        g = 255 * I / 3 * (1 + S * (1 - cos(H) / cos(1.047196667 - H)));
-        b = 255 * I / 3 * (1 - S);
+        float cos_h = cosf(h);
+        float cos_1047_h = cosf(1.047196667 - h);
+        float div = cos_h / cos_1047_h;
+
+        lookup_hsi2rgbw_cos_120[h] = div;
     }
-    else if (H < 4.188787)
+
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
     {
-        H = H - 2.09439;
-        g = 255 * I / 3 * (1 + S * cos(H) / cos(1.047196667 - H));
-        b = 255 * I / 3 * (1 + S * (1 - cos(H) / cos(1.047196667 - H)));
-        r = 255 * I / 3 * (1 - S);
+        float H = h - 2.09439;
+        float cos_h = cosf(H);
+        float cos_1047_h = cosf(1.047196667 - H);
+        float div = cos_h / cos_1047_h;
+
+        lookup_hsi2rgbw_cos_240[h] = div;
     }
-    else
+
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
     {
-        H = H - 4.188787;
-        b = 255 * I / 3 * (1 + S * cos(H) / cos(1.047196667 - H));
-        r = 255 * I / 3 * (1 + S * (1 - cos(H) / cos(1.047196667 - H)));
-        g = 255 * I / 3 * (1 - S);
+        float H = h - 4.188787;
+        float cos_h = cosf(H);
+        float cos_1047_h = cosf(1.047196667 - H);
+        float div = cos_h / cos_1047_h;
+
+        lookup_hsi2rgbw_cos_360[h] = div;
     }
-    rgb[0] = r;
-    rgb[1] = g;
-    rgb[2] = b;
+#endif
 }
 
 // This method has to be blazingly fast! Find ways to spee it up if possible!
-void hsi2rgbw(HsiColor* hsi, RgbwColor *c)
+void hsi2rgbw(HsiColor *hsi, RgbwColor *c)
 {
     uint8_t r, g, b, w;
-    float cos_h, cos_1047_h;
-    float H = hsi->h; // fmod(hsi->h, 360);                // cycle H around to 0-360 degrees
-    H = M_PI * H / (float)180;    // Convert to radians.
-    float S = hsi->s; // hsi->s > 0 ? (hsi->s < 1 ? hsi->s : 1) : 0; // clamp S and I to interval [0,1]
-    float I = hsi->i; // hsi->i > 0 ? (hsi->i < 1 ? hsi->i : 1) : 0;
-
-    if (H < 2.09439)
+    
+    if (hsi->h < 120)
     {
+#ifdef PRECOMPUTE_HSI2RGBW
+        float cos_div_cached = lookup_hsi2rgbw_cos_120[hsi->h];
+        r = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
+        g = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
+#else
+        float H = M_PI * hsi->h / (float)180; // Convert to radians
         cos_h = cosf(H);
         cos_1047_h = cosf(1.047196667 - H);
         r = S * 255 * I / 3 * (1 + cos_h / cos_1047_h);
         g = S * 255 * I / 3 * (1 + (1 - cos_h / cos_1047_h));
+#endif
         b = 0;
-        w = 255 * (1 - S) * I;
+        w = 255 * (1 - hsi->s) * hsi->i;
     }
-    else if (H < 4.188787)
+    else if (hsi->h < 240)
     {
+#ifdef PRECOMPUTE_HSI2RGBW
+        float cos_div_cached = lookup_hsi2rgbw_cos_240[hsi->h];
+        g = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
+        b = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
+#else
+        float H = M_PI * hsi->h / (float)180; // Convert to radians
         H = H - 2.09439;
         cos_h = cosf(H);
         cos_1047_h = cosf(1.047196667 - H);
         g = S * 255 * I / 3 * (1 + cos_h / cos_1047_h);
         b = S * 255 * I / 3 * (1 + (1 - cos_h / cos_1047_h));
+#endif
         r = 0;
-        w = 255 * (1 - S) * I;
+        w = 255 * (1 - hsi->s) * hsi->i;
     }
     else
     {
+#ifdef PRECOMPUTE_HSI2RGBW
+        float cos_div_cached = lookup_hsi2rgbw_cos_360[hsi->h];
+        b = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
+        r = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
+#else
+        float H = M_PI * hsi->h / (float)180; // Convert to radians
         H = H - 4.188787;
-        cos_h = cosf(H);
-        cos_1047_h = cosf(1.047196667 - H);
-        b = S * 255 * I / 3 * (1 + cos_h / cos_1047_h);
-        r = S * 255 * I / 3 * (1 + (1 - cos_h / cos_1047_h));
+        float cos_h = cosf(H);
+        float cos_1047_h = cosf(1.047196667 - H);
+        b = hsi->s * 255 * hsi->i / 3 * (1 + cos_h / cos_1047_h);
+        r = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_h / cos_1047_h));
+#endif
         g = 0;
-        w = 255 * (1 - S) * I;
+        w = 255 * (1 - hsi->s) * hsi->i;
     }
 
     c->r = r;
