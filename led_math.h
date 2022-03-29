@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include "global.h"
 #include "types.h"
 
 // Disable this define if you do not want to waste memory on 

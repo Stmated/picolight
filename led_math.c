@@ -1,5 +1,4 @@
 #include "led_math.h"
-#include "pico/float.h"
 
 bool gcd(int a, int b)
 {
