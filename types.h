@@ -1,3 +1,7 @@
+#pragma once
+#ifndef PICOL_TYPES
+#define PICOL_TYPES
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -16,17 +20,13 @@ typedef struct RgbwColor
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255
 typedef struct HsiColor
 {
+    // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
+    uint16_t h;
     float s;
     float i;
-    uint16_t h;
 } HsiColor;
 
-// TODO: Convert S and I into an uint8_t, with range being 0 to 255
-typedef struct HsiColorWide
-{
-    float s;
-    float i;
-    uint64_t h;
-} HsiColorWide;
+extern HsiColor black;
+extern HsiColor white;
 
-// TODO: Build a benchmark for float vs int -- see how fast it is to do all the normal operations that are needed for colors. Implement using #define entries
+#endif

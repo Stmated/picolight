@@ -1,3 +1,4 @@
+#pragma once
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
@@ -17,7 +18,10 @@ int randint_weighted_towards_min(int min, int max, float weight);
 
 int randint_weighted_towards_max(int min, int max, float weight);
 
-float getAverageAngle(float *angles, int length);
+float math_average_angle(float *angles, int length);
+
+// TODO: Add blend mode, and maybe different blend progress between the different colors?
+HsiColor math_average_hsi(HsiColor* colors, uint8_t length);
 
 HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t);
 void hsi2rgbw(HsiColor *hsi, RgbwColor *c);

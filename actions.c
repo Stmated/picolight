@@ -1,5 +1,4 @@
 #include "actions.h"
-#include "pico/float.h"
 
 void button_increment_pattern_index(GlobalState *state, bool isDown, uint32_t sinceLastDown, uint32_t sinceLastUp)
 {

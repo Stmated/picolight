@@ -29,7 +29,8 @@ int getCoPrime(int a)
 }
 
 // TODO: This can be simplified if we change hue into float? Or should everything else become ints?
-float getAverageAngle(float *angles, int length)
+//          This method is SLOW -- have to SPEED IT UP SIGNIFICANTLY!
+/*float math_average_angle(float *angles, int length)
 {
     float x = 0;
     float y = 0;
@@ -37,14 +38,58 @@ float getAverageAngle(float *angles, int length)
     for (int i = 0; i < length; i++)
     {
         float r = angles[i] * (M_PI / 180.0);
-        x += cos(r);
-        y += sin(r);
+        x += cosf(r);
+        y += sinf(r);
     }
 
     float radians = atan2f(y, x);
-    int degrees = (int)round(radians * (180.0 / M_PI));
+    int degrees = (int)roundf(radians * (180.0 / M_PI));
     int fixedDegreees = (degrees + 360) % 360;
     return fixedDegreees;
+}
+*/
+
+inline float math_average_angle(float *angles, int length)
+{
+    float x = 0;
+    float y = 0;
+
+    for (int i = 0; i < length; i++)
+    {
+        float r = angles[i] * (M_PI / 180.0);
+        x += cosf(r);
+        y += sinf(r);
+    }
+
+    float radians = atan2f(y, x);
+    int degrees = (int)roundf(radians * (180.0 / M_PI));
+    int fixedDegreees = (degrees + 360) % 360;
+    return fixedDegreees;
+}
+
+// TODO: Speed up this method! It is slow! Especially patterns_average_angles!
+inline HsiColor math_average_hsi(HsiColor *colors, uint8_t length)
+{
+    float x = 0;
+    float y = 0;
+    float sMax = 0;
+    float iMax = 0;
+    for (int i = 0; i < length; i++)
+    {
+        HsiColor c = colors[sizeof(HsiColor) * i];
+
+        float r = c.h * (M_PI / 180.0);
+        x += cosf(r);
+        y += sinf(r);
+
+        sMax = MAX(sMax, c.s);
+        iMax = MAX(iMax, c.i);
+    }
+
+    float radians = atan2f(y, x);
+    uint16_t degrees = (uint16_t)roundf(radians * (180.0 / M_PI));
+
+    return (HsiColor){degrees, sMax, iMax};
 }
 
 int randint(int n)

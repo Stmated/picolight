@@ -1,9 +1,8 @@
 #include "../patterns.h"
-#include "../led_math.h"
 
 typedef struct data_struct
 {
-    data_pixels_struct base;
+    data_pixel_blending_struct base;
 
     void *snake1data;
     void *snake2data;
@@ -14,79 +13,78 @@ typedef struct data_struct
 static void data_destroyer(void *dataPtr)
 {
     data_struct *data = (data_struct *)dataPtr;
-
     PatternModule *module = getPatternByName("snake");
 
     if (data->snake1data)
     {
         module->destroyer(data->snake1data);
-        data->snake1data = NULL;
-    }
-
-    if (data->snake2data)
-    {
         module->destroyer(data->snake2data);
-        data->snake2data = NULL;
-    }
-
-    if (data->snake3data)
-    {
         module->destroyer(data->snake3data);
-        data->snake3data = NULL;
-    }
-
-    if (data->base.pixels)
-    {
         free(data->base.pixels);
-        data->base.pixels = NULL;
     }
 }
 
-void *data_creator(uint16_t len, float intensity)
+static void *data_creator(uint16_t len, float intensity)
 {
-    struct data_struct *data = malloc(sizeof(struct data_struct));
+    data_struct *data = calloc(1, sizeof(data_struct));
 
     PatternModule *module = getPatternByName("snake");
 
     data->snake1data = module->creator(len, intensity * 4);
     data->snake2data = module->creator(len, intensity * 2);
     data->snake3data = module->creator(len, intensity);
-    data->base.pixels = calloc(len, sizeof(HsiColor));
+    data->base.pixels = calloc(3, sizeof(HsiColor));
 
     return data;
 }
 
-void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     data_struct *data = (data_struct *)dataPtr;
     PatternModule *module = getPatternByName("snake");
 
-    // TODO: Abstract out the aggregating printer from Random pattern, and use it here as well.
-    // TODO: Can we create different types of printers, which can stream one pixel through different executors?
+    void *snake1CyclePtr = module->cycleCreator(len, t, data->snake1data);
+    void *snake2CyclePtr = module->cycleCreator(len, t, data->snake2data);
+    void *snake3CyclePtr = module->cycleCreator(len, t, data->snake3data);
 
-    data->base.progress = 1;
+    //HsiColor *pixels = calloc(stop - start, sizeof(HsiColor));
 
-    void *cyclePtr = module->cycleCreator(len, t, data->snake1data);
-    module->executor(offset, len, t, data->snake1data, cyclePtr, pattern_printer_merging);
-    module->cycleDestroyer(cyclePtr);
-
-    data->base.progress = 0.5;
-    //data->base.progress = 0.5;
-
-    cyclePtr = module->cycleCreator(len, t, data->snake2data);
-    module->executor(offset, len, t, data->snake2data, cyclePtr, pattern_printer_merging);
-    module->cycleDestroyer(cyclePtr);
-
-    //data->base.progress = 0.5;
-    cyclePtr = module->cycleCreator(len, t, data->snake3data);
-    module->executor(offset, len, t, data->snake3data, cyclePtr, pattern_printer_merging);
-    module->cycleDestroyer(cyclePtr);
-
-    for (int i = offset; i < len; i++)
+    for (int i = start; i < stop; i++)
     {
-        // Now let's send the data to the original printer
-        printer(i, &data->base.pixels[i], dataPtr);
+        data->base.stepIndex = 0;
+        module->executor(i, i + 1, len, t, data->snake1data, snake1CyclePtr, pattern_printer_merging);
+        module->executor(i, i + 1, len, t, data->snake2data, snake2CyclePtr, pattern_printer_merging);
+        module->executor(i, i + 1, len, t, data->snake3data, snake3CyclePtr, pattern_printer_merging);
+
+        //HsiColor c1 = data->base.pixels[sizeof(HsiColor) * 0];
+        //HsiColor c2 = data->base.pixels[sizeof(HsiColor) * 1];
+        //HsiColor c3 = data->base.pixels[sizeof(HsiColor) * 2];
+
+        //HsiColor c = {
+        //    MAX(c1.h, MAX(c2.h, c3.h)),
+        //    MAX(c1.s, MAX(c2.s, c3.s)),
+        //    MAX(c1.i, MAX(c2.i, c3.i))
+        //};
+
+        HsiColor c = math_average_hsi(data->base.pixels, 3);
+
+        //pixels[sizeof(HsiColor) * (i - start)] = c;
+        //printer(i, &c, dataPtr);
+
+        printer(i, &c, dataPtr);
     }
+
+    //for (int i = start; i < stop; i++)
+    //{
+        // Now let's send the data to the original printer
+    //    printer(i, &pixels[sizeof(HsiColor) * (i - start)], dataPtr);
+    //}
+    
+    //free(pixels);
+
+    module->cycleDestroyer(snake1CyclePtr);
+    module->cycleDestroyer(snake2CyclePtr);
+    module->cycleDestroyer(snake3CyclePtr);
 
     /*
     struct data_struct *instance = data;
@@ -159,8 +157,5 @@ void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cy
 
 void pattern_register_snakes()
 {
-    pattern_register("snakes", executor,
-                     data_creator, data_destroyer,
-                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
-                     &(PatternOptions){1});
+    pattern_register("snakes", executor, data_creator, data_destroyer, NULL, NULL, &(PatternOptions){1});
 }

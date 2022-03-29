@@ -35,7 +35,8 @@
         "double.h": "c",
         "float.h": "c",
         "led_math.h": "c",
-        "strings.h": "c"
+        "strings.h": "c",
+        "types.h": "c"
     },
     "cmake.buildBeforeRun": true,
 }

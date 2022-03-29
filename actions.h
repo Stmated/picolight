@@ -1,4 +1,5 @@
 #include "patterns.h"
+#include "pico/float.h"
 
 /*
 void button_increment_pattern_index(t_state *state);

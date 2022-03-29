@@ -8,7 +8,6 @@
 #include "environment/environment.h"
 #include "easing.h"
 #include "options.h"
-#include "led_math.h"
 
 typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr);
 
@@ -16,7 +15,7 @@ typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr);
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "CycleData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a cycle way too often
-typedef void (*PatternExecutor)(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer);
+typedef void (*PatternExecutor)(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 typedef void *(*PatternCycleDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
@@ -45,21 +44,12 @@ typedef struct PatternModule
     PatternOptions *options;
 } PatternModule;
 
-typedef struct data_pixels_struct
+typedef struct data_pixel_blending_struct
 {
     HsiColor *pixels;
+    uint8_t stepIndex;
 
-    // TODO: Remove this -- instead rename "progress" to "blend" and use only that to set the 100% the first pixels
-    // DEPRECATED! NOT USED!
-    bool subsequent;
-
-    // TODO: This needs to be rewritten somehow, so it can handle X amounts of different merging printers.
-    float progress;
-
-    // TODO: Remove this -- instead rename "progress" to "blend" and use that correctly to decide how to assign pixels
-    bool progressReversed;
-
-} data_pixels_struct;
+} data_pixel_blending_struct;
 
 PatternModule *getPatternByIndex(int index);
 PatternModule *getPatternByName(const char* name);
