@@ -26,8 +26,8 @@ static void *data_creator(uint16_t len, float intensity)
     data->width = 3 + randint_weighted_towards_min(len / 16, len / 8, intensity);
     data->period = randint_weighted_towards_min(2000, 30000, intensity);
     data->offset = randint(data->period * 3);
-    data->saturation = randint_weighted_towards_max(0, 1000, intensity) / (float)1000;
-    data->brightness = randint_weighted_towards_max(200, 500, intensity) / (float)1000;
+    data->saturation = randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000;
+    data->brightness = randint_weighted_towards_max(300, 1000, intensity) / (float)1000;
 
     return data;
 }
@@ -53,8 +53,8 @@ inline static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_
 
         if (distance <= data->width)
         {
-            // Move "hsi" into cycle memory, and keep writing over the hue attribute? We save a couple of cycles?
-            HsiColor hsi = {data->hue, 1, (1 - (distance / (float)data->width))};
+            // Move "hsi" into cycle memory, and keep writing over the hue + i attributes? We save a couple of cycles?
+            HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
             printer(i, &hsi, dataPtr);
         }
         else

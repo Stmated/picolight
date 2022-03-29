@@ -6,7 +6,7 @@
 #include "types.h"
 
 // Disable this define if you do not want to waste memory on 
-#define PRECOMPUTE_HSI2RGBW
+#define MATH_PRECOMPUTE
 
 bool gcd(int a, int b);
 
@@ -18,7 +18,7 @@ int randint_weighted_towards_min(int min, int max, float weight);
 
 int randint_weighted_towards_max(int min, int max, float weight);
 
-float math_average_angle(float *angles, int length);
+int math_average_angle(int *angles, int length);
 
 // TODO: Add blend mode, and maybe different blend progress between the different colors?
 HsiColor math_average_hsi(HsiColor* colors, uint8_t length);
@@ -29,7 +29,7 @@ void hsi2rgbw(HsiColor *hsi, RgbwColor *c);
 void math_precompute();
 
 #define HSI_H_MIN 0
-#define HSI_H_MAX 255
+#define HSI_H_MAX 360
 
 #define HSI_S_MIN 0
 #define HSI_S_MAX 1

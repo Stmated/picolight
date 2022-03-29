@@ -1,5 +1,52 @@
 #include "led_math.h"
 
+#ifdef MATH_PRECOMPUTE
+static float lookup_h2cos[HSI_H_MAX] = {};
+static float lookup_h2sin[HSI_H_MAX] = {};
+static float lookup_hsi2rgbw_cos_120[HSI_H_MAX] = {};
+static float lookup_hsi2rgbw_cos_240[HSI_H_MAX] = {};
+static float lookup_hsi2rgbw_cos_360[HSI_H_MAX] = {};
+#endif
+
+void math_precompute()
+{
+#ifdef MATH_PRECOMPUTE
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
+    {
+        float r = h * (M_PI / 180.0);
+        float cos_h = cosf(r);
+        float cos_1047_h = cosf(1.047196667 - r);
+        float div = cos_h / cos_1047_h;
+
+        lookup_h2sin[h] = sinf(r);
+        lookup_h2cos[h] = cos_h;
+        lookup_hsi2rgbw_cos_120[h] = div;
+    }
+
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
+    {
+        float r = h * (M_PI / 180.0) - 2.09439;
+        // float H = r
+        float cos_h = cosf(r);
+        float cos_1047_h = cosf(1.047196667 - r);
+        float div = cos_h / cos_1047_h;
+
+        lookup_hsi2rgbw_cos_240[h] = div;
+    }
+
+    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
+    {
+        float r = h * (M_PI / 180.0) - 4.188787;
+        // float H = h - 4.188787;
+        float cos_h = cosf(r);
+        float cos_1047_h = cosf(1.047196667 - r);
+        float div = cos_h / cos_1047_h;
+
+        lookup_hsi2rgbw_cos_360[h] = div;
+    }
+#endif
+}
+
 bool gcd(int a, int b)
 {
     while (b)
@@ -49,16 +96,21 @@ int getCoPrime(int a)
 }
 */
 
-inline float math_average_angle(float *angles, int length)
+inline int math_average_angle(int *angles, int length)
 {
     float x = 0;
     float y = 0;
 
     for (int i = 0; i < length; i++)
     {
+#ifdef MATH_PRECOMPUTE
+        x += lookup_h2cos[angles[i]];
+        y += lookup_h2sin[angles[i]];
+#else
         float r = angles[i] * (M_PI / 180.0);
         x += cosf(r);
         y += sinf(r);
+#endif
     }
 
     float radians = atan2f(y, x);
@@ -66,6 +118,8 @@ inline float math_average_angle(float *angles, int length)
     int fixedDegreees = (degrees + 360) % 360;
     return fixedDegreees;
 }
+
+static const float RADIAN_TO_PI = (180.0 / M_PI);
 
 // TODO: Speed up this method! It is slow! Especially patterns_average_angles!
 inline HsiColor math_average_hsi(HsiColor *colors, uint8_t length)
@@ -77,17 +131,28 @@ inline HsiColor math_average_hsi(HsiColor *colors, uint8_t length)
     for (int i = 0; i < length; i++)
     {
         HsiColor c = colors[sizeof(HsiColor) * i];
+        if (c.i == 0)
+        {
+            // Do not include if it's black/transparent
+            continue;
+        }
 
+#ifdef MATH_PRECOMPUTE
+        x += lookup_h2cos[c.h];
+        y += lookup_h2sin[c.h];
+#else
         float r = c.h * (M_PI / 180.0);
         x += cosf(r);
         y += sinf(r);
+#endif
 
-        sMax = MAX(sMax, c.s);
-        iMax = MAX(iMax, c.i);
+        if (c.s > sMax)
+            sMax = c.s;
+        if (c.i > iMax)
+            iMax = c.i;
     }
 
-    float radians = atan2f(y, x);
-    uint16_t degrees = (uint16_t)roundf(radians * (180.0 / M_PI));
+    uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
 
     return (HsiColor){degrees, sMax, iMax};
 }
@@ -127,7 +192,7 @@ int randint_weighted_towards_min(int min, int max, float weight)
 
 /**
  * Higher power means higher probability to be higher
- * Weight can be anything from 0 to Inf. 
+ * Weight can be anything from 0 to Inf.
  * */
 int randint_weighted_towards_max(int min, int max, float weight)
 {
@@ -157,8 +222,8 @@ double rand_gaussian()
 
     double R0 = sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
     /*
-		double R1 = sqrt(-2.0 * log(a)) * sin(2 * M_PI * b);
-	*/
+        double R1 = sqrt(-2.0 * log(a)) * sin(2 * M_PI * b);
+    */
 
     return R0;
 }
@@ -174,54 +239,14 @@ double rand_gaussian()
 
 // Need a way of converting HSV to RGBW -- where the W has dynamic warmth!
 
-#ifdef PRECOMPUTE_HSI2RGBW
-const float lookup_hsi2rgbw_cos_120[360];
-const float lookup_hsi2rgbw_cos_240[360];
-const float lookup_hsi2rgbw_cos_360[360];
-#endif
-
-void math_precompute()
-{
-#ifdef PRECOMPUTE_HSI2RGBW
-    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
-    {
-        float cos_h = cosf(h);
-        float cos_1047_h = cosf(1.047196667 - h);
-        float div = cos_h / cos_1047_h;
-
-        lookup_hsi2rgbw_cos_120[h] = div;
-    }
-
-    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
-    {
-        float H = h - 2.09439;
-        float cos_h = cosf(H);
-        float cos_1047_h = cosf(1.047196667 - H);
-        float div = cos_h / cos_1047_h;
-
-        lookup_hsi2rgbw_cos_240[h] = div;
-    }
-
-    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
-    {
-        float H = h - 4.188787;
-        float cos_h = cosf(H);
-        float cos_1047_h = cosf(1.047196667 - H);
-        float div = cos_h / cos_1047_h;
-
-        lookup_hsi2rgbw_cos_360[h] = div;
-    }
-#endif
-}
-
 // This method has to be blazingly fast! Find ways to spee it up if possible!
 void hsi2rgbw(HsiColor *hsi, RgbwColor *c)
 {
     uint8_t r, g, b, w;
-    
+
     if (hsi->h < 120)
     {
-#ifdef PRECOMPUTE_HSI2RGBW
+#ifdef MATH_PRECOMPUTE
         float cos_div_cached = lookup_hsi2rgbw_cos_120[hsi->h];
         r = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
         g = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
@@ -237,7 +262,7 @@ void hsi2rgbw(HsiColor *hsi, RgbwColor *c)
     }
     else if (hsi->h < 240)
     {
-#ifdef PRECOMPUTE_HSI2RGBW
+#ifdef MATH_PRECOMPUTE
         float cos_div_cached = lookup_hsi2rgbw_cos_240[hsi->h];
         g = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
         b = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
@@ -254,7 +279,7 @@ void hsi2rgbw(HsiColor *hsi, RgbwColor *c)
     }
     else
     {
-#ifdef PRECOMPUTE_HSI2RGBW
+#ifdef MATH_PRECOMPUTE
         float cos_div_cached = lookup_hsi2rgbw_cos_360[hsi->h];
         b = hsi->s * 255 * hsi->i / 3 * (1 + cos_div_cached);
         r = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_div_cached));
