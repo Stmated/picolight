@@ -136,7 +136,7 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     }
 }
 
-static void pattern_random(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
+static void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
 {
     // TODO: Delegate to a random pattern
     // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
@@ -193,5 +193,5 @@ static void pattern_random(uint16_t len, uint32_t t, void *dataPtr, PatternPrint
 
 void pattern_register_random()
 {
-    pattern_register("random", pattern_random, data_creator, data_destroyer, &(PatternOptions){0});
+    pattern_register("random", executor, data_creator, data_destroyer, &(PatternOptions){0});
 }
