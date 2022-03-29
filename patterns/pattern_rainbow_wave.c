@@ -1,18 +1,17 @@
 #include "../patterns.h"
-#include "../led_math.h"
 
-typedef struct pattern_rainbow_wave_struct
+typedef struct data_struct
 {
     int easing;
     bool endless;
     int period;
     float hsi_s;
     float hsi_i;
-} pattern_rainbow_wave_struct;
+} data_struct;
 
-void *pattern_rainbow_wave_data(uint16_t len, float intensity)
+static void *data_creator(uint16_t len, float intensity)
 {
-    pattern_rainbow_wave_struct *data = malloc(sizeof(pattern_rainbow_wave_struct));
+    data_struct *data = malloc(sizeof(data_struct));
 
     data->easing = randint(getEasingCount());
     data->endless = randint(1000) > 500;
@@ -22,9 +21,9 @@ void *pattern_rainbow_wave_data(uint16_t len, float intensity)
     return data;
 }
 
-void pattern_rainbow_wave(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    pattern_rainbow_wave_struct *data = dataPtr;
+    data_struct *data = dataPtr;
 
     float p;
     if (data->endless)
@@ -40,7 +39,7 @@ void pattern_rainbow_wave(uint16_t offset, uint16_t len, uint32_t t, void *dataP
     float huePerLed = (360.0 / (float)len);
 
     HsiColor hsi = {0, data->hsi_s, data->hsi_i};
-    for (int i = offset; i < len; i++)
+    for (int i = start; i < stop; i++)
     {
         float base = (huePerLed * i);
         float offset = (360 * p);
@@ -51,8 +50,8 @@ void pattern_rainbow_wave(uint16_t offset, uint16_t len, uint32_t t, void *dataP
 
 void pattern_register_rainbow_wave()
 {
-    pattern_register("rainbow_wave", pattern_rainbow_wave,
-                     pattern_rainbow_wave_data, pattern_destroyer_default,
-                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+    pattern_register("rainbow_wave", executor,
+                     data_creator, NULL,
+                     NULL, NULL,
                      &(PatternOptions){1});
 }

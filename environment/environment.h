@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "../options.h"
-#include "../types.h"
+#include "../led_math.h"
 
 void put_pixel(uint16_t index, RgbwColor *c);
 

@@ -1,16 +1,15 @@
 #include "../patterns.h"
-#include "../led_math.h"
 
-typedef struct pattern_fade_between_struct
+typedef struct data_struct
 {
     HsiColor *colors;
     int colors_size;
     int time_per_color;
-} pattern_fade_between_struct;
+} data_struct;
 
-void pattern_fade_between_data_destroyer(void *data)
+static void data_destroyer(void *data)
 {
-    pattern_fade_between_struct *instance = data;
+    data_struct *instance = data;
     if (instance->colors)
     {
         free(instance->colors);
@@ -19,10 +18,10 @@ void pattern_fade_between_data_destroyer(void *data)
     free(data);
 }
 
-void *pattern_fade_between_data(uint16_t len, float intensity)
+static void *data_creator(uint16_t len, float intensity)
 {
     // TODO: Create a bunch of data for different kinds of fades
-    pattern_fade_between_struct *data = malloc(sizeof(pattern_fade_between_struct));
+    data_struct *data = malloc(sizeof(data_struct));
 
     data->colors_size = 3 + randint(10);
     data->time_per_color = 3000 + randint_weighted_towards_min(0, 30000, intensity);
@@ -40,9 +39,9 @@ void *pattern_fade_between_data(uint16_t len, float intensity)
     return data;
 }
 
-void pattern_fade_between(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    pattern_fade_between_struct *data = dataPtr;
+    data_struct *data = dataPtr;
 
     float totalColorStepProgress = (t / (float)data->time_per_color);
     int colorIndex = ((int)totalColorStepProgress) % data->colors_size;
@@ -55,7 +54,7 @@ void pattern_fade_between(uint16_t offset, uint16_t len, uint32_t t, void *dataP
     float percentage_into_color = totalColorStepProgress - ((int)floorf(totalColorStepProgress));
     HsiColor result = LerpHSI(&hsi_from, &hsi_to, percentage_into_color);
 
-    for (int i = offset; i < len; i++)
+    for (int i = start; i < stop; i++)
     {
         printer(i, &result, dataPtr);
     }
@@ -63,8 +62,8 @@ void pattern_fade_between(uint16_t offset, uint16_t len, uint32_t t, void *dataP
 
 void pattern_register_fade_between()
 {
-    pattern_register("fade", pattern_fade_between,
-                     pattern_fade_between_data, pattern_fade_between_data_destroyer,
-                     pattern_cycle_creator_default, pattern_cycle_destroyer_default,
+    pattern_register("fade", executor,
+                     data_creator, data_destroyer,
+                     NULL, NULL,
                      &(PatternOptions){1});
 }
