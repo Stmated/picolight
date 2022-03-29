@@ -42,7 +42,7 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
     return cycle;
 }
 
-inline static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+inline static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
     cycle_struct *cycle = cyclePtr;
@@ -55,16 +55,16 @@ inline static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_
         {
             // Move "hsi" into cycle memory, and keep writing over the hue + i attributes? We save a couple of cycles?
             HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
-            printer(i, &hsi, dataPtr);
+            printer(i, &hsi, dataPtr, parentDataPtr);
         }
         else
         {
-            printer(i, &black, dataPtr);
+            printer(i, &black, dataPtr, parentDataPtr);
         }
     }
 }
 
 void pattern_register_snake()
 {
-    pattern_register("snake", executor, data_creator, NULL, cycle_creator, NULL, &(PatternOptions){1, 3});
+    pattern_register("snake", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1, 3});
 }

@@ -19,9 +19,14 @@ typedef struct data_struct
     float brightness_width;
 } data_struct;
 
+typedef struct cycle_struct
+{
+    HsiColor hsi;
+} cycle_struct;
+
 static void *data_creator(uint16_t len, float intensity)
 {
-    struct data_struct *instance = calloc(1, sizeof(struct data_struct));
+    data_struct *instance = calloc(1, sizeof(data_struct));
 
     instance->hue_start = randint(360);
     instance->hue_width = 60 + randint_weighted_towards_max(0, 120, intensity);
@@ -47,9 +52,10 @@ static void *data_creator(uint16_t len, float intensity)
     return instance;
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
-    struct data_struct *data = dataPtr;
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
 
     float ph = executeEasing(data->easing_h, (t % data->speedh) / (float)data->speedh);
     float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
@@ -57,18 +63,23 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
 
     int h = ((int)(data->hue_start + (ph * data->hue_width))) % 360;
 
-    HsiColor hsi = {h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
+    cycle->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
+
+    return cycle;
+}
+
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+{
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = cyclePtr;
 
     for (uint16_t i = start; i < stop; i++)
     {
-        printer(i, &hsi, dataPtr);
+        printer(i, &cycle->hsi, dataPtr, parentDataPtr);
     }
 }
 
 void pattern_register_fill_sway()
 {
-    pattern_register("sway", executor,
-                     data_creator, NULL,
-                     NULL, NULL,
-                     &(PatternOptions){1});
+    pattern_register("sway", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1});
 }

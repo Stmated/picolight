@@ -61,8 +61,6 @@ PatternModule *getPatternByName(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_snakes();
-
     pattern_register_random();
 
     pattern_register_rainbow_wave();
@@ -70,7 +68,7 @@ void pattern_find_and_register_patterns()
     pattern_register_snake();
     pattern_register_fade_between();
     pattern_register_fill_sway();
-
+    pattern_register_snakes();
     pattern_register_sparkle();
     pattern_register_strobe();
 }
@@ -79,7 +77,7 @@ void pattern_register(
     const char *name, PatternExecutor executor,
     PatternDataCreator creator, PatternDataDestroyer destroyer,
     PatternCycleDataCreator cycleCreator, PatternCycleDataDestroyer cycleDestroyer,
-    PatternOptions *options)
+    PatternOptions options)
 {
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
     memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
@@ -96,7 +94,7 @@ void pattern_register(
     state.modules_size++;
 }
 
-void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr)
+inline void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
@@ -105,12 +103,22 @@ void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr)
     put_pixel(index, &rgbw);
 }
 
-void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr)
+inline void pattern_printer_set(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
 {
-    // Important to use the global data here, since "dataPtr" is from the sub-pattern
-    data_pixel_blending_struct *data = state.patternData;
+    // Important to use the parent data here, since "dataPtr" is from the sub-pattern
+    data_pixel_blending_struct *data = parentDataPtr;
 
     data->pixels[sizeof(HsiColor) * data->stepIndex] = *c;
+    data->stepIndex++;
+}
+
+inline void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
+{
+    // Important to use the parent data here, since "dataPtr" is from the sub-pattern
+    data_pixel_blending_struct *data = parentDataPtr;
+
+    HsiColor colors[2] = {data->pixels[sizeof(HsiColor) * data->stepIndex], *c};
+    data->pixels[sizeof(HsiColor) * data->stepIndex] = math_average_hsi(colors, 2);
     data->stepIndex++;
 }
 
@@ -141,7 +149,7 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = getPatternByIndex(state.patternIndex);
         void *cyclePtr = module->cycleCreator(len, t, state.patternData);
-        module->executor(0, len, len, t, state.patternData, cyclePtr, pattern_printer_default);
+        module->executor(0, len, len, t, state.patternData, cyclePtr, NULL, pattern_printer_default);
         module->cycleDestroyer(cyclePtr);
     }
     else

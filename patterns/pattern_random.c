@@ -24,7 +24,9 @@ static void data_destroyer(void *dataPtr)
     if (data->data1)
     {
         data->pattern1->destroyer(data->data1);
+        data->data1 = NULL;
         data->pattern2->destroyer(data->data2);
+        data->data2 = NULL;
     }
 
     free(dataPtr);
@@ -40,8 +42,8 @@ static void *data_creator(uint16_t len, float intensity)
     data->patternIndex1 = -1;
     data->patternIndex2 = -1;
 
-    // This is... a lot of data. Can we shrink it?
-    data->base.pixels = calloc(len, sizeof(HsiColor)); // Allocate memory for each pixel, which we will need to blend
+    // Allocate memory for each sub-pattern, which we will need to blend
+    data->base.pixels = calloc(2, sizeof(HsiColor));
 
     return data;
 }
@@ -57,7 +59,7 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
         PatternModule *module = getPatternByIndex(next);
 
         float ourChance = randint(100) / f100;
-        if (ourChance >= module->options->randomChance)
+        if (ourChance >= module->options.randomChance)
         {
             // That module had too low chance to be picked this time (or ever).
             continue;
@@ -74,7 +76,7 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     }
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     // TODO: Delegate to a random pattern
     // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
@@ -85,28 +87,27 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
         // It is time to move on to the next random mix.
         data->updatedAt = t;
 
+        if (data->patternIndex2 == -1)
+        {
+            // This is the first time. So assign pattern 2, which will be moved to 1 straight away.
+            data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
+            data->pattern2 = getPatternByIndex(data->patternIndex2);
+            data->data2 = data->pattern2->creator(len, data->intensity);
+        }
+
         if (data->data1)
         {
             data->pattern1->destroyer(data->data1);
             data->data1 = NULL;
         }
 
-        if (!data->patternIndex2 == -1)
-        {
-            // This is the first time. So assign pattern 2, which will be moved to 1 straight away.
-            data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
-        }
-
         data->patternIndex1 = data->patternIndex2;
-        data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
-
-        PatternModule *pattern2 = getPatternByIndex(data->patternIndex2);
-
         data->data1 = data->data2;
-        data->data2 = pattern2->creator(len, data->intensity);
-
         data->pattern1 = data->pattern2;
-        data->pattern2 = pattern2;
+
+        data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
+        data->pattern2 = getPatternByIndex(data->patternIndex2);
+        data->data2 = data->pattern2->creator(len, data->intensity);
 
         // Ugly workaround so progress goes 0->1,1->0, and so on.
         // This way there should not be an instant JUMP when we switch to next pattern.
@@ -119,16 +120,18 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
     void *cyclePtr1 = data->pattern1->cycleCreator(len, t, data->data1);
     void *cyclePtr2 = data->pattern2->cycleCreator(len, t, data->data2);
 
+    // TODO: This is WAY too slow -- either speed up each individual pattern, or implement buffering here... or both ;)
+
     for (int i = start; i < stop; i++)
     {
-        // TODO: Could we change this so we go through all, and work more like it did before? Less overhead?
         data->base.stepIndex = 0;
-        data->pattern1->executor(i, i + 1, len, t, data->data1, cyclePtr1, pattern_printer_merging);
-        data->pattern2->executor(i, i + 1, len, t, data->data2, cyclePtr2, pattern_printer_merging);
+        data->pattern1->executor(i, i + 1, len, t, data->data1, cyclePtr1, data, pattern_printer_set);
+        data->pattern2->executor(i, i + 1, len, t, data->data2, cyclePtr2, data, pattern_printer_set);
 
         // Now let's send the data to the original printer
-        HsiColor c = math_average_hsi(data->base.pixels, 3);
-        printer(i, &c, dataPtr);
+        // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
+        HsiColor c = math_average_hsi(data->base.pixels, 2);
+        printer(i, &c, dataPtr, dataPtr);  // Parent as ourself, since we are just a virtual pattern
     }
 
     data->pattern1->cycleDestroyer(cyclePtr1);
@@ -137,5 +140,5 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
 
 void pattern_register_random()
 {
-    pattern_register("random", executor, data_creator, data_destroyer, NULL, NULL, &(PatternOptions){0});
+    pattern_register("random", executor, data_creator, data_destroyer, NULL, NULL, (PatternOptions){0});
 }

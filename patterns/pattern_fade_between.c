@@ -7,15 +7,16 @@ typedef struct data_struct
     int time_per_color;
 } data_struct;
 
-static void data_destroyer(void *data)
+typedef struct cycle_struct
 {
-    data_struct *instance = data;
-    if (instance->colors)
-    {
-        free(instance->colors);
-    }
+    HsiColor hsi;
+} cycle_struct;
 
-    free(data);
+static void data_destroyer(void *dataPtr)
+{
+    data_struct *data = dataPtr;
+    free(data->colors);
+    free(dataPtr);
 }
 
 static void *data_creator(uint16_t len, float intensity)
@@ -39,9 +40,10 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
+    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
 
     float totalColorStepProgress = (t / (float)data->time_per_color);
     int colorIndex = ((int)totalColorStepProgress) % data->colors_size;
@@ -52,18 +54,23 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
 
     // If on color step 3.2, then we will get 0.2, since the integral value is removed.
     float percentage_into_color = totalColorStepProgress - ((int)floorf(totalColorStepProgress));
-    HsiColor result = LerpHSI(&hsi_from, &hsi_to, percentage_into_color);
+    cycle->hsi = LerpHSI(&hsi_from, &hsi_to, percentage_into_color);
+
+    return cycle;
+}
+
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+{
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = cyclePtr;
 
     for (int i = start; i < stop; i++)
     {
-        printer(i, &result, dataPtr);
+        printer(i, &cycle->hsi, dataPtr, parentDataPtr);
     }
 }
 
 void pattern_register_fade_between()
 {
-    pattern_register("fade", executor,
-                     data_creator, data_destroyer,
-                     NULL, NULL,
-                     &(PatternOptions){1});
+    pattern_register("fade", executor, data_creator, data_destroyer, cycle_creator, NULL, (PatternOptions){1});
 }

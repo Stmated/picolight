@@ -9,9 +9,16 @@ typedef struct data_struct
     float hsi_i;
 } data_struct;
 
+typedef struct cycle_struct
+{
+    float p;
+    float huePerLed;
+    HsiColor hsi;
+} cycle_struct;
+
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *data = malloc(sizeof(data_struct));
+    data_struct *data = calloc(1, sizeof(data_struct));
 
     data->easing = randint(getEasingCount());
     data->endless = randint(1000) > 500;
@@ -21,9 +28,10 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
+    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
 
     float p;
     if (data->endless)
@@ -36,22 +44,28 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
         p = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    float huePerLed = (360.0 / (float)len);
+    cycle->p = p;
+    cycle->huePerLed = (360.0 / (float)len);
+    cycle->hsi = (HsiColor){0, data->hsi_s, data->hsi_i};
 
-    HsiColor hsi = {0, data->hsi_s, data->hsi_i};
+    return cycle;
+}
+
+static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+{
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = cyclePtr;
+
     for (int i = start; i < stop; i++)
     {
-        float base = (huePerLed * i);
-        float offset = (360 * p);
-        hsi.h = (int)roundf(base + offset) % 360;
-        printer(i, &hsi, dataPtr);
+        float base = (cycle->huePerLed * i);
+        float offset = (360 * cycle->p);
+        cycle->hsi.h = (int)roundf(base + offset) % 360;
+        printer(i, &cycle->hsi, dataPtr, parentDataPtr);
     }
 }
 
 void pattern_register_rainbow_wave()
 {
-    pattern_register("rainbow_wave", executor,
-                     data_creator, NULL,
-                     NULL, NULL,
-                     &(PatternOptions){1});
+    pattern_register("rainbow_wave", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1});
 }
