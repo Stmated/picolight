@@ -12,40 +12,40 @@ typedef struct pattern_rainbow_wave_struct
 
 void *pattern_rainbow_wave_data(uint16_t len, float intensity)
 {
-    pattern_rainbow_wave_struct *instance = malloc(sizeof(pattern_rainbow_wave_struct));
+    pattern_rainbow_wave_struct *data = malloc(sizeof(pattern_rainbow_wave_struct));
 
-    instance->easing = randint(getEasingCount());
-    instance->endless = randint(1000) > 500;
-    instance->period = randint_weighted_towards_min(1000, 30000, intensity);
-    instance->hsi_s = 0.9 + (0.1 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
-    instance->hsi_i = 0.1 + (0.4 * (randint_weighted_towards_max(0, 1000, intensity) / (float)1000));
-    return instance;
+    data->easing = randint(getEasingCount());
+    data->endless = randint(1000) > 500;
+    data->period = randint_weighted_towards_min(1000, 30000, intensity);
+    data->hsi_s = 0.9 + (0.1 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
+    data->hsi_i = 0.1 + (0.4 * (randint_weighted_towards_max(0, 1000, intensity) / (float)1000));
+    return data;
 }
 
-void pattern_rainbow_wave(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void pattern_rainbow_wave(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    pattern_rainbow_wave_struct *instance = data;
+    pattern_rainbow_wave_struct *data = dataPtr;
 
     float p;
-    if (instance->endless)
+    if (data->endless)
     {
         // p is total progress for an endless looping, never stopping.
-        p = t / (float)instance->period;
+        p = t / (float)data->period;
     }
     else
     {
-        p = executeEasing(instance->easing, (t % instance->period) / (float)instance->period);
+        p = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
     float huePerLed = (360.0 / (float)len);
 
-    HsiColor hsi = {0, instance->hsi_s, instance->hsi_i};
-    for (int i = 0; i < len; i++)
+    HsiColor hsi = {0, data->hsi_s, data->hsi_i};
+    for (int i = offset; i < len; i++)
     {
         float base = (huePerLed * i);
         float offset = (360 * p);
         hsi.h = (int)roundf(base + offset) % 360;
-        printer(i, &hsi, data);
+        printer(i, &hsi, dataPtr);
     }
 }
 

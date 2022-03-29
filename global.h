@@ -18,5 +18,4 @@ static const int PIN_TX[] = {22}; //, 21, 20, 19 };
 #define PIN_BUTTONS_END 15
 #define PIN_BUTTONS_COUNT (PIN_BUTTONS_END - PIN_BUTTONS_START)
 
-#define LOCAL_DEV true
 

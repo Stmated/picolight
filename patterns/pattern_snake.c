@@ -27,7 +27,7 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
+static void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
 
@@ -35,18 +35,18 @@ static void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter pri
     const float p = len * executeEasing(data->easing, t_into_period);
 
     HsiColor black = {0, 0, 0};
-    for (int i = 0; i < len; i++)
+    for (int i = offset; i < len; i++)
     {
         float distance = fabsf(i - p);
 
         if (distance <= data->width)
         {
             HsiColor hsi = {data->hue, 1, (1 - (distance / (float)data->width))};
-            printer(i, &hsi, data);
+            printer(i, &hsi, dataPtr);
         }
         else
         {
-            printer(i, &black, data);
+            printer(i, &black, dataPtr);
         }
     }
 }

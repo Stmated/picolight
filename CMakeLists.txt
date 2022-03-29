@@ -26,6 +26,7 @@ endif()
 
 set (SRC_LIST
     global.h
+    types.h
     storage.h
     storage.c
     led_math.h
@@ -34,10 +35,8 @@ set (SRC_LIST
     options.c
     easing.h
     easing.c
-    colors.h
-    colors.c
-    perlinnoise.h
-    perlinnoise.c
+    math/perlinnoise.h
+    math/perlinnoise.c
     actions.h
     actions.c
     patterns.h

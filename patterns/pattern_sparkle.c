@@ -39,16 +39,16 @@ void *pattern_sparkle_data(uint16_t len, float intensity)
     return instance;
 }
 
-void pattern_sparkle(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void pattern_sparkle(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    pattern_sparkle_data_struct *instance = data;
+    pattern_sparkle_data_struct *data = dataPtr;
 
     const int v = 1000000;
-    int chanceToLightUpInt = v * instance->chanceToLightUp;
-    int chanceToGoOutInt = v * instance->chanceToGoOut;
-    bool *bools = (bool *)instance->values;
+    int chanceToLightUpInt = v * data->chanceToLightUp;
+    int chanceToGoOutInt = v * data->chanceToGoOut;
+    bool *bools = (bool *)data->values;
 
-    for (int i = 0; i < len; i++)
+    for (int i = offset; i < len; i++)
     {
         int ptrAddress = sizeof(bool) * i;
         if (randint(v) < chanceToLightUpInt)
@@ -61,7 +61,7 @@ void pattern_sparkle(uint16_t len, uint32_t t, void *data, PatternPrinter printe
         }
 
         HsiColor hsi = {0, 0, bools[ptrAddress] ? 1 : 0};
-        printer(i, &hsi, data);
+        printer(i, &hsi, dataPtr);
     }
 }
 

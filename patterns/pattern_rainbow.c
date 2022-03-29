@@ -26,25 +26,25 @@ void *pattern_rainbow_data(uint16_t len, float intensity)
     return instance;
 }
 
-void pattern_rainbow(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void pattern_rainbow(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    pattern_rainbow_struct *instance = data;
+    pattern_rainbow_struct *data = dataPtr;
 
     float periodProgress;
-    if (instance->endless)
+    if (data->endless)
     {
         // p is total progress for an endless looping, never stopping.
-        periodProgress = t / (float)instance->period;
+        periodProgress = t / (float)data->period;
     }
     else
     {
-        periodProgress = executeEasing(instance->easing, (t % instance->period) / (float)instance->period);
+        periodProgress = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    HsiColor hsi = {(int)(roundf(instance->hue_from + (instance->hue_width * periodProgress))) % 360, instance->hsi_s, instance->hsi_i};
-    for (int i = 0; i < len; i++)
+    HsiColor hsi = {(int)(roundf(data->hue_from + (data->hue_width * periodProgress))) % 360, data->hsi_s, data->hsi_i};
+    for (int i = offset; i < len; i++)
     {
-        printer(i, &hsi, data);
+        printer(i, &hsi, dataPtr);
     }
 }
 

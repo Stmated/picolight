@@ -2,23 +2,23 @@
 
 int a = 10;
 
-void pattern_strobe(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void pattern_strobe(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     uint32_t remainder = t % 100;
     if (remainder < 50)
     {
         HsiColor white = {0, 0, 1};
-        for (int i = 0; i < len; i++)
+        for (int i = offset; i < len; i++)
         {
-            printer(i, &white, data);
+            printer(i, &white, dataPtr);
         }
     }
     else
     {
         HsiColor black = {0, 0, 0};
-        for (int i = 0; i < len; i++)
+        for (int i = offset; i < len; i++)
         {
-            printer(i, &black, data);
+            printer(i, &black, dataPtr);
         }
     }
 }

@@ -56,18 +56,7 @@ void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-/*
-void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr)
-{
-    data_struct *data = (data_struct *)dataPtr;
-
-    //default
-
-    pattern_printer_default(index, c, dataPtr);
-}
-*/
-
-void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
+void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     data_struct *data = (data_struct *)dataPtr;
     PatternModule *module = getPatternByName("snake");
@@ -76,17 +65,27 @@ void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
     // TODO: Can we create different types of printers, which can stream one pixel through different executors?
 
     data->base.progress = 1;
-    module->executor(len, t, data->snake1data, pattern_printer_merging);
+
+    void *cyclePtr = module->cycleCreator(len, t, data->snake1data);
+    module->executor(offset, len, t, data->snake1data, cyclePtr, pattern_printer_merging);
+    module->cycleDestroyer(cyclePtr);
+
     data->base.progress = 0.5;
     //data->base.progress = 0.5;
-    module->executor(len, t, data->snake2data, pattern_printer_merging);
-    //data->base.progress = 0.5;
-    module->executor(len, t, data->snake3data, pattern_printer_merging);
 
-    for (int i = 0; i < len; i++)
+    cyclePtr = module->cycleCreator(len, t, data->snake2data);
+    module->executor(offset, len, t, data->snake2data, cyclePtr, pattern_printer_merging);
+    module->cycleDestroyer(cyclePtr);
+
+    //data->base.progress = 0.5;
+    cyclePtr = module->cycleCreator(len, t, data->snake3data);
+    module->executor(offset, len, t, data->snake3data, cyclePtr, pattern_printer_merging);
+    module->cycleDestroyer(cyclePtr);
+
+    for (int i = offset; i < len; i++)
     {
         // Now let's send the data to the original printer
-        printer(i, &data->base.pixels[i], data);
+        printer(i, &data->base.pixels[i], dataPtr);
     }
 
     /*

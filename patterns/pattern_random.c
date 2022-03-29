@@ -4,7 +4,6 @@
 typedef struct data_struct
 {
     data_pixels_struct base;
-    // HsiColor *pixels;
     void *data1;
     void *data2;
     PatternModule *pattern1;
@@ -136,7 +135,7 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     }
 }
 
-static void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer)
+static void executor(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
     // TODO: Delegate to a random pattern
     // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
@@ -180,11 +179,18 @@ static void executor(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter pri
     data->base.progress = age / (float)data->period;
 
     data->base.subsequent = false;
-    data->pattern1->executor(len, t, data->data1, pattern_printer_merging);
-    data->base.subsequent = true;
-    data->pattern2->executor(len, t, data->data2, pattern_printer_merging);
 
-    for (int i = 0; i < len; i++)
+    void *cyclePtr1 = data->pattern1->cycleCreator(len, t, data->data1);
+    data->pattern1->executor(offset, len, t, data->data1, cyclePtr1, pattern_printer_merging);
+    data->pattern1->cycleDestroyer(cyclePtr1);
+
+    data->base.subsequent = true;
+
+    void *cyclePtr2 = data->pattern2->cycleCreator(len, t, data->data2);
+    data->pattern2->executor(offset, len, t, data->data2, cyclePtr2, pattern_printer_merging);
+    data->pattern2->cycleDestroyer(cyclePtr2);
+
+    for (int i = offset; i < len; i++)
     {
         // Now let's send the data to the original printer
         printer(i, &data->base.pixels[i], dataPtr);

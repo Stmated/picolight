@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include "types.h"
 
 bool gcd(int a, int b);
 
@@ -14,6 +14,19 @@ int randint_weighted_towards_min(int min, int max, float weight);
 int randint_weighted_towards_max(int min, int max, float weight);
 
 float getAverageAngle(float *angles, int length);
+
+HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t);
+void hsi2rgb(float H, float S, float I, uint8_t *rgb);
+void hsi2rgbw(HsiColor *hsi, RgbwColor *c);
+
+#define HSI_H_MIN 0
+#define HSI_H_MAX 255
+
+#define HSI_S_MIN 0
+#define HSI_S_MAX 1
+
+#define HSI_I_MIN 0
+#define HSI_I_MAX 1
 
 #define ChannelBlend_Normal(A,B)     ((uint8)(A))
 #define ChannelBlend_Lighten(A,B)    ((uint8)((B > A) ? B:A))

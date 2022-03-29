@@ -48,19 +48,19 @@ void *pattern_fill_sway_data(uint16_t len, float intensity)
     return instance;
 }
 
-void pattern_fill_sway(uint16_t len, uint32_t t, void *data, PatternPrinter printer)
+void pattern_fill_sway(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer)
 {
-    struct pattern_fill_sway_struct *instance = data;
+    struct pattern_fill_sway_struct *data = dataPtr;
 
-    float ph = executeEasing(instance->easing_h, (t % instance->speedh) / (float)instance->speedh);
-    float ps = executeEasing(instance->easing_s, (t % instance->speeds) / (float)(instance->speeds));
-    float pi = executeEasing(instance->easing_i, (t % instance->speedi) / (float)(instance->speedi));
+    float ph = executeEasing(data->easing_h, (t % data->speedh) / (float)data->speedh);
+    float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
+    float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
 
-    int h = ((int)(instance->hue_start + (ph * instance->hue_width))) % 360;
+    int h = ((int)(data->hue_start + (ph * data->hue_width))) % 360;
 
-    HsiColor hsi = {h, instance->sat_from + (ps * instance->sat_width), instance->brightness_from + (pi * instance->brightness_width)};
+    HsiColor hsi = {h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
 
-    setAll(len, &hsi, data, printer);
+    setAll(offset, len, &hsi, dataPtr, cyclePtr, printer);
 }
 
 void pattern_register_fill_sway()

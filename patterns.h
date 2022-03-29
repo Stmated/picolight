@@ -12,9 +12,15 @@
 
 typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr);
 
-typedef void (*PatternExecutor)(uint16_t len, uint32_t t, void *dataPtr, PatternPrinter printer);
+// TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
+//          Or do a few pixels at a time, in different threads or whatnot.
+//          Need a new concept for a data structure to speed things up, like a "CycleData" -- so we have that and a "PatternData"
+//          We must have this, otherwise we'd need to do some calculations commons to a cycle way too often
+typedef void (*PatternExecutor)(uint16_t offset, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
+typedef void *(*PatternCycleDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
+typedef void (*PatternCycleDataDestroyer)(void *cyclePtr);
 
 typedef void *(*PatternRegistrator)(void);
 
@@ -34,6 +40,8 @@ typedef struct PatternModule
     PatternExecutor executor;
     PatternDataCreator creator;
     PatternDataDestroyer destroyer;
+    PatternCycleDataCreator cycleCreator;
+    PatternCycleDataDestroyer cycleDestroyer;
     PatternOptions *options;
 } PatternModule;
 
@@ -58,10 +66,14 @@ PatternModule *getPatternByName(const char* name);
 
 void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);
+
+void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr);
+void pattern_cycle_destroyer_default(void *data);
+
 void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr);
 void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr);
 
-void setAll(uint16_t len, HsiColor *c, void *data, PatternPrinter printer);
+void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *cyclePtr, PatternPrinter printer);
 
 void pattern_find_and_register_patterns();
 
