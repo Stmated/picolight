@@ -5,6 +5,8 @@ typedef struct data_struct
     int chanceToLightUp;
     int chanceToGoOut;
     void *values;
+    HsiColor colorOn;
+    HsiColor colorOff;
 } data_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -23,30 +25,29 @@ static void *data_creator(uint16_t len, float intensity)
     data->chanceToLightUp = v * (randint_weighted_towards_max(10, 10000000, intensity) / (float)1000000000);
     data->chanceToGoOut = v * (randint_weighted_towards_max(1000, 5000, intensity) / (float)100000);
     data->values = calloc(len, sizeof(bool));
+    data->colorOn = (HsiColor) {0, 0, 1};
+    data->colorOff = (HsiColor) {0, 0, 0};
 
     return data;
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
     bool *bools = (bool *)data->values;
 
-    for (int i = start; i < stop; i++)
+    int ptrAddress = sizeof(bool) * i;
+    if (randint(v) < data->chanceToLightUp)
     {
-        int ptrAddress = sizeof(bool) * i;
-        if (randint(v) < data->chanceToLightUp)
-        {
-            bools[ptrAddress] = true;
-        }
-        else if (randint(v) < data->chanceToGoOut)
-        {
-            bools[ptrAddress] = false;
-        }
-
-        HsiColor hsi = {0, 0, bools[ptrAddress] ? 1 : 0};
-        printer(i, &hsi, dataPtr, parentDataPtr);
+        bools[ptrAddress] = true;
     }
+    else if (randint(v) < data->chanceToGoOut)
+    {
+        bools[ptrAddress] = false;
+    }
+
+    HsiColor hsi = (bools[ptrAddress] ? data->colorOn : data->colorOff);
+    printer(i, &hsi, dataPtr, parentDataPtr);
 }
 
 void pattern_register_sparkle()

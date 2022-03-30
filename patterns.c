@@ -28,7 +28,7 @@ void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr)
     return NULL;
 }
 
-void pattern_cycle_destroyer_default(void *cycleDataPtr)
+void pattern_cycle_destroyer_default(void *dataPtr, void *cycleDataPtr)
 {
     if (cycleDataPtr)
     {
@@ -149,8 +149,11 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = getPatternByIndex(state.patternIndex);
         void *cyclePtr = module->cycleCreator(len, t, state.patternData);
-        module->executor(0, len, len, t, state.patternData, cyclePtr, NULL, pattern_printer_default);
-        module->cycleDestroyer(cyclePtr);
+        for (int i = 0; i < len; i++)
+        {
+            module->executor(i, state.patternData, cyclePtr, NULL, pattern_printer_default);
+        }
+        module->cycleDestroyer(state.patternData, cyclePtr);
     }
     else
     {

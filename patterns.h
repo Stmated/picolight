@@ -15,11 +15,13 @@ typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr, void 
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "CycleData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a cycle way too often
-typedef void (*PatternExecutor)(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer);
+typedef void (*PatternExecutor)(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
+
+// TODO: Create a new CycleDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
 typedef void *(*PatternCycleDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
-typedef void (*PatternCycleDataDestroyer)(void *cyclePtr);
+typedef void (*PatternCycleDataDestroyer)(void *dataPtr, void *cyclePtr);
 
 typedef void *(*PatternRegistrator)(void);
 
@@ -58,7 +60,7 @@ void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);
 
 void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr);
-void pattern_cycle_destroyer_default(void *data);
+void pattern_cycle_destroyer_default(void *data, void *cyclePtr);
 
 void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
 void pattern_printer_set(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);

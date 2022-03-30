@@ -51,15 +51,12 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
     return cycle;
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
     cycle_struct *cycle = cyclePtr;
 
-    for (int i = start; i < stop; i++)
-    {
-        printer(i, &cycle->hsi, dataPtr, parentDataPtr);
-    }
+    printer(i, &cycle->hsi, dataPtr, parentDataPtr);
 }
 
 void pattern_register_rainbow()

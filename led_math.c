@@ -196,17 +196,7 @@ int randint_weighted_towards_min(int min, int max, float weight)
  * */
 int randint_weighted_towards_max(int min, int max, float weight)
 {
-    if (weight > 1)
-    {
-        // If weight is above 1, then we should go further below 1 the higher the number.
-        weight = 1 / weight;
-    }
-    else if (weight < 1)
-    {
-        // If weight is under 1, then we should go further ABOVE 1.
-        weight = 1 / weight;
-    }
-
+    weight = 1 / weight;
     float random = randint(100000) / (float)100000; // 0..1
     return (int)floorf(min + (max - min) * (powf(random, weight)));
 }

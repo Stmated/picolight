@@ -42,25 +42,22 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
     return cycle;
 }
 
-inline static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
     cycle_struct *cycle = cyclePtr;
 
-    for (int i = start; i < stop; i++)
-    {
-        float distance = fabsf(i - cycle->p);
+    float distance = fabsf(i - cycle->p);
 
-        if (distance <= data->width)
-        {
-            // Move "hsi" into cycle memory, and keep writing over the hue + i attributes? We save a couple of cycles?
-            HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
-            printer(i, &hsi, dataPtr, parentDataPtr);
-        }
-        else
-        {
-            printer(i, &black, dataPtr, parentDataPtr);
-        }
+    if (distance <= data->width)
+    {
+        // Move "hsi" into cycle memory, and keep writing over the hue + i attributes? We save a couple of cycles?
+        HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
+        printer(i, &hsi, dataPtr, parentDataPtr);
+    }
+    else
+    {
+        printer(i, &black, dataPtr, parentDataPtr);
     }
 }
 

@@ -15,6 +15,13 @@ typedef struct data_struct
 
 } data_struct;
 
+typedef struct cycle_struct
+{
+    void *cycle1;
+    void *cycle2;
+
+} cycle_struct;
+
 static void data_destroyer(void *dataPtr)
 {
     data_struct *data = dataPtr;
@@ -76,11 +83,10 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     }
 }
 
-static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
-    // TODO: Delegate to a random pattern
-    // TODO: The best thing would be if we could intercept all the pixels, and blend different patterns into one
     data_struct *data = dataPtr;
+    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
 
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
@@ -115,30 +121,43 @@ static void executor(uint16_t start, uint16_t stop, uint16_t len, uint32_t t, vo
     }
 
     // Set the progress so we can calculate the proper crossover
-    int age = t - data->updatedAt;
+    //int age = t - data->updatedAt;
 
-    void *cyclePtr1 = data->pattern1->cycleCreator(len, t, data->data1);
-    void *cyclePtr2 = data->pattern2->cycleCreator(len, t, data->data2);
+    cycle->cycle1 = data->pattern1->cycleCreator(len, t, data->data1);
+    cycle->cycle2 = data->pattern2->cycleCreator(len, t, data->data2);
 
-    // TODO: This is WAY too slow -- either speed up each individual pattern, or implement buffering here... or both ;)
+    return cycle;
+}
 
-    for (int i = start; i < stop; i++)
-    {
-        data->base.stepIndex = 0;
-        data->pattern1->executor(i, i + 1, len, t, data->data1, cyclePtr1, data, pattern_printer_set);
-        data->pattern2->executor(i, i + 1, len, t, data->data2, cyclePtr2, data, pattern_printer_set);
+static void cycle_destroyer(void *dataPtr, void *cyclePtr)
+{
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = cyclePtr;
 
-        // Now let's send the data to the original printer
-        // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
-        HsiColor c = math_average_hsi(data->base.pixels, 2);
-        printer(i, &c, dataPtr, dataPtr);  // Parent as ourself, since we are just a virtual pattern
-    }
+    data->pattern1->cycleDestroyer(data->data1, cycle->cycle1);
+    data->pattern2->cycleDestroyer(data->data2, cycle->cycle2);
+    
+    free(cyclePtr);
+}
 
-    data->pattern1->cycleDestroyer(cyclePtr1);
-    data->pattern2->cycleDestroyer(cyclePtr2);
+static void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+{
+    data_struct *data = dataPtr;
+    cycle_struct *cycle = cyclePtr;
+
+    data->base.stepIndex = 0;
+    data->pattern1->executor(i, data->data1, cycle->cycle1, data, pattern_printer_set);
+    data->pattern2->executor(i, data->data2, cycle->cycle2, data, pattern_printer_set);
+
+    // Now let's send the data to the original printer
+    // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
+    // TODO: Could this be sent to the parent printer directly somehow? So we do not need to average twice?
+    // TODO: Can we skip sending along the parentDataPtr, and instead sent Printer as a semi-opaque struct that contains its own functionality?
+    HsiColor c = math_average_hsi(data->base.pixels, 2);
+    printer(i, &c, dataPtr, dataPtr); // Parent as ourself, since we are just a virtual pattern
 }
 
 void pattern_register_random()
 {
-    pattern_register("random", executor, data_creator, data_destroyer, NULL, NULL, (PatternOptions){0});
+    pattern_register("random", executor, data_creator, data_destroyer, cycle_creator, cycle_destroyer, (PatternOptions){0});
 }
