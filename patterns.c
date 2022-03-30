@@ -76,7 +76,7 @@ void pattern_find_and_register_patterns()
 void pattern_register(
     const char *name, PatternExecutor executor,
     PatternDataCreator creator, PatternDataDestroyer destroyer,
-    PatternCycleDataCreator cycleCreator, PatternCycleDataDestroyer cycleDestroyer,
+    PatternFrameDataCreator cycleCreator, PatternFrameDataDestroyer cycleDestroyer,
     PatternOptions options)
 {
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
@@ -148,12 +148,12 @@ void pattern_execute(uint16_t len, uint32_t t)
     if (!state.disabled)
     {
         PatternModule *module = getPatternByIndex(state.patternIndex);
-        void *cyclePtr = module->cycleCreator(len, t, state.patternData);
+        void *framePtr = module->frameCreator(len, t, state.patternData);
         for (int i = 0; i < len; i++)
         {
-            module->executor(i, state.patternData, cyclePtr, NULL, pattern_printer_default);
+            module->executor(i, state.patternData, framePtr, NULL, pattern_printer_default);
         }
-        module->cycleDestroyer(state.patternData, cyclePtr);
+        module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {

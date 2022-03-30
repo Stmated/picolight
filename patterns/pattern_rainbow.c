@@ -11,10 +11,10 @@ typedef struct data_struct
     float hsi_i;
 } data_struct;
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
     HsiColor hsi;
-} cycle_struct;
+} frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
@@ -30,10 +30,10 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
     float periodProgress;
     if (data->endless)
@@ -46,20 +46,20 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
         periodProgress = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    cycle->hsi = (HsiColor){(int)(roundf(data->hue_from + (data->hue_width * periodProgress))) % 360, data->hsi_s, data->hsi_i};
+    frame->hsi = (HsiColor){(int)(roundf(data->hue_from + (data->hue_width * periodProgress))) % 360, data->hsi_s, data->hsi_i};
 
-    return cycle;
+    return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    printer(i, &cycle->hsi, dataPtr, parentDataPtr);
+    printer(i, &frame->hsi, dataPtr, parentDataPtr);
 }
 
 void pattern_register_rainbow()
 {
-    pattern_register("rainbow", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1});
+    pattern_register("rainbow", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
 }

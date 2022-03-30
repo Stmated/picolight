@@ -19,10 +19,10 @@ typedef struct data_struct
     float brightness_width;
 } data_struct;
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
     HsiColor hsi;
-} cycle_struct;
+} frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
@@ -52,10 +52,10 @@ static void *data_creator(uint16_t len, float intensity)
     return instance;
 }
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
     float ph = executeEasing(data->easing_h, (t % data->speedh) / (float)data->speedh);
     float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
@@ -63,20 +63,20 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 
     int h = ((int)(data->hue_start + (ph * data->hue_width))) % 360;
 
-    cycle->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
+    frame->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
 
-    return cycle;
+    return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    printer(i, &cycle->hsi, dataPtr, parentDataPtr);
+    printer(i, &frame->hsi, dataPtr, parentDataPtr);
 }
 
 void pattern_register_fill_sway()
 {
-    pattern_register("sway", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1});
+    pattern_register("sway", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
 }

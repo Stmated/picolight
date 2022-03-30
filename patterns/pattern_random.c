@@ -15,12 +15,12 @@ typedef struct data_struct
 
 } data_struct;
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
-    void *cycle1;
-    void *cycle2;
+    void *pattern1frame;
+    void *pattern2frame;
 
-} cycle_struct;
+} frame_struct;
 
 static void data_destroyer(void *dataPtr)
 {
@@ -83,10 +83,10 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     }
 }
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
@@ -123,31 +123,31 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
-    cycle->cycle1 = data->pattern1->cycleCreator(len, t, data->data1);
-    cycle->cycle2 = data->pattern2->cycleCreator(len, t, data->data2);
+    frame->pattern1frame = data->pattern1->frameCreator(len, t, data->data1);
+    frame->pattern2frame = data->pattern2->frameCreator(len, t, data->data2);
 
-    return cycle;
+    return frame;
 }
 
-static void cycle_destroyer(void *dataPtr, void *cyclePtr)
+static void frame_destroyer(void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    data->pattern1->cycleDestroyer(data->data1, cycle->cycle1);
-    data->pattern2->cycleDestroyer(data->data2, cycle->cycle2);
+    data->pattern1->frameDestroyer(data->data1, frame->pattern1frame);
+    data->pattern2->frameDestroyer(data->data2, frame->pattern2frame);
     
-    free(cyclePtr);
+    free(framePtr);
 }
 
-static void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
     data->base.stepIndex = 0;
-    data->pattern1->executor(i, data->data1, cycle->cycle1, data, pattern_printer_set);
-    data->pattern2->executor(i, data->data2, cycle->cycle2, data, pattern_printer_set);
+    data->pattern1->executor(i, data->data1, frame->pattern1frame, data, pattern_printer_set);
+    data->pattern2->executor(i, data->data2, frame->pattern2frame, data, pattern_printer_set);
 
     // Now let's send the data to the original printer
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
@@ -159,5 +159,5 @@ static void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentData
 
 void pattern_register_random()
 {
-    pattern_register("random", executor, data_creator, data_destroyer, cycle_creator, cycle_destroyer, (PatternOptions){0});
+    pattern_register("random", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){0});
 }

@@ -12,13 +12,13 @@ typedef struct data_struct
 
 } data_struct;
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
-    void *cycle1;
-    void *cycle2;
+    void *pattern1frame;
+    void *pattern2frame;
     void *cycle3;
 
-} cycle_struct;
+} frame_struct;
 
 static void data_destroyer(void *dataPtr)
 {
@@ -49,26 +49,26 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *cycle = calloc(1, sizeof(frame_struct));
 
-    cycle->cycle1 = data->snakeModule->cycleCreator(len, t, data->snake1data);
-    cycle->cycle2 = data->snakeModule->cycleCreator(len, t, data->snake2data);
-    cycle->cycle3 = data->snakeModule->cycleCreator(len, t, data->snake3data);
+    cycle->pattern1frame = data->snakeModule->frameCreator(len, t, data->snake1data);
+    cycle->pattern2frame = data->snakeModule->frameCreator(len, t, data->snake2data);
+    cycle->cycle3 = data->snakeModule->frameCreator(len, t, data->snake3data);
 
     return cycle;
 }
 
-static void cycle_destroyer(void *dataPtr, void *cyclePtr)
+static void frame_destroyer(void *dataPtr, void *cyclePtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *cycle = cyclePtr;
 
-    data->snakeModule->cycleDestroyer(data->snake1data, cycle->cycle1);
-    data->snakeModule->cycleDestroyer(data->snake2data, cycle->cycle2);
-    data->snakeModule->cycleDestroyer(data->snake3data, cycle->cycle3);
+    data->snakeModule->frameDestroyer(data->snake1data, cycle->pattern1frame);
+    data->snakeModule->frameDestroyer(data->snake2data, cycle->pattern2frame);
+    data->snakeModule->frameDestroyer(data->snake3data, cycle->cycle3);
 
     free(cyclePtr);
 }
@@ -81,11 +81,11 @@ static void cycle_destroyer(void *dataPtr, void *cyclePtr)
 static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = (data_struct *)dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *cycle = cyclePtr;
 
     data->base.stepIndex = 0;
-    data->snakeModule->executor(i, data->snake1data, cycle->cycle1, data, pattern_printer_set);
-    data->snakeModule->executor(i, data->snake2data, cycle->cycle2, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake1data, cycle->pattern1frame, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake2data, cycle->pattern2frame, data, pattern_printer_set);
     data->snakeModule->executor(i, data->snake3data, cycle->cycle3, data, pattern_printer_set);
 
     // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?
@@ -95,5 +95,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *par
 
 void pattern_register_snakes()
 {
-    pattern_register("snakes", executor, data_creator, data_destroyer, cycle_creator, cycle_destroyer, (PatternOptions){1});
+    pattern_register("snakes", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){1});
 }

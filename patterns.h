@@ -15,13 +15,13 @@ typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr, void 
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "CycleData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a cycle way too often
-typedef void (*PatternExecutor)(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer);
+typedef void (*PatternExecutor)(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
 // TODO: Create a new CycleDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
-typedef void *(*PatternCycleDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
-typedef void (*PatternCycleDataDestroyer)(void *dataPtr, void *cyclePtr);
+typedef void *(*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
+typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 
 typedef void *(*PatternRegistrator)(void);
 
@@ -41,8 +41,8 @@ typedef struct PatternModule
     PatternExecutor executor;
     PatternDataCreator creator;
     PatternDataDestroyer destroyer;
-    PatternCycleDataCreator cycleCreator;
-    PatternCycleDataDestroyer cycleDestroyer;
+    PatternFrameDataCreator frameCreator;
+    PatternFrameDataDestroyer frameDestroyer;
     PatternOptions options;
 } PatternModule;
 
@@ -69,7 +69,7 @@ void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *cyc
 
 void pattern_find_and_register_patterns();
 
-void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternCycleDataCreator cycleCreator, PatternCycleDataDestroyer cycleDestroyer, PatternOptions options);
+void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataCreator cycleCreator, PatternFrameDataDestroyer cycleDestroyer, PatternOptions options);
 
 void pattern_register_snake();
 void pattern_register_fade_between();

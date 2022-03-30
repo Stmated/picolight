@@ -9,12 +9,12 @@ typedef struct data_struct
     float hsi_i;
 } data_struct;
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
     float p;
     float huePerLed;
     HsiColor hsi;
-} cycle_struct;
+} frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
@@ -28,10 +28,10 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
     float p;
     if (data->endless)
@@ -44,25 +44,25 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
         p = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    cycle->p = p;
-    cycle->huePerLed = (360.0 / (float)len);
-    cycle->hsi = (HsiColor){0, data->hsi_s, data->hsi_i};
+    frame->p = p;
+    frame->huePerLed = (360.0 / (float)len);
+    frame->hsi = (HsiColor){0, data->hsi_s, data->hsi_i};
 
-    return cycle;
+    return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    float base = (cycle->huePerLed * i);
-    float offset = (360 * cycle->p);
-    cycle->hsi.h = (int)roundf(base + offset) % 360;
-    printer(i, &cycle->hsi, dataPtr, parentDataPtr);
+    float base = (frame->huePerLed * i);
+    float offset = (360 * frame->p);
+    frame->hsi.h = (int)roundf(base + offset) % 360;
+    printer(i, &frame->hsi, dataPtr, parentDataPtr);
 }
 
 void pattern_register_rainbow_wave()
 {
-    pattern_register("rainbow_wave", executor, data_creator, NULL, cycle_creator, NULL, (PatternOptions){1});
+    pattern_register("rainbow_wave", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
 }

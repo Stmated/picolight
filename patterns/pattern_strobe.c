@@ -1,15 +1,15 @@
 #include "../patterns.h"
 
-typedef struct cycle_struct
+typedef struct frame_struct
 {
     uint32_t remainder;
     HsiColor white;
     HsiColor black;
-} cycle_struct;
+} frame_struct;
 
-static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
-    cycle_struct *cycle = calloc(1, sizeof(cycle_struct));
+    frame_struct *cycle = calloc(1, sizeof(frame_struct));
 
     cycle->remainder = t % 100;
     cycle->white = (HsiColor){0, 0, 1};
@@ -20,7 +20,7 @@ static void *cycle_creator(uint16_t len, uint32_t t, void *dataPtr)
 
 static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
 {
-    cycle_struct *cycle = cyclePtr;
+    frame_struct *cycle = cyclePtr;
 
     if (cycle->remainder < 50)
     {
