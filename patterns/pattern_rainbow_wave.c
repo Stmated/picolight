@@ -11,7 +11,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    float p;
+    float offset;
     float huePerLed;
     HsiColor hsi;
 } frame_struct;
@@ -44,9 +44,9 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
         p = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    frame->p = p;
     frame->huePerLed = (360.0 / (float)len);
     frame->hsi = (HsiColor){0, data->hsi_s, data->hsi_i};
+    frame->offset = (HSI_H_MAX * p);
 
     return frame;
 }
@@ -57,8 +57,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     frame_struct *frame = framePtr;
 
     float base = (frame->huePerLed * i);
-    float offset = (360 * frame->p);
-    frame->hsi.h = (int)roundf(base + offset) % 360;
+    frame->hsi.h = (int)roundf(base + frame->offset) % 360;
     printer(i, &frame->hsi, dataPtr, parentDataPtr);
 }
 

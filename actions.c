@@ -164,5 +164,8 @@ bool executeButton(int i, bool isDown, uint32_t sinceLastDown, uint32_t sinceLas
     if (funcIndex < buttonCount)
     {
         button_map[funcIndex].pat(&state, isDown, sinceLastDown, sinceLastUp);
+        return true;
     }
+
+    return false;
 }

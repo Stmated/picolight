@@ -68,6 +68,7 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
 
 int main()
 {
+    printf("Entered main\n");
     picolight_boot(LED_COUNT);
 
     state.patternIndex = 0;
@@ -121,3 +122,8 @@ int main()
         }
     }
 }
+
+// TODO:
+// * https://github.com/google/orbit
+//      Profile like a madman, find out where the time is spent! 
+//      (or add simple #DEFINE guards and run all patterns and print a performance table)

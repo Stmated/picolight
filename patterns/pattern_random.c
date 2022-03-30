@@ -60,9 +60,10 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     // TODO: This is bad. Does not take chance into account, and not that got the same twice, or the same as the other pattern
     int chances = 3;
     float f100 = (float)100;
+    int next = -1;
     while (chances > 0)
     {
-        int next = randint(getPatternCount());
+        next = randint(getPatternCount());
         PatternModule *module = getPatternByIndex(next);
 
         float ourChance = randint(100) / f100;
@@ -79,8 +80,10 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
             continue;
         }
 
-        return next;
+        break;
     }
+
+    return next;
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)

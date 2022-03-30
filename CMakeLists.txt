@@ -15,14 +15,13 @@ else()
 endif()
 
 project(ws2812 C CXX ASM)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
 
 if(OPTION_ENVIRONMENT_LOCAL)
-else()
-    pico_sdk_init()
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 set (SRC_LIST
     global.h
@@ -63,6 +62,7 @@ if(OPTION_ENVIRONMENT_LOCAL)
    set (SRC_LIST environment/environment_local.h environment/environment_local.c ${SRC_LIST})
 else()
     set (SRC_LIST environment/environment_pico.h environment/environment_pico.c ${SRC_LIST})
+    pico_sdk_init()
 endif()
 
 add_executable(${PROJECT_NAME}
@@ -72,6 +72,7 @@ add_executable(${PROJECT_NAME}
 )
 
 if(OPTION_ENVIRONMENT_LOCAL)
+    #target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
 else()
     # Make sure we use the fast float and double implementations
     pico_set_float_implementation(${PROJECT_NAME} pico)

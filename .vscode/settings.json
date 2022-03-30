@@ -39,4 +39,5 @@
         "types.h": "c"
     },
     "cmake.buildBeforeRun": true,
+    "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}
 }

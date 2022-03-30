@@ -30,6 +30,9 @@ void picolight_blink(bool on);
 
 void program_init(int offset, int gpio);
 
+int getPermanentInt(int i);
+void setPermanentInt(int i, int v);
+
 // TODO: Move below to only be included when compiling for local dev?
 #ifndef count_of
 #define count_of(a) (sizeof(a) / sizeof((a)[0]))
