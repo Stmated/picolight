@@ -1,0 +1,28 @@
+<html>
+
+<head>
+<style>
+    body {
+        background-color: black;
+    }
+</style>
+</head>
+
+<body>
+
+    <img id="image" src="./build/local_dev_output.bmp" style="height: 100%; width: 50%; image-rendering: pixelated; text-align: center; display: block; margin-left: auto; margin-right: auto;" />
+
+    <script>
+
+        var $image = document.getElementById("image");
+        function reloadImage()
+        {
+            $image.src = "./build/local_dev_output.bmp?" + new Date().getTime();
+            setTimeout(reloadImage, 1);
+        }
+
+        setTimeout(reloadImage, 1);
+
+    </script>
+</body>
+</html>

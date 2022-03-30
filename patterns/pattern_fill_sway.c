@@ -34,20 +34,21 @@ static void *data_creator(uint16_t len, float intensity)
     data->speeds = 5000 + randint_weighted_towards_min(0, 20000, intensity);
     data->speedi = 5000 + randint_weighted_towards_min(0, 10000, intensity);
 
-    // TODO: Need a way to select an easing based on intensity, so they are ranked by fastness/intensity
     data->easing_h = randint(getEasingCount());
     data->easing_s = randint(getEasingCount());
     data->easing_i = randint(getEasingCount());
 
-    // TODO: The values MUST NOT GO OVER 1! The calculations become WONKY!!!!
-    data->sat_from = 0.8 + (0.2 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
-    data->brightness_from = 0.2 + (0.1 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float sat1 = 0.5 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float sat2 = 0.5 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
-    float sat_to = MIN(1, data->sat_from + 0.1 + (0.4 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
-    float brightness_to = MIN(1, data->brightness_from + 0.2 + (0.10 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
+    float int1 = 0.2 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float int2 = 0.2 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
-    data->sat_width = (sat_to - data->sat_from);
-    data->brightness_width = (brightness_to - data->brightness_from);
+    data->sat_from = MIN(sat1, sat2);
+    data->sat_width = MAX(sat1, sat2) - data->sat_from;
+
+    data->brightness_from = MIN(int1, int2);
+    data->brightness_width = MAX(int1, int2) - data->brightness_from;
 
     return data;
 }
@@ -57,12 +58,11 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    float ph = executeEasing(data->easing_h, (t % data->speedh) / (float)data->speedh);
+    float ph = InOutLinear((t % data->speedh) / (float)data->speedh);
     float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
     float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
 
-    int h = ((int)(data->hue_start + (ph * data->hue_width))) % HSI_H_MAX;
-
+    int h = (int)(data->hue_start + (ph * data->hue_width)) % HSI_H_MAX;
     frame->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
 
     return frame;

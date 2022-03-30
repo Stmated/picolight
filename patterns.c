@@ -61,16 +61,22 @@ PatternModule *getPatternByName(const char *name)
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_fill_sway();
+
+
+    pattern_register_fade_between();
+
+
+    pattern_register_strobe();
+    pattern_register_rainbow_wave();
+    pattern_register_snakes();
+
     pattern_register_random();
 
-    pattern_register_rainbow_wave();
-    pattern_register_rainbow();
-    pattern_register_snake();
-    pattern_register_fade_between();
-    pattern_register_fill_sway();
-    pattern_register_snakes();
     pattern_register_sparkle();
-    pattern_register_strobe();
+    pattern_register_rainbow();
+    
+    pattern_register_snake();
 }
 
 void pattern_register(
@@ -98,8 +104,7 @@ inline void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, 
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
-    RgbwColor rgbw;
-    hsi2rgbw(c, &rgbw);
+    RgbwColor rgbw = hsi2rgbw(c);
     put_pixel(index, &rgbw);
 }
 
@@ -134,7 +139,9 @@ void pattern_execute(uint16_t len, uint32_t t)
         }
 
         // Create the new pattern data
-        void *data = getPatternByIndex(state.nextPatternIndex)->creator(len, state.nextIntensity);
+        PatternModule *newModule = getPatternByIndex(state.nextPatternIndex);
+
+        void *data = newModule->creator(len, state.nextIntensity);
 
         // Set to the new (or same) pattern index, and new data
         state.patternIndex = state.nextPatternIndex;

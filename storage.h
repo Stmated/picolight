@@ -1,7 +1,3 @@
 
 
-struct storage_struct
-{
-
-};
 

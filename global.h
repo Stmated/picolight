@@ -12,7 +12,8 @@
 #endif
 
 static const int PIN_TX[] = {22}; //, 21, 20, 19 };
-#define LED_COUNT 288             // 480; // 120;
+#define LED_COUNT 288 // When working on Pico
+//#define LED_COUNT 1000 // When working on PC
 
 #define LED_ROWS 16
 #define LED_PER_ROW roundf(LED_COUNT / LED_ROWS)

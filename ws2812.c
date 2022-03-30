@@ -68,7 +68,6 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
 
 int main()
 {
-    printf("Entered main\n");
     picolight_boot(LED_COUNT);
 
     state.patternIndex = 0;

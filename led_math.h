@@ -24,7 +24,7 @@ int math_average_angle(int *angles, int length);
 HsiColor math_average_hsi(HsiColor* colors, uint8_t length);
 
 HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t);
-void hsi2rgbw(HsiColor *hsi, RgbwColor *c);
+RgbwColor hsi2rgbw(HsiColor *hsi);
 
 void math_precompute();
 
