@@ -34,5 +34,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
 
 void pattern_register_strobe()
 {
-    pattern_register("strobe", executor, NULL, NULL, NULL, NULL, (PatternOptions){0.1});
+    pattern_register("strobe", executor, NULL, NULL, frame_creator, NULL, (PatternOptions){0.1});
 }
