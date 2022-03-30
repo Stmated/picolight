@@ -13,13 +13,13 @@ typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr, void 
 
 // TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
 //          Or do a few pixels at a time, in different threads or whatnot.
-//          Need a new concept for a data structure to speed things up, like a "CycleData" -- so we have that and a "PatternData"
-//          We must have this, otherwise we'd need to do some calculations commons to a cycle way too often
+//          Need a new concept for a data structure to speed things up, like a "FrameData" -- so we have that and a "PatternData"
+//          We must have this, otherwise we'd need to do some calculations commons to a frame way too often
 typedef void (*PatternExecutor)(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
-// TODO: Create a new CycleDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
+// TODO: Create a new FrameDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
 typedef void *(*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
 typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 
@@ -59,17 +59,17 @@ PatternModule *getPatternByName(const char* name);
 void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);
 
-void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr);
-void pattern_cycle_destroyer_default(void *data, void *cyclePtr);
+void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr);
+void pattern_frame_destroyer_default(void *data, void *framePtr);
 
 void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
 void pattern_printer_set(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
 
-void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *cyclePtr, PatternPrinter printer);
+void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *framePtr, PatternPrinter printer);
 
 void pattern_find_and_register_patterns();
 
-void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataCreator cycleCreator, PatternFrameDataDestroyer cycleDestroyer, PatternOptions options);
+void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer, PatternOptions options);
 
 void pattern_register_snake();
 void pattern_register_fade_between();

@@ -113,10 +113,7 @@ inline int math_average_angle(int *angles, int length)
 #endif
     }
 
-    float radians = atan2f(y, x);
-    int degrees = (int)roundf(radians * (180.0 / M_PI));
-    int fixedDegreees = (degrees + 360) % 360;
-    return fixedDegreees;
+    return (int)roundf(atan2f(y, x) * (180.0 / M_PI)) % 360;
 }
 
 static const float RADIAN_TO_PI = (180.0 / M_PI);
@@ -217,8 +214,6 @@ double rand_gaussian()
 
     return R0;
 }
-
-#define DEG_TO_RAD(X) (M_PI * (X) / 180)
 
 // Add "brightness" that is used to modify the values right before it it sent to the GPIO
 // Add "dithering" which should be done by giving a rounding method that alternates between "round up" and "round down"

@@ -26,30 +26,30 @@ typedef struct frame_struct
 
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *instance = calloc(1, sizeof(data_struct));
+    data_struct *data = calloc(1, sizeof(data_struct));
 
-    instance->hue_start = randint(360);
-    instance->hue_width = 60 + randint_weighted_towards_max(0, 120, intensity);
-    instance->speedh = 10000 + randint_weighted_towards_min(0, 30000, intensity);
-    instance->speeds = 5000 + randint_weighted_towards_min(0, 20000, intensity);
-    instance->speedi = 5000 + randint_weighted_towards_min(0, 10000, intensity);
+    data->hue_start = randint(HSI_H_MAX);
+    data->hue_width = 60 + randint_weighted_towards_max(0, 120, intensity);
+    data->speedh = 10000 + randint_weighted_towards_min(0, 30000, intensity);
+    data->speeds = 5000 + randint_weighted_towards_min(0, 20000, intensity);
+    data->speedi = 5000 + randint_weighted_towards_min(0, 10000, intensity);
 
     // TODO: Need a way to select an easing based on intensity, so they are ranked by fastness/intensity
-    instance->easing_h = randint(getEasingCount());
-    instance->easing_s = randint(getEasingCount());
-    instance->easing_i = randint(getEasingCount());
+    data->easing_h = randint(getEasingCount());
+    data->easing_s = randint(getEasingCount());
+    data->easing_i = randint(getEasingCount());
 
     // TODO: The values MUST NOT GO OVER 1! The calculations become WONKY!!!!
-    instance->sat_from = 0.8 + (0.2 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
-    instance->brightness_from = 0.2 + (0.1 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    data->sat_from = 0.8 + (0.2 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    data->brightness_from = 0.2 + (0.1 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
-    float sat_to = MIN(1, instance->sat_from + 0.1 + (0.4 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
-    float brightness_to = MIN(1, instance->brightness_from + 0.2 + (0.10 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
+    float sat_to = MIN(1, data->sat_from + 0.1 + (0.4 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
+    float brightness_to = MIN(1, data->brightness_from + 0.2 + (0.10 * (randint_weighted_towards_max(0, 100, intensity) / (float)100)));
 
-    instance->sat_width = (sat_to - instance->sat_from);
-    instance->brightness_width = (brightness_to - instance->brightness_from);
+    data->sat_width = (sat_to - data->sat_from);
+    data->brightness_width = (brightness_to - data->brightness_from);
 
-    return instance;
+    return data;
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -61,7 +61,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
     float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
 
-    int h = ((int)(data->hue_start + (ph * data->hue_width))) % 360;
+    int h = ((int)(data->hue_start + (ph * data->hue_width))) % HSI_H_MAX;
 
     frame->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
 

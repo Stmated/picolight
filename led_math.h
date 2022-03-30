@@ -37,6 +37,8 @@ void math_precompute();
 #define HSI_I_MIN 0
 #define HSI_I_MAX 1
 
+#define DEG_TO_RAD(X) (M_PI * (X) / 180)
+
 #define ChannelBlend_Normal(A,B)     ((uint8)(A))
 #define ChannelBlend_Lighten(A,B)    ((uint8)((B > A) ? B:A))
 #define ChannelBlend_Darken(A,B)     ((uint8)((B > A) ? A:B))

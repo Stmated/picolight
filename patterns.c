@@ -3,7 +3,7 @@
 HsiColor black = {0, 0, 0};
 HsiColor white = {0, 0, 1};
 
-void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *cyclePtr, PatternPrinter printer)
+void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *framePtr, PatternPrinter printer)
 {
 
     // We sleep 1 ms, since this is usually too fast.
@@ -23,16 +23,16 @@ void pattern_destroyer_default(void *dataPtr)
     }
 }
 
-void *pattern_cycle_creator_default(uint16_t len, uint32_t t, void *dataPtr)
+void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr)
 {
     return NULL;
 }
 
-void pattern_cycle_destroyer_default(void *dataPtr, void *cycleDataPtr)
+void pattern_frame_destroyer_default(void *dataPtr, void *framePtr)
 {
-    if (cycleDataPtr)
+    if (framePtr)
     {
-        free(cycleDataPtr);
+        free(framePtr);
     }
 }
 
@@ -76,7 +76,7 @@ void pattern_find_and_register_patterns()
 void pattern_register(
     const char *name, PatternExecutor executor,
     PatternDataCreator creator, PatternDataDestroyer destroyer,
-    PatternFrameDataCreator cycleCreator, PatternFrameDataDestroyer cycleDestroyer,
+    PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer,
     PatternOptions options)
 {
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
@@ -85,8 +85,8 @@ void pattern_register(
     PatternModule module = {name, executor,
                             creator ? creator : pattern_creator_default,
                             destroyer ? destroyer : pattern_destroyer_default,
-                            cycleCreator ? cycleCreator : pattern_cycle_creator_default,
-                            cycleDestroyer ? cycleDestroyer : pattern_cycle_destroyer_default,
+                            frameCreator ? frameCreator : pattern_frame_creator_default,
+                            frameDestroyer ? frameDestroyer : pattern_frame_destroyer_default,
                             options};
     array_new[state.modules_size] = module;
 

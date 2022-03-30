@@ -35,23 +35,23 @@ static void *data_creator(uint16_t len, float intensity)
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *cycle = calloc(1, sizeof(frame_struct));
-    cycle->t_into_period = (((t + data->offset) % data->period) / (float)data->period);
-    cycle->p = len * executeEasing(data->easing, cycle->t_into_period);
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
+    frame->t_into_period = (((t + data->offset) % data->period) / (float)data->period);
+    frame->p = len * executeEasing(data->easing, frame->t_into_period);
 
-    return cycle;
+    return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
-    frame_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    float distance = fabsf(i - cycle->p);
+    float distance = fabsf(i - frame->p);
 
     if (distance <= data->width)
     {
-        // Move "hsi" into cycle memory, and keep writing over the hue + i attributes? We save a couple of cycles?
+        // Move "hsi" into frame memory, and keep writing over the hue + i attributes? We save a couple of cpu cycles?
         HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
         printer(i, &hsi, dataPtr, parentDataPtr);
     }

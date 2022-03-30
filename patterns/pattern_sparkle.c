@@ -31,7 +31,7 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = dataPtr;
     bool *bools = (bool *)data->values;

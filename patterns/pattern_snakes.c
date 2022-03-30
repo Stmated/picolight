@@ -14,9 +14,9 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    void *pattern1frame;
-    void *pattern2frame;
-    void *cycle3;
+    void *snake1frame;
+    void *snake2frame;
+    void *snake3frame;
 
 } frame_struct;
 
@@ -52,41 +52,41 @@ static void *data_creator(uint16_t len, float intensity)
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *cycle = calloc(1, sizeof(frame_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    cycle->pattern1frame = data->snakeModule->frameCreator(len, t, data->snake1data);
-    cycle->pattern2frame = data->snakeModule->frameCreator(len, t, data->snake2data);
-    cycle->cycle3 = data->snakeModule->frameCreator(len, t, data->snake3data);
+    frame->snake1frame = data->snakeModule->frameCreator(len, t, data->snake1data);
+    frame->snake2frame = data->snakeModule->frameCreator(len, t, data->snake2data);
+    frame->snake3frame = data->snakeModule->frameCreator(len, t, data->snake3data);
 
-    return cycle;
+    return frame;
 }
 
-static void frame_destroyer(void *dataPtr, void *cyclePtr)
+static void frame_destroyer(void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    data->snakeModule->frameDestroyer(data->snake1data, cycle->pattern1frame);
-    data->snakeModule->frameDestroyer(data->snake2data, cycle->pattern2frame);
-    data->snakeModule->frameDestroyer(data->snake3data, cycle->cycle3);
+    data->snakeModule->frameDestroyer(data->snake1data, frame->snake1frame);
+    data->snakeModule->frameDestroyer(data->snake2data, frame->snake2frame);
+    data->snakeModule->frameDestroyer(data->snake3data, frame->snake3frame);
 
-    free(cyclePtr);
+    free(framePtr);
 }
 
 // TODO: This will write to the wrong data pointer if Snakes is ran inside Random! The parentDataPtr was not a good idea!
 // TODO: Redo so that we send a struct with all the common arguments, so we do not send so many
 // TODO: Figure out how to handle nested Random -> Snakes
-// TODO: Figure out how to make it so that if inside Random, that we do not re-create the cycleData every time! It is too slow!
+// TODO: Figure out how to make it so that if inside Random, that we do not re-create the frameData every time! It is too slow!
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
     data_struct *data = (data_struct *)dataPtr;
-    frame_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
     data->base.stepIndex = 0;
-    data->snakeModule->executor(i, data->snake1data, cycle->pattern1frame, data, pattern_printer_set);
-    data->snakeModule->executor(i, data->snake2data, cycle->pattern2frame, data, pattern_printer_set);
-    data->snakeModule->executor(i, data->snake3data, cycle->cycle3, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake1data, frame->snake1frame, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake2data, frame->snake2frame, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake3data, frame->snake3frame, data, pattern_printer_set);
 
     // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?
     HsiColor c = math_average_hsi(data->base.pixels, 3);

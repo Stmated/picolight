@@ -9,26 +9,26 @@ typedef struct frame_struct
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
-    frame_struct *cycle = calloc(1, sizeof(frame_struct));
+    frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    cycle->remainder = t % 100;
-    cycle->white = (HsiColor){0, 0, 1};
-    cycle->black = (HsiColor){0, 0, 0};
+    frame->remainder = t % 100;
+    frame->white = (HsiColor){0, 0, 1};
+    frame->black = (HsiColor){0, 0, 0};
 
-    return cycle;
+    return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *cyclePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
-    frame_struct *cycle = cyclePtr;
+    frame_struct *frame = framePtr;
 
-    if (cycle->remainder < 50)
+    if (frame->remainder < 50)
     {
-        printer(i, &cycle->white, dataPtr, parentDataPtr);
+        printer(i, &frame->white, dataPtr, parentDataPtr);
     }
     else
     {
-        printer(i, &cycle->black, dataPtr, parentDataPtr);
+        printer(i, &frame->black, dataPtr, parentDataPtr);
     }
 }
 

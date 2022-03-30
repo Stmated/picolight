@@ -17,8 +17,8 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    void *pattern1frame;
-    void *pattern2frame;
+    void *snake1frame;
+    void *snake2frame;
 
 } frame_struct;
 
@@ -123,8 +123,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
-    frame->pattern1frame = data->pattern1->frameCreator(len, t, data->data1);
-    frame->pattern2frame = data->pattern2->frameCreator(len, t, data->data2);
+    frame->snake1frame = data->pattern1->frameCreator(len, t, data->data1);
+    frame->snake2frame = data->pattern2->frameCreator(len, t, data->data2);
 
     return frame;
 }
@@ -134,8 +134,8 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->pattern1->frameDestroyer(data->data1, frame->pattern1frame);
-    data->pattern2->frameDestroyer(data->data2, frame->pattern2frame);
+    data->pattern1->frameDestroyer(data->data1, frame->snake1frame);
+    data->pattern2->frameDestroyer(data->data2, frame->snake2frame);
     
     free(framePtr);
 }
@@ -146,8 +146,8 @@ static void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentData
     frame_struct *frame = framePtr;
 
     data->base.stepIndex = 0;
-    data->pattern1->executor(i, data->data1, frame->pattern1frame, data, pattern_printer_set);
-    data->pattern2->executor(i, data->data2, frame->pattern2frame, data, pattern_printer_set);
+    data->pattern1->executor(i, data->data1, frame->snake1frame, data, pattern_printer_set);
+    data->pattern2->executor(i, data->data2, frame->snake2frame, data, pattern_printer_set);
 
     // Now let's send the data to the original printer
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
