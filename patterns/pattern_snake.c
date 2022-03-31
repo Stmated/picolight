@@ -6,6 +6,7 @@ typedef struct data_struct
     int hue;
     int period;
     int width;
+    bool affectSaturation;
     float saturation;
     float brightness;
     int offset;
@@ -23,10 +24,11 @@ static void *data_creator(uint16_t len, float intensity)
 
     data->easing = randint(getEasingCount());
     data->hue = randint(360);
-    data->width = 3 + randint_weighted_towards_min(len / 16, len / 8, intensity);
+    data->width = randint_weighted_towards_min(MAX(3, len / 32), len / 8, intensity);
     data->period = randint_weighted_towards_min(2000, 30000, intensity);
     data->offset = randint(data->period * 3);
     data->saturation = randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000;
+    data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
     data->brightness = randint_weighted_towards_max(300, 1000, intensity) / (float)1000;
 
     return data;
@@ -52,7 +54,13 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     if (distance <= data->width)
     {
         // Move "hsi" into frame memory, and keep writing over the hue + i attributes? We save a couple of cpu cycles?
-        HsiColor hsi = {data->hue, data->saturation, data->brightness * (1 - (distance / (float)data->width))};
+        float distanceMultiplier = (1 - (distance / (float)data->width));
+        HsiColor hsi = {data->hue, data->saturation, data->brightness * distanceMultiplier};
+        if (data->affectSaturation)
+        {
+            hsi.s *= distanceMultiplier;   
+        }
+        
         printer(i, &hsi, dataPtr, parentDataPtr);
     }
     else

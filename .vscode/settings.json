@@ -36,7 +36,10 @@
         "float.h": "c",
         "led_math.h": "c",
         "strings.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "__config": "c",
+        "chrono": "c",
+        "cstdio": "c"
     },
     "cmake.buildBeforeRun": true,
     "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}

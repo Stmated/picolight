@@ -1,4 +1,5 @@
 {
+  "version": "2.0.0",
   "tasks": [
     {
       "label": "cmake-build",
@@ -13,6 +14,5 @@
         "./.."
       ],
     }
-  ],
-  "version": "2.0.0"
+  ]
 }
