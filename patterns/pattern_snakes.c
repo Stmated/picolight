@@ -14,8 +14,8 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    void *snake1frame;
-    void *snake2frame;
+    void *frame1;
+    void *frame2;
     void *snake3frame;
 
 } frame_struct;
@@ -23,7 +23,7 @@ typedef struct frame_struct
 static void data_destroyer(void *dataPtr)
 {
     data_struct *data = (data_struct *)dataPtr;
-    PatternModule *module = getPatternByName("snake");
+    PatternModule *module = pattern_get_by_name("snake");
 
     module->destroyer(data->snake1data);
     data->snake1data = NULL;
@@ -40,7 +40,7 @@ static void *data_creator(uint16_t len, float intensity)
 {
     data_struct *data = calloc(1, sizeof(data_struct));
 
-    data->snakeModule = getPatternByName("snake");
+    data->snakeModule = pattern_get_by_name("snake");
     data->snake1data = data->snakeModule->creator(len, intensity * 4);
     data->snake2data = data->snakeModule->creator(len, intensity * 2);
     data->snake3data = data->snakeModule->creator(len, intensity);
@@ -54,8 +54,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    frame->snake1frame = data->snakeModule->frameCreator(len, t, data->snake1data);
-    frame->snake2frame = data->snakeModule->frameCreator(len, t, data->snake2data);
+    frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data);
+    frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data);
     frame->snake3frame = data->snakeModule->frameCreator(len, t, data->snake3data);
 
     return frame;
@@ -66,8 +66,8 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->snakeModule->frameDestroyer(data->snake1data, frame->snake1frame);
-    data->snakeModule->frameDestroyer(data->snake2data, frame->snake2frame);
+    data->snakeModule->frameDestroyer(data->snake1data, frame->frame1);
+    data->snakeModule->frameDestroyer(data->snake2data, frame->frame2);
     data->snakeModule->frameDestroyer(data->snake3data, frame->snake3frame);
 
     free(framePtr);
@@ -84,8 +84,8 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     frame_struct *frame = framePtr;
 
     data->base.stepIndex = 0;
-    data->snakeModule->executor(i, data->snake1data, frame->snake1frame, data, pattern_printer_set);
-    data->snakeModule->executor(i, data->snake2data, frame->snake2frame, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake1data, frame->frame1, data, pattern_printer_set);
+    data->snakeModule->executor(i, data->snake2data, frame->frame2, data, pattern_printer_set);
     data->snakeModule->executor(i, data->snake3data, frame->snake3frame, data, pattern_printer_set);
 
     // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?

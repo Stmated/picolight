@@ -53,8 +53,8 @@ typedef struct data_pixel_blending_struct
 
 } data_pixel_blending_struct;
 
-PatternModule *getPatternByIndex(int index);
-PatternModule *getPatternByName(const char* name);
+PatternModule *pattern_get_by_index(int index);
+PatternModule *pattern_get_by_name(const char* name);
 
 void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);

@@ -26,7 +26,7 @@
             ],
         },
 
-
+        // TODO: Make it so that if debugging locally, we run with the local cmake profile. How?
         {
             "name": "G++ Debug",
             "type": "cppdbg",

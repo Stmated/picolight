@@ -10,15 +10,15 @@ typedef struct data_struct
     int period;
     uint32_t updatedAt;
     float intensity;
-    int patternIndex1;
-    int patternIndex2;
+    //int patternIndex1;
+    //int patternIndex2;
 
 } data_struct;
 
 typedef struct frame_struct
 {
-    void *snake1frame;
-    void *snake2frame;
+    void *frame1;
+    void *frame2;
 
 } frame_struct;
 
@@ -44,10 +44,13 @@ static void *data_creator(uint16_t len, float intensity)
     data_struct *data = calloc(1, sizeof(data_struct));
 
     data->intensity = intensity;
-    data->period = randint_weighted_towards_min(5000, 6000, intensity);
+    data->period = randint_weighted_towards_min(10000, 15000, intensity);
     data->updatedAt = 0;
-    data->patternIndex1 = -1;
-    data->patternIndex2 = -1;
+
+    data->pattern1 = pattern_get_by_name("rainbow_wave");
+    data->pattern2 = pattern_get_by_name("snake");
+    data->data1 = data->pattern1->creator(len, intensity);
+    data->data2 = data->pattern2->creator(len, intensity);
 
     // Allocate memory for each sub-pattern, which we will need to blend
     data->base.pixels = calloc(2, sizeof(HsiColor));
@@ -64,7 +67,7 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
     while (chances > 0)
     {
         next = randint(getPatternCount());
-        PatternModule *module = getPatternByIndex(next);
+        PatternModule *module = pattern_get_by_index(next);
 
         float ourChance = randint(100) / f100;
         if (ourChance >= module->options.randomChance)
@@ -91,6 +94,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
+    /*
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
         // It is time to move on to the next random mix.
@@ -118,16 +122,19 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
         data->pattern2 = getPatternByIndex(data->patternIndex2);
         data->data2 = data->pattern2->creator(len, data->intensity);
 
+        printf("Going to '%s' and '%s'\n", data->pattern1->name, data->pattern2->name);
+
         // Ugly workaround so progress goes 0->1,1->0, and so on.
         // This way there should not be an instant JUMP when we switch to next pattern.
         // data->base.progressReversed = !data->base.progressReversed;
     }
+    */
 
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
-    frame->snake1frame = data->pattern1->frameCreator(len, t, data->data1);
-    frame->snake2frame = data->pattern2->frameCreator(len, t, data->data2);
+    frame->frame1 = data->pattern1->frameCreator(len, t, data->data1);
+    frame->frame2 = data->pattern2->frameCreator(len, t, data->data2);
 
     return frame;
 }
@@ -137,20 +144,22 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->pattern1->frameDestroyer(data->data1, frame->snake1frame);
-    data->pattern2->frameDestroyer(data->data2, frame->snake2frame);
+    data->pattern1->frameDestroyer(data->data1, frame->frame1);
+    data->pattern2->frameDestroyer(data->data2, frame->frame2);
     
     free(framePtr);
 }
 
 static void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
 {
+    // TODO: Need to test each combination separately, and accurately, and make each one work EXACTLY as intended -- because something is seriously wrong... especially rainbow_wave + whatever.
+
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
     data->base.stepIndex = 0;
-    data->pattern1->executor(i, data->data1, frame->snake1frame, data, pattern_printer_set);
-    data->pattern2->executor(i, data->data2, frame->snake2frame, data, pattern_printer_set);
+    data->pattern1->executor(i, data->data1, frame->frame1, data, pattern_printer_set);
+    data->pattern2->executor(i, data->data2, frame->frame2, data, pattern_printer_set);
 
     // Now let's send the data to the original printer
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!

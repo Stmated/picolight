@@ -41,12 +41,12 @@ int getPatternCount()
     return state.modules_size;
 }
 
-PatternModule *getPatternByIndex(int index)
+PatternModule *pattern_get_by_index(int index)
 {
     return &state.modules[index];
 }
 
-PatternModule *getPatternByName(const char *name)
+PatternModule *pattern_get_by_name(const char *name)
 {
     for (int i = 0; i < getPatternCount(); i++)
     {
@@ -61,21 +61,15 @@ PatternModule *getPatternByName(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_fill_sway();
-
-
-    pattern_register_fade_between();
-
-
-    pattern_register_strobe();
-    pattern_register_rainbow_wave();
-    pattern_register_snakes();
-
     pattern_register_random();
 
+    pattern_register_rainbow_wave();
+    pattern_register_fill_sway();
+    pattern_register_fade_between();
+    pattern_register_strobe();
+    pattern_register_snakes();
     pattern_register_sparkle();
     pattern_register_rainbow();
-    
     pattern_register_snake();
 }
 
@@ -134,12 +128,12 @@ void pattern_execute(uint16_t len, uint32_t t)
         // Destroy/free any previous memory allocations
         if (state.patternData)
         {
-            getPatternByIndex(state.patternIndex)->destroyer(state.patternData);
+            pattern_get_by_index(state.patternIndex)->destroyer(state.patternData);
             state.patternData = NULL;
         }
 
         // Create the new pattern data
-        PatternModule *newModule = getPatternByIndex(state.nextPatternIndex);
+        PatternModule *newModule = pattern_get_by_index(state.nextPatternIndex);
 
         void *data = newModule->creator(len, state.nextIntensity);
 
@@ -154,7 +148,7 @@ void pattern_execute(uint16_t len, uint32_t t)
     // Execute the current pattern inside state
     if (!state.disabled)
     {
-        PatternModule *module = getPatternByIndex(state.patternIndex);
+        PatternModule *module = pattern_get_by_index(state.patternIndex);
         void *framePtr = module->frameCreator(len, t, state.patternData);
         for (int i = 0; i < len; i++)
         {
