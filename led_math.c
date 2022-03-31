@@ -81,75 +81,121 @@ inline int math_average_angle(int *angles, int length)
 
 static const float RADIAN_TO_PI = (180.0 / M_PI);
 
-// TODO: Speed up this method!
-inline HsiaColor math_average_hsia(HsiaColor *colors, uint8_t length)
+int math_shortest_path_lerp(int origin, int target, float t)
 {
-    float x = 0;
-    float y = 0;
-    HsiaColor result = {colors[0].h, colors[0].s, colors[0].i, colors[0].a};
-    //uint16_t hsia_h = colors[0].h;
-    //float hsia_s = colors[0].s;
-    //float hsia_i = colors[0].i;
-    //float hsia_a = colors[0].a;
-    for (uint_fast8_t i = 1; i < length; i++)
+
+    if (origin > target)
     {
-        HsiaColor c = colors[sizeof(HsiaColor) * i];
-        if (c.a <= 0)
+        int raw_diff = origin - target;
+        int mod_diff = raw_diff % HSI_H_MAX;
+        if (mod_diff > HSI_H_HALF)
         {
-            // Do not include at all if it's transparent.
-            continue;
+            return t * (HSI_H_MAX - mod_diff);
         }
-
-#ifdef MATH_PRECOMPUTE
-        x += lookup_h2cos[c.h];
-        y += lookup_h2sin[c.h];
-#else
-        float r = DEG_TO_RAD(c.h);
-        x += cosf(r);
-        y += sinf(r);
-#endif
-
-        uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
-
-        float a = c.a + result.a * (1 - result.a);
-
-        //return c;
-        //if (c.s > sMax)
-        //    sMax = c.s;
-        //if (c.i > iMax)
-        //    iMax = c.i;
-    }
-
-    uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
-
-    return (HsiaColor){degrees, 0, 0, 1};
-}
-
-inline HsiaColor math_average_hsia2(HsiaColor *a, HsiaColor *b)
-{
-    float x = 0;
-    float y = 0;
-    HsiaColor result = {a->h, a->s, a->i, a->a};
-
-    if (b->a >= 0.95)
-    {
-        return *b;
+        else
+        {
+            return t * (mod_diff * -1);
+        }
     }
     else
     {
-        x += lookup_h2cos[a->h];
-        y += lookup_h2sin[a->h];
-        x += lookup_h2cos[b->h];
-        y += lookup_h2sin[b->h];
+        int raw_diff = target - origin;
+        int mod_diff = raw_diff % HSI_H_MAX;
+        if (mod_diff > HSI_H_HALF)
+        {
+            float signedDiff = (HSI_H_MAX - mod_diff);
+            return t * (signedDiff * -1);
+        }
+        else
+        {
+            return t * (mod_diff);
+        }
+    }
+}
+
+#ifndef MAX
+#define MAX(a, b) (a > b ? a : b)
+#endif
+#ifndef MIN
+#define MIN(a, b) (a > b ? b : a)
+#endif
+
+HsiaColor rgbw2hsia(RgbwColor c, float a)
+{
+    float r = c.r / (float)255.0;
+    float g = c.g / (float)255.0;
+    float b = c.b / (float)255.0;
+    float intensity = (r + g + b) / (float)3;
+
+    float M = MAX(r, MAX(g, b));
+    float m = MIN(r, MIN(g, b));
+    // float C = M - m;
+
+    float saturation = 0.0;
+    if (intensity == 0.0)
+        saturation = 0.0;
+    else
+        saturation = 1.0 - (m / intensity);
+
+    float hue = 0;
+    if (M == m)
+    {
+        hue = 0;
+    }
+    if (M == r)
+    {
+        if (M == m)
+            hue = 0.0;
+        else
+            hue = 60.0 * (0.0 + ((g - b) / (M - m)));
+    }
+    if (M == g)
+    {
+        if (M == m)
+            hue = 0.0;
+        else
+            hue = 60.0 * (2.0 + ((b - r) / (M - m)));
+    }
+    if (M == b)
+    {
+        if (M == m)
+            hue = 0.0;
+        else
+            hue = 60.0 * (4.0 + ((r - g) / (M - m)));
+    }
+    if (hue < 0.0)
+    {
+        hue = hue + 360;
     }
 
-    uint32_t degrees = (uint32_t)roundf(atan2f(y, x) * RADIAN_TO_PI) % 360;
+    return (HsiaColor){(int)hue, fabs(saturation), intensity, a};
+}
 
-    float alpha = b->a + result.a * (1 - result.a);
+// TODO: There is a slight loss in precision from using this method! The RGB becomes ever so slightly off! Fix this!
+// Try and work with only HSIA if possible :(
+inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
+{
+    // If above very low/high alpha, just replace. Faster and won't notice a difference.
+    if (hsia_b->a <= 0.01)
+        return *hsia_a;
+    if (hsia_b->a >= 0.99)
+        return *hsia_b;
 
-    //uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
+    // TODO: Can this be replaced with full ONLY HSI calculations?
+    // Or even cooler:  https://en.wikipedia.org/wiki/CIECAM02
+    //                  https://github.com/dannyvi/ciecam02
+    RgbwColor ca = hsia2rgbw(hsia_a);
+    RgbwColor cb = hsia2rgbw(hsia_b);
 
-    return (HsiaColor){degrees, 1, 1, alpha};
+    int r = (int)((cb.r * hsia_b->a) + (ca.r * (1.0 - hsia_b->a)));
+    int g = (int)((cb.g * hsia_b->a) + (ca.g * (1.0 - hsia_b->a)));
+    int b = (int)((cb.b * hsia_b->a) + (ca.b * (1.0 - hsia_b->a)));
+    int w = (int)((cb.w * hsia_b->a) + (ca.w * (1.0 - hsia_b->a)));
+
+    RgbwColor rgbw = {r, g, b, w};
+    float a = hsia_a->a + (hsia_b->a * (1 - hsia_a->a));
+
+    return rgbw2hsia(rgbw, a);
 }
 
 int randint(int n)
@@ -229,6 +275,100 @@ double rand_gaussian()
 
 RgbwColor hsia2rgbw(HsiaColor *hsia)
 {
+    int H = hsia->h;
+    double S = hsia->s;
+    double I = hsia->i;
+    
+    //if (hsia->a < 1)
+    //{
+        // Since we are doing the final conversion from HSIA to RGBW, we cannot bring along the alpha channel.
+        // We will simulate this by moving the alpha as a multiplier of the given intensity.
+    //    I = I * hsia->a;
+    //}
+
+    double Htag = H / (double) 60;
+    double Z = 1 - fabs(fmod(Htag, 2) - 1);
+    double C = (3 * I * S) / (1 + Z);
+    double X = C * Z;
+
+    double R1;
+    double G1;
+    double B1;
+    if (0 <= Htag && Htag <= 1) {
+        R1 = C;
+        G1 = X;
+        B1 = 0; //R1, G1, B1 = C, X, 0
+    }
+    else if (1 <= Htag && Htag <= 2) {
+        R1 = X;
+        G1 = C;
+        B1 = 0; //R1, G1, B1 = X, C, 0
+    }
+    else if (2 <= Htag && Htag <= 3) {
+        R1 = 0;
+        G1 = C;
+        B1 = X; //R1, G1, B1 = 0, C, X
+    }
+    else if (3 <= Htag && Htag <= 4) {
+        R1 = 0;
+        G1 = X;
+        B1 = C; //R1, G1, B1 = 0, X, C
+    }
+    else if (4 <= Htag && Htag <= 5) {
+        R1 = X;
+        G1 = 0;
+        B1 = C; //R1, G1, B1 = X, 0, C
+    }
+    else if (5 <= Htag && Htag <= 6) {
+        R1 = C;
+        G1 = 0;
+        B1 = X; //R1, G1, B1 = C, 0, X
+    }
+    else {
+        R1 = 0;
+        G1 = 0;
+        B1 = 0; //R1, G1, B1 = 0, 0, 0  # Undefined
+    }
+
+    // Calculation rgb
+    double m = I * (1 - S);
+    double R = R1 + m;
+    double G = G1 + m;
+    double B = B1 + m; //, G, B = R1 + m, G1 + m, B1 + m
+
+    // Limit R, G, B to valid range:
+    //R = max(min(R, 1), 0)
+    //G = max(min(G, 1), 0)
+    //B = max(min(B, 1), 0)
+
+    // Handling RGB values above 1:
+    // -----------------------------
+    // Avoiding weird colours - see the comment of Giacomo Catenazzi.
+    // Find the maximum between R, G, B, and if the value is above 1, divide the 3 channels with such numbers.
+    //int max_rgb = MAX(R, MAX(G, B));
+    double max_rgb = R;
+    if (G > max_rgb) {
+        max_rgb = G;
+    }
+    if (B > max_rgb) {
+        max_rgb = B;
+    }
+
+    if (max_rgb > 1) {
+        //printf("More than 1, %f, %f, %f\n", R, G, B);
+        R = R / 3; //R / max_rgb;
+        G = G / 3; //G / max_rgb;
+        B = B / 3; //B / max_rgb;
+    }
+    
+    return (RgbwColor){
+        (int)floorf(255 * R),
+        (int)floorf(255 * G),
+        (int)floorf(255 * B),
+        (int) (255 * ((float)((1 - S) * I)))
+    };
+
+    /*
     float i = hsia->i;
     if (hsia->a < 1)
     {
@@ -309,6 +449,7 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
 #endif
 
     return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
+    */
 }
 
 HsiaColor LerpHSIA(HsiaColor *a, HsiaColor *b, float t)

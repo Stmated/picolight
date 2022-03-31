@@ -32,79 +32,79 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
 
     if (i < data->len * 0.1)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor c = black;
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c = c1;
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.2)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise = {190, 1, 1, 1};
-        HsiaColor c = math_average_hsia2(&black, &turqoise);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 1};
+        HsiaColor c = math_average_hsia(&c1, &c2);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.3)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise80 = {190, 1, 1, 0.8};
-        HsiaColor c = math_average_hsia2(&black, &turqoise80);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.8};
+        HsiaColor c = math_average_hsia(&c1, &c2);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.4)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise60 = {190, 1, 1, 0.6};
-        HsiaColor c = math_average_hsia2(&black, &turqoise60);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.6};
+        HsiaColor c = math_average_hsia(&c1, &c2);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.5)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise40 = {190, 1, 1, 0.4};
-        HsiaColor c = math_average_hsia2(&black, &turqoise40);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.4};
+        HsiaColor c = math_average_hsia(&c1, &c2);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.6)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise = {190, 1, 1, 1};
-        HsiaColor green = {115, 1, 1, 1};
-        HsiaColor mix1 = math_average_hsia2(&black, &turqoise);
-        HsiaColor c = math_average_hsia2(&mix1, &green);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 1};
+        HsiaColor c3 = {120, 1, 1, 1};
+        HsiaColor mix1 = math_average_hsia(&c1, &c2);
+        HsiaColor c = math_average_hsia(&mix1, &c3);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.7)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise80 = {190, 1, 1, 0.8};
-        HsiaColor green50 = {115, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia2(&black, &turqoise80);
-        HsiaColor c = math_average_hsia2(&mix1, &green50);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.8};
+        HsiaColor c3 = {120, 1, 1, 0.5};
+        HsiaColor mix1 = math_average_hsia(&c1, &c2);
+        HsiaColor c = math_average_hsia(&mix1, &c3);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.8)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise60 = {190, 1, 1, 0.6};
-        HsiaColor green50 = {115, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia2(&black, &turqoise60);
-        HsiaColor c = math_average_hsia2(&mix1, &green50);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.6};
+        HsiaColor c3 = {120, 1, 1, 0.5};
+        HsiaColor mix1 = math_average_hsia(&c1, &c2);
+        HsiaColor c = math_average_hsia(&mix1, &c3);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else if (i < data->len * 0.9)
     {
-        HsiaColor black = {0, 1, 1, 1};
-        HsiaColor turqoise40 = {190, 1, 1, 0.4};
-        HsiaColor green50 = {115, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia2(&black, &turqoise40);
-        HsiaColor c = math_average_hsia2(&mix1, &green50);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {240, 1, 1, 0.4};
+        HsiaColor c3 = {120, 1, 1, 0.5};
+        HsiaColor mix1 = math_average_hsia(&c1, &c2);
+        HsiaColor c = math_average_hsia(&mix1, &c3);
         printer(i, &c, dataPtr, parentDataPtr);
     }
     else
     {
-        HsiaColor black = {0, 0, 0, 1};
-        HsiaColor green50 = {115, 1, 1, 0.5};
-        HsiaColor c = math_average_hsia2(&black, &green50);
+        HsiaColor c1 = {0, 1, 1, 1};
+        HsiaColor c2 = {120, 1, 1, 0.5};
+        HsiaColor c = math_average_hsia(&c1, &c2);
         printer(i, &c, dataPtr, parentDataPtr);
     }
 

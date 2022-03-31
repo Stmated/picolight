@@ -61,20 +61,18 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_test();
-    
-    pattern_register_snakes();
-
-    pattern_register_snake();
-
     pattern_register_random();
 
+    pattern_register_snakes();
+    pattern_register_snake();
     pattern_register_rainbow_wave();
     pattern_register_fade_between();
     pattern_register_fill_sway();
     pattern_register_strobe();
     pattern_register_sparkle();
     pattern_register_rainbow();
+
+    pattern_register_test();
 }
 
 void pattern_register(
@@ -98,12 +96,23 @@ void pattern_register(
     state.modules_size++;
 }
 
+HsiaColor BLACK = {0, 0, 0, 1};
+
 inline void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
-    RgbwColor rgbw = hsia2rgbw(c);
-    put_pixel(index, &rgbw);
+    if (c->a < 1)
+    {
+        HsiaColor blended = math_average_hsia(&BLACK, c);
+        RgbwColor rgbw = hsia2rgbw(&blended);
+        put_pixel(index, &rgbw);
+    }
+    else
+    {
+        RgbwColor rgbw = hsia2rgbw(c);
+        put_pixel(index, &rgbw);
+    }
 }
 
 inline void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
@@ -120,8 +129,7 @@ inline void pattern_printer_merging(uint16_t index, HsiaColor *c, void *dataPtr,
     // Important to use the parent data here, since "dataPtr" is from the sub-pattern
     data_pixel_blending_struct *data = parentDataPtr;
 
-    HsiaColor colors[2] = {data->pixels[sizeof(HsiaColor) * data->stepIndex], *c};
-    data->pixels[sizeof(HsiaColor) * data->stepIndex] = math_average_hsia(colors, 2);
+    data->pixels[sizeof(HsiaColor) * data->stepIndex] = math_average_hsia(&data->pixels[sizeof(HsiaColor) * data->stepIndex], c);
     data->stepIndex++;
 }
 

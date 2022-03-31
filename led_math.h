@@ -21,8 +21,7 @@ int randint_weighted_towards_max(int min, int max, float weight);
 int math_average_angle(int *angles, int length);
 
 // TODO: Add blend mode, and maybe different blend progress between the different colors?
-HsiaColor math_average_hsia(HsiaColor* colors, uint8_t length);
-HsiaColor math_average_hsia2(HsiaColor *a, HsiaColor *b);
+HsiaColor math_average_hsia(HsiaColor *a, HsiaColor *b);
 
 HsiaColor LerpHSIA(HsiaColor *a, HsiaColor *b, float t);
 RgbwColor hsia2rgbw(HsiaColor *hsi);
@@ -31,6 +30,7 @@ void math_precompute();
 
 #define HSI_H_MIN 0
 #define HSI_H_MAX 360
+#define HSI_H_HALF 180
 
 #define HSI_S_MIN 0
 #define HSI_S_MAX 1

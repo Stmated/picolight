@@ -96,7 +96,8 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     data->snakeModule->executor(i, data->snake3data, frame->snake3frame, data, snakes_printer);
 
     // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?
-    HsiaColor c = math_average_hsia(data->base.pixels, 3);
+    HsiaColor step1 = math_average_hsia(&data->base.pixels[sizeof(HsiaColor) * 0], &data->base.pixels[sizeof(HsiaColor) * 1]);
+    HsiaColor c = math_average_hsia(&step1, &data->base.pixels[sizeof(HsiaColor) * 2]);
 
     // Parent as ourself, since we are just a virtual pattern
     // THIS IS WRONG! IT ONLY WORKS FOR RANDOM, NOT NESTED!

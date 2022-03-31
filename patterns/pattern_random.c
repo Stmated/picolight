@@ -165,7 +165,7 @@ static void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentData
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
     // TODO: Could this be sent to the parent printer directly somehow? So we do not need to average twice?
     // TODO: Can we skip sending along the parentDataPtr, and instead sent Printer as a semi-opaque struct that contains its own functionality?
-    HsiaColor c = math_average_hsia(data->base.pixels, 2);
+    HsiaColor c = math_average_hsia(&data->base.pixels[0], &data->base.pixels[sizeof(HsiaColor)]);
     printer(i, &c, dataPtr, dataPtr); // Parent as ourself, since we are just a virtual pattern
 }
 
