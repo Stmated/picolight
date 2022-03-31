@@ -2,14 +2,14 @@
 
 typedef struct data_struct
 {
-    HsiColor *colors;
+    HsiaColor *colors;
     int colors_size;
     int time_per_color;
 } data_struct;
 
 typedef struct frame_struct
 {
-    HsiColor hsi;
+    HsiaColor hsi;
 } frame_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -26,7 +26,7 @@ static void *data_creator(uint16_t len, float intensity)
 
     data->colors_size = 3 + randint(10);
     data->time_per_color = 3000 + randint_weighted_towards_min(0, 30000, intensity);
-    data->colors = calloc(data->colors_size, sizeof(HsiColor));
+    data->colors = calloc(data->colors_size, sizeof(HsiaColor));
 
     // We use the same saturation and intensity for all different hues for this pattern.
     float hsi_s = 0.5 + 0.5 * (randint_weighted_towards_max(0, 10000, intensity) / (float)10000);
@@ -34,7 +34,7 @@ static void *data_creator(uint16_t len, float intensity)
 
     for (int i = 0; i < data->colors_size; i++)
     {
-        data->colors[i * sizeof(HsiColor)] = (HsiColor){randint(360), hsi_s, hsi_i};
+        data->colors[i * sizeof(HsiaColor)] = (HsiaColor){randint(360), hsi_s, hsi_i, 1};
     }
 
     return data;
@@ -49,12 +49,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     int colorIndex = ((int)totalColorStepProgress) % data->colors_size;
     int colorIndex2 = (colorIndex + 1) % data->colors_size;
 
-    HsiColor hsi_from = data->colors[colorIndex * sizeof(HsiColor)];
-    HsiColor hsi_to = data->colors[colorIndex2 * sizeof(HsiColor)];
+    HsiaColor hsi_from = data->colors[colorIndex * sizeof(HsiaColor)];
+    HsiaColor hsi_to = data->colors[colorIndex2 * sizeof(HsiaColor)];
 
     // If on color step 3.2, then we will get 0.2, since the integral value is removed.
     float percentage_into_color = totalColorStepProgress - ((int)floorf(totalColorStepProgress));
-    frame->hsi = LerpHSI(&hsi_from, &hsi_to, percentage_into_color);
+    frame->hsi = LerpHSIA(&hsi_from, &hsi_to, percentage_into_color);
 
     return frame;
 }

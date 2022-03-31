@@ -3,8 +3,8 @@
 typedef struct frame_struct
 {
     uint32_t remainder;
-    HsiColor white;
-    HsiColor black;
+    HsiaColor white;
+    HsiaColor black;
 } frame_struct;
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -12,8 +12,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
     frame->remainder = t % 100;
-    frame->white = (HsiColor){0, 0, 1};
-    frame->black = (HsiColor){0, 0, 0};
+    frame->white = (HsiaColor){0, 0, 1, 1};
+    frame->black = (HsiaColor){0, 0, 0, 0};
 
     return frame;
 }

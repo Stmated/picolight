@@ -1,9 +1,9 @@
 #include "patterns.h"
 
-HsiColor black = {0, 0, 0};
-HsiColor white = {0, 0, 1};
+HsiaColor transparent = {0, 0, 0, 0};
+HsiaColor white = {0, 0, 1, 1};
 
-void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *framePtr, PatternPrinter printer)
+void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, PatternPrinter printer)
 {
 
     // We sleep 1 ms, since this is usually too fast.
@@ -61,6 +61,8 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_test();
+    
     pattern_register_snakes();
 
     pattern_register_snake();
@@ -96,30 +98,30 @@ void pattern_register(
     state.modules_size++;
 }
 
-inline void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
+inline void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
-    RgbwColor rgbw = hsi2rgbw(c);
+    RgbwColor rgbw = hsia2rgbw(c);
     put_pixel(index, &rgbw);
 }
 
-inline void pattern_printer_set(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
+inline void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
 {
     // Important to use the parent data here, since "dataPtr" is from the sub-pattern
     data_pixel_blending_struct *data = parentDataPtr;
 
-    data->pixels[sizeof(HsiColor) * data->stepIndex] = *c;
+    data->pixels[sizeof(HsiaColor) * data->stepIndex] = *c;
     data->stepIndex++;
 }
 
-inline void pattern_printer_merging(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr)
+inline void pattern_printer_merging(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
 {
     // Important to use the parent data here, since "dataPtr" is from the sub-pattern
     data_pixel_blending_struct *data = parentDataPtr;
 
-    HsiColor colors[2] = {data->pixels[sizeof(HsiColor) * data->stepIndex], *c};
-    data->pixels[sizeof(HsiColor) * data->stepIndex] = math_average_hsi(colors, 2);
+    HsiaColor colors[2] = {data->pixels[sizeof(HsiaColor) * data->stepIndex], *c};
+    data->pixels[sizeof(HsiaColor) * data->stepIndex] = math_average_hsia(colors, 2);
     data->stepIndex++;
 }
 
@@ -160,7 +162,7 @@ void pattern_execute(uint16_t len, uint32_t t)
     }
     else
     {
-        HsiColor black = {0, 0, 0};
-        setAll(0, len, &black, NULL, NULL, pattern_printer_default);
+        HsiaColor transparent = {0, 0, 0};
+        setAll(0, len, &transparent, NULL, NULL, pattern_printer_default);
     }
 }

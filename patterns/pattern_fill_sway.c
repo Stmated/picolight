@@ -21,7 +21,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    HsiColor hsi;
+    HsiaColor hsi;
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
@@ -63,7 +63,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
 
     int h = (int)(data->hue_start + (ph * data->hue_width)) % HSI_H_MAX;
-    frame->hsi = (HsiColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width)};
+    frame->hsi = (HsiaColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width), 1};
 
     return frame;
 }

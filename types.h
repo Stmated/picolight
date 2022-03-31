@@ -18,15 +18,16 @@ typedef struct RgbwColor
 } RgbwColor;
 
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255
-typedef struct HsiColor
+typedef struct HsiaColor
 {
     // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
     uint16_t h;
     float s;
     float i;
-} HsiColor;
+    float a;
+} HsiaColor;
 
-extern HsiColor black;
-extern HsiColor white;
+extern HsiaColor transparent;
+extern HsiaColor white;
 
 #endif

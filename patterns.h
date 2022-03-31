@@ -9,7 +9,7 @@
 #include "easing.h"
 #include "options.h"
 
-typedef void (*PatternPrinter)(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
+typedef void (*PatternPrinter)(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr);
 
 // TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
 //          Or do a few pixels at a time, in different threads or whatnot.
@@ -48,7 +48,7 @@ typedef struct PatternModule
 
 typedef struct data_pixel_blending_struct
 {
-    HsiColor *pixels;
+    HsiaColor *pixels;
     uint8_t stepIndex;
 
 } data_pixel_blending_struct;
@@ -62,24 +62,26 @@ void pattern_destroyer_default(void *data);
 void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr);
 void pattern_frame_destroyer_default(void *data, void *framePtr);
 
-void pattern_printer_default(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
-void pattern_printer_set(uint16_t index, HsiColor *c, void *dataPtr, void *parentDataPtr);
+void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr);
+void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr);
 
-void setAll(uint16_t offset, uint16_t len, HsiColor *c, void *dataPtr, void *framePtr, PatternPrinter printer);
+void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, PatternPrinter printer);
 
 void pattern_find_and_register_patterns();
 
 void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer, PatternOptions options);
 
+void pattern_register_test();
 void pattern_register_snake();
 void pattern_register_fade_between();
 void pattern_register_fill_sway();
 void pattern_register_rainbow();
 void pattern_register_rainbow_wave();
-void pattern_register_random();
 void pattern_register_snakes();
 void pattern_register_sparkle();
 void pattern_register_strobe();
+
+void pattern_register_random();
 
 typedef struct GlobalState
 {

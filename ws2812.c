@@ -74,7 +74,7 @@ int main()
     state.speed = 1;
     state.withOffset = false;
     state.nextPatternIndex = 0;
-    state.nextIntensity = 0.2;
+    state.nextIntensity = 0.4;
 
     for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_END; i++)
     {

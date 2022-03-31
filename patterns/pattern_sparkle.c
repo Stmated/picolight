@@ -5,8 +5,8 @@ typedef struct data_struct
     int chanceToLightUp;
     int chanceToGoOut;
     void *values;
-    HsiColor colorOn;
-    HsiColor colorOff;
+    HsiaColor colorOn;
+    HsiaColor colorOff;
 } data_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -25,8 +25,8 @@ static void *data_creator(uint16_t len, float intensity)
     data->chanceToLightUp = randint_weighted_towards_max(1, 10, intensity);
     data->chanceToGoOut = randint_weighted_towards_min(10, 100, intensity);
     data->values = calloc(len, sizeof(bool));
-    data->colorOn = (HsiColor){0, 0, 1};
-    data->colorOff = (HsiColor){0, 0, 0};
+    data->colorOn = (HsiaColor){0, 0, 1, 1};
+    data->colorOff = (HsiaColor){0, 0, 0, 0};
 
     return data;
 }

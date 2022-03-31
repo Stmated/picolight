@@ -52,6 +52,7 @@ set (SRC_LIST
     patterns/pattern_snakes.c
     patterns/pattern_sparkle.c
     patterns/pattern_strobe.c
+    patterns/pattern_test.c
 
     patterns.c
 

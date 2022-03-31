@@ -72,7 +72,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
         h = HSI_H_MAX - h;
     }
 
-    HsiColor c = (HsiColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i};
+    HsiaColor c = (HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1};
 
     printer(i, &c, dataPtr, parentDataPtr);
 }

@@ -53,9 +53,8 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
 
     if (distance <= data->width)
     {
-        // Move "hsi" into frame memory, and keep writing over the hue + i attributes? We save a couple of cpu cycles?
         float distanceMultiplier = (1 - (distance / (float)data->width));
-        HsiColor hsi = {data->hue, data->saturation, data->brightness * distanceMultiplier};
+        HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
         if (data->affectSaturation)
         {
             hsi.s *= distanceMultiplier;   
@@ -65,7 +64,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     }
     else
     {
-        printer(i, &black, dataPtr, parentDataPtr);
+        printer(i, &transparent, dataPtr, parentDataPtr);
     }
 }
 

@@ -28,30 +28,6 @@ void math_precompute()
         lookup_h2cos_h240[h] = cosf(DEG_TO_RAD(h - 240));
         lookup_h2cos_300h[h] = cosf(DEG_TO_RAD(300 - h));
     }
-
-    /*
-    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
-    {
-        float r = h * (M_PI / 180.0) - 2.09439;
-        // float H = r
-        float cos_h = cosf(r);
-        float cos_1047_h = cosf(1.047196667 - r);
-        float div = cos_h / cos_1047_h;
-
-        lookup_hsi2rgbw_cos_240[h] = div;
-    }
-
-    for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
-    {
-        float r = h * (M_PI / 180.0) - 4.188787;
-        // float H = h - 4.188787;
-        float cos_h = cosf(r);
-        float cos_1047_h = cosf(1.047196667 - r);
-        float div = cos_h / cos_1047_h;
-
-        lookup_hsi2rgbw_cos_360[h] = div;
-    }
-    */
 #endif
 }
 
@@ -83,27 +59,6 @@ int getCoPrime(int a)
     return coprime;
 }
 
-// TODO: This can be simplified if we change hue into float? Or should everything else become ints?
-//          This method is SLOW -- have to SPEED IT UP SIGNIFICANTLY!
-/*float math_average_angle(float *angles, int length)
-{
-    float x = 0;
-    float y = 0;
-
-    for (int i = 0; i < length; i++)
-    {
-        float r = angles[i] * (M_PI / 180.0);
-        x += cosf(r);
-        y += sinf(r);
-    }
-
-    float radians = atan2f(y, x);
-    int degrees = (int)roundf(radians * (180.0 / M_PI));
-    int fixedDegreees = (degrees + 360) % 360;
-    return fixedDegreees;
-}
-*/
-
 inline int math_average_angle(int *angles, int length)
 {
     float x = 0;
@@ -126,19 +81,22 @@ inline int math_average_angle(int *angles, int length)
 
 static const float RADIAN_TO_PI = (180.0 / M_PI);
 
-// TODO: Speed up this method! It is slow! Especially patterns_average_angles!
-inline HsiColor math_average_hsi(HsiColor *colors, uint8_t length)
+// TODO: Speed up this method!
+inline HsiaColor math_average_hsia(HsiaColor *colors, uint8_t length)
 {
     float x = 0;
     float y = 0;
-    float sMax = 0;
-    float iMax = 0;
-    for (int i = 0; i < length; i++)
+    HsiaColor result = {colors[0].h, colors[0].s, colors[0].i, colors[0].a};
+    //uint16_t hsia_h = colors[0].h;
+    //float hsia_s = colors[0].s;
+    //float hsia_i = colors[0].i;
+    //float hsia_a = colors[0].a;
+    for (uint_fast8_t i = 1; i < length; i++)
     {
-        HsiColor c = colors[sizeof(HsiColor) * i];
-        if (c.i == 0)
+        HsiaColor c = colors[sizeof(HsiaColor) * i];
+        if (c.a <= 0)
         {
-            // Do not include if it's black/transparent
+            // Do not include at all if it's transparent.
             continue;
         }
 
@@ -146,20 +104,45 @@ inline HsiColor math_average_hsi(HsiColor *colors, uint8_t length)
         x += lookup_h2cos[c.h];
         y += lookup_h2sin[c.h];
 #else
-        float r = c.h * (M_PI / 180.0);
+        float r = DEG_TO_RAD(c.h);
         x += cosf(r);
         y += sinf(r);
 #endif
 
-        if (c.s > sMax)
-            sMax = c.s;
-        if (c.i > iMax)
-            iMax = c.i;
+        uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
+
+        float a = c.a + result.a * (1 - result.a);
+
+        //return c;
+        //if (c.s > sMax)
+        //    sMax = c.s;
+        //if (c.i > iMax)
+        //    iMax = c.i;
     }
 
     uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
 
-    return (HsiColor){degrees, sMax, iMax};
+    return (HsiaColor){degrees, 0, 0, 1};
+}
+
+inline HsiaColor math_average_hsia2(HsiaColor *a, HsiaColor *b)
+{
+    float x = 0;
+    float y = 0;
+    HsiaColor result = {a->h, a->s, a->i, a->a};
+
+    x += lookup_h2cos[a->h];
+    y += lookup_h2sin[a->h];
+    x += lookup_h2cos[b->h];
+    y += lookup_h2sin[b->h];
+
+    uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
+
+    float alpha = b->a + result.a * (1 - result.a);
+
+    //uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
+
+    return (HsiaColor){degrees, 1, 1, alpha};
 }
 
 int randint(int n)
@@ -237,88 +220,91 @@ double rand_gaussian()
 
 #define HUE_UPPER_LIMIT 360
 
-RgbwColor hsi2rgbw(HsiColor *hsi)
+RgbwColor hsia2rgbw(HsiaColor *hsia)
 {
+    float i = hsia->i;
+    if (hsia->a < 1)
+    {
+        // Since we are doing the final conversion from HSIA to RGBW, we cannot bring along the alpha channel.
+        // We will simulate this by moving the alpha as a multiplier of the given intensity.
+        i = i * hsia->a;
+    }
+
     uint8_t r, g, b;
 
 #ifdef MATH_PRECOMPUTE
-    if (hsi->h == 0)
+    if (hsia->h == 0)
     {
-        r = 255 * (hsi->i + 2 * hsi->i * hsi->s);
-        g = 255 * (hsi->i - hsi->i * hsi->s);
-        b = 255 * (hsi->i - hsi->i * hsi->s);
+        r = 255 * (i + 2 * i * hsia->s);
+        g = 255 * (i - i * hsia->s);
+        b = 255 * (i - i * hsia->s);
     }
-    else if (hsi->h < 120)
+    else if (hsia->h < 120)
     {
-        r = 255 * (hsi->i + hsi->i * hsi->s * lookup_h2cos[hsi->h] / lookup_h2cos_60h[hsi->h]);
-        g = 255 * (hsi->i + hsi->i * hsi->s * (1 - lookup_h2cos[hsi->h] / lookup_h2cos_60h[hsi->h]));
-        b = 255 * (hsi->i - hsi->i * hsi->s);
+        r = 255 * (i + i * hsia->s * lookup_h2cos[hsia->h] / lookup_h2cos_60h[hsia->h]);
+        g = 255 * (i + i * hsia->s * (1 - lookup_h2cos[hsia->h] / lookup_h2cos_60h[hsia->h]));
+        b = 255 * (i - i * hsia->s);
     }
-    else if (hsi->h == 120)
+    else if (hsia->h == 120)
     {
-        r = 255 * (hsi->i - hsi->i * hsi->s);
-        g = 255 * (hsi->i + 2 * hsi->i * hsi->s);
-        b = 255 * (hsi->i - hsi->i * hsi->s);
+        r = 255 * (i - i * hsia->s);
+        g = 255 * (i + 2 * i * hsia->s);
+        b = 255 * (i - i * hsia->s);
     }
-    else if (hsi->h < 240)
+    else if (hsia->h < 240)
     {
-        r = 255 * (hsi->i - hsi->i * hsi->s);
-        g = 255 * (hsi->i + hsi->i * hsi->s * lookup_h2cos_h120[hsi->h] / lookup_h2cos_180h[hsi->h]);
-        b = 255 * (hsi->i + hsi->i * hsi->s * (1 - lookup_h2cos_h120[hsi->h] / lookup_h2cos_180h[hsi->h]));
+        r = 255 * (i - i * hsia->s);
+        g = 255 * (i + i * hsia->s * lookup_h2cos_h120[hsia->h] / lookup_h2cos_180h[hsia->h]);
+        b = 255 * (i + i * hsia->s * (1 - lookup_h2cos_h120[hsia->h] / lookup_h2cos_180h[hsia->h]));
     }
-    else if (hsi->h == 240)
+    else if (hsia->h == 240)
     {
-        r = 255 * (hsi->i - hsi->i * hsi->s);
-        g = 255 * (hsi->i - hsi->i * hsi->s);
-        b = 255 * (hsi->i + 2 * hsi->i * hsi->s);
+        r = 255 * (i - i * hsia->s);
+        g = 255 * (i - i * hsia->s);
+        b = 255 * (i + 2 * i * hsia->s);
     }
     else
     {
-        r = 255 * (hsi->i + hsi->i * hsi->s * (1 - lookup_h2cos_h240[hsi->h] / lookup_h2cos_300h[hsi->h]));
-        g = 255 * (hsi->i - hsi->i * hsi->s);
-        b = 255 * (hsi->i + hsi->i * hsi->s * lookup_h2cos_h240[hsi->h] / lookup_h2cos_300h[hsi->h]);
+        r = 255 * (i + i * hsia->s * (1 - lookup_h2cos_h240[hsia->h] / lookup_h2cos_300h[hsia->h]));
+        g = 255 * (i - i * hsia->s);
+        b = 255 * (i + i * hsia->s * lookup_h2cos_h240[hsia->h] / lookup_h2cos_300h[hsia->h]);
     }
 #else
-    if (hsi->h < 120)
+    if (hsia->h < 120)
     {
-        float rad = DEG_TO_RAD(hsi->h);
-        float rad_offset = DEG_TO_RAD(60 - hsi->h);
-        r = 255 * (hsi->i + hsi->i * hsi->s * cosf(rad) / cosf(rad_offset));
-        g = 255 * (hsi->i + hsi->i * hsi->s * (1 - cosf(rad) / cosf(rad_offset)));
-        b = 255 * (hsi->i - hsi->i * hsi->s);
+        float rad = DEG_TO_RAD(hsia->h);
+        float rad_offset = DEG_TO_RAD(60 - hsia->h);
+        r = 255 * (i + i * hsia->s * cosf(rad) / cosf(rad_offset));
+        g = 255 * (i + i * hsia->s * (1 - cosf(rad) / cosf(rad_offset)));
+        b = 255 * (i - i * hsia->s);
     }
-    else if (hsi->h < 240)
+    else if (hsia->h < 240)
     {
-        float H = M_PI * hsi->h / (float)180; // Convert to radians
+        float H = M_PI * hsia->h / (float)180; // Convert to radians
         H = H - 2.09439;
         float cos_h = cosf(H);
         float cos_1047_h = cosf(1.047196667 - H);
-        g = hsi->s * 255 * hsi->i / 3 * (1 + cos_h / cos_1047_h);
-        b = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_h / cos_1047_h));
+        g = hsia->s * 255 * i / 3 * (1 + cos_h / cos_1047_h);
+        b = hsia->s * 255 * i / 3 * (1 + (1 - cos_h / cos_1047_h));
         r = 0;
     }
     else
     {
 
-        float H = M_PI * hsi->h / (float)180; // Convert to radians
+        float H = M_PI * hsia->h / (float)180; // Convert to radians
         H = H - 4.188787;
         float cos_h = cosf(H);
         float cos_1047_h = cosf(1.047196667 - H);
-        b = hsi->s * 255 * hsi->i / 3 * (1 + cos_h / cos_1047_h);
-        r = hsi->s * 255 * hsi->i / 3 * (1 + (1 - cos_h / cos_1047_h));
+        b = hsia->s * 255 * i / 3 * (1 + cos_h / cos_1047_h);
+        r = hsia->s * 255 * i / 3 * (1 + (1 - cos_h / cos_1047_h));
         g = 0;
     }
 #endif
 
-    // c->r = r;
-    // c->g = g;
-    // c->b = b;
-    // c->w = 255 * (1 - hsi->s) * hsi->i;
-
-    return (RgbwColor){r, g, b, 255 * (1 - hsi->s) * hsi->i};
+    return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
 }
 
-HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t)
+HsiaColor LerpHSIA(HsiaColor *a, HsiaColor *b, float t)
 {
     // Hue interpolation
     int h;
@@ -344,8 +330,9 @@ HsiColor LerpHSI(HsiColor *a, HsiColor *b, float t)
     }
 
     // Interpolates the rest
-    return (HsiColor){
+    return (HsiaColor){
         h,
         a->s + t * (b->s - a->s),
-        a->i + t * (b->i - a->i)};
+        a->i + t * (b->i - a->i),
+        (a->a + b->a) / 2};
 }
