@@ -131,12 +131,19 @@ inline HsiaColor math_average_hsia2(HsiaColor *a, HsiaColor *b)
     float y = 0;
     HsiaColor result = {a->h, a->s, a->i, a->a};
 
-    x += lookup_h2cos[a->h];
-    y += lookup_h2sin[a->h];
-    x += lookup_h2cos[b->h];
-    y += lookup_h2sin[b->h];
+    if (b->a >= 0.95)
+    {
+        return *b;
+    }
+    else
+    {
+        x += lookup_h2cos[a->h];
+        y += lookup_h2sin[a->h];
+        x += lookup_h2cos[b->h];
+        y += lookup_h2sin[b->h];
+    }
 
-    uint16_t degrees = (uint16_t)roundf(atan2f(y, x) * RADIAN_TO_PI);
+    uint32_t degrees = (uint32_t)roundf(atan2f(y, x) * RADIAN_TO_PI) % 360;
 
     float alpha = b->a + result.a * (1 - result.a);
 
