@@ -18,17 +18,17 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, Printer *printer)
 {
     frame_struct *frame = framePtr;
 
     if (frame->remainder < 50)
     {
-        printer(i, &frame->white, dataPtr, parentDataPtr);
+        printer->print(i, &frame->white, printer);
     }
     else
     {
-        printer(i, &frame->black, dataPtr, parentDataPtr);
+        printer->print(i, &frame->black, printer);
     }
 }
 

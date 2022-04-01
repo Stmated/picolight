@@ -2,7 +2,6 @@
 
 typedef struct data_struct
 {
-    data_pixel_blending_struct base;
     void *data1;
     void *data2;
     PatternModule *pattern1;
@@ -10,23 +9,19 @@ typedef struct data_struct
     int period;
     uint32_t updatedAt;
     float intensity;
-    //int patternIndex1;
-    //int patternIndex2;
 
 } data_struct;
 
 typedef struct frame_struct
 {
-    void *snake1frame;
-    void *snake2frame;
+    void *frame1;
+    void *frame2;
 
 } frame_struct;
 
 static void data_destroyer(void *dataPtr)
 {
     data_struct *data = dataPtr;
-
-    free(data->base.pixels);
 
     if (data->data1)
     {
@@ -53,7 +48,7 @@ static void *data_creator(uint16_t len, float intensity)
     data->data2 = data->pattern2->creator(len, intensity);
 
     // Allocate memory for each sub-pattern, which we will need to blend
-    data->base.pixels = calloc(2, sizeof(HsiaColor));
+    //data->base.pixels = calloc(2, sizeof(HsiaColor));
 
     return data;
 }
@@ -133,8 +128,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
-    frame->snake1frame = data->pattern1->frameCreator(len, t, data->data1);
-    frame->snake2frame = data->pattern2->frameCreator(len, t, data->data2);
+    frame->frame1 = data->pattern1->frameCreator(len, t, data->data1);
+    frame->frame2 = data->pattern2->frameCreator(len, t, data->data2);
 
     return frame;
 }
@@ -144,29 +139,46 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->pattern1->frameDestroyer(data->data1, frame->snake1frame);
-    data->pattern2->frameDestroyer(data->data2, frame->snake2frame);
+    data->pattern1->frameDestroyer(data->data1, frame->frame1);
+    data->pattern2->frameDestroyer(data->data2, frame->frame2);
     
     free(framePtr);
 }
 
-static void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+typedef struct RandomPrinter
+{
+    Printer base;
+    int stepIndex;
+    HsiaColor pixels[2];
+
+} RandomPrinter;
+
+static inline void random_printer(uint16_t index, HsiaColor *c, void *printerPtr)
+{
+    RandomPrinter *printer = printerPtr;
+    printer->pixels[printer->stepIndex] = *c;
+    printer->stepIndex++;
+}
+
+static void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     // TODO: Need to test each combination separately, and accurately, and make each one work EXACTLY as intended -- because something is seriously wrong... especially rainbow_wave + whatever.
 
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->base.stepIndex = 0;
-    data->pattern1->executor(i, data->data1, frame->snake1frame, data, pattern_printer_set);
-    data->pattern2->executor(i, data->data2, frame->snake2frame, data, pattern_printer_set);
+    RandomPrinter randomPrinter = {*printer};
+    Printer *downcast = (void*)&randomPrinter;
+
+    data->pattern1->executor(i, data->data1, frame->frame1, downcast);
+    data->pattern2->executor(i, data->data2, frame->frame2, downcast);
 
     // Now let's send the data to the original printer
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
     // TODO: Could this be sent to the parent printer directly somehow? So we do not need to average twice?
     // TODO: Can we skip sending along the parentDataPtr, and instead sent Printer as a semi-opaque struct that contains its own functionality?
-    HsiaColor c = math_average_hsia(&data->base.pixels[0], &data->base.pixels[sizeof(HsiaColor)]);
-    printer(i, &c, dataPtr, dataPtr); // Parent as ourself, since we are just a virtual pattern
+    HsiaColor c = math_average_hsia(&randomPrinter.pixels[0], &randomPrinter.pixels[1]);
+    printer->print(i, &c, printer); // Parent as ourself, since we are just a virtual pattern
 }
 
 void pattern_register_random()

@@ -3,12 +3,14 @@
 HsiaColor transparent = {0, 0, 0, 0};
 HsiaColor white = {0, 0, 1, 1};
 
-void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, PatternPrinter printer)
+/*
+void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, Printer *printer)
 {
 
     // We sleep 1 ms, since this is usually too fast.
     sleep_ms(1);
 }
+*/
 
 void *pattern_creator_default(uint16_t len, float intensity)
 {
@@ -61,8 +63,6 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_test();
-    
     pattern_register_random();
 
     pattern_register_snakes();
@@ -74,7 +74,7 @@ void pattern_find_and_register_patterns()
     pattern_register_sparkle();
     pattern_register_rainbow();
 
-    
+    pattern_register_test();
 }
 
 void pattern_register(
@@ -100,7 +100,7 @@ void pattern_register(
 
 HsiaColor BLACK = {0, 0, 0, 1};
 
-inline void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
+static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer* printer)
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
@@ -117,6 +117,7 @@ inline void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr,
     }
 }
 
+/*
 inline void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
 {
     // Important to use the parent data here, since "dataPtr" is from the sub-pattern
@@ -134,6 +135,7 @@ inline void pattern_printer_merging(uint16_t index, HsiaColor *c, void *dataPtr,
     data->pixels[sizeof(HsiaColor) * data->stepIndex] = math_average_hsia(&data->pixels[sizeof(HsiaColor) * data->stepIndex], c);
     data->stepIndex++;
 }
+*/
 
 void pattern_execute(uint16_t len, uint32_t t)
 {
@@ -164,15 +166,19 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
         void *framePtr = module->frameCreator(len, t, state.patternData);
+        Printer pixelPrinter = {pattern_printer_default};
         for (int i = 0; i < len; i++)
         {
-            module->executor(i, state.patternData, framePtr, NULL, pattern_printer_default);
+            module->executor(i, state.patternData, framePtr, &pixelPrinter);
         }
         module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
         HsiaColor transparent = {0, 0, 0};
-        setAll(0, len, &transparent, NULL, NULL, pattern_printer_default);
+        for (int i = 0; i < len; i++)
+        {
+            pattern_printer_default(i, &transparent, NULL);
+        }
     }
 }

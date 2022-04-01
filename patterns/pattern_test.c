@@ -25,7 +25,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -34,35 +34,35 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c = c1;
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.2)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 1};
         HsiaColor c = math_average_hsia(&c1, &c2);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.3)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.8};
         HsiaColor c = math_average_hsia(&c1, &c2);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.4)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.6};
         HsiaColor c = math_average_hsia(&c1, &c2);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.5)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.4};
         HsiaColor c = math_average_hsia(&c1, &c2);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.6)
     {
@@ -71,7 +71,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
         HsiaColor c3 = {120, 1, 1, 1};
         HsiaColor mix1 = math_average_hsia(&c1, &c2);
         HsiaColor c = math_average_hsia(&mix1, &c3);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.7)
     {
@@ -80,7 +80,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
         HsiaColor c3 = {120, 1, 1, 0.5};
         HsiaColor mix1 = math_average_hsia(&c1, &c2);
         HsiaColor c = math_average_hsia(&mix1, &c3);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.8)
     {
@@ -89,7 +89,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
         HsiaColor c3 = {120, 1, 1, 0.5};
         HsiaColor mix1 = math_average_hsia(&c1, &c2);
         HsiaColor c = math_average_hsia(&mix1, &c3);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else if (i < data->len * 0.9)
     {
@@ -98,37 +98,15 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
         HsiaColor c3 = {120, 1, 1, 0.5};
         HsiaColor mix1 = math_average_hsia(&c1, &c2);
         HsiaColor c = math_average_hsia(&mix1, &c3);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
     else
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {120, 1, 1, 0.5};
         HsiaColor c = math_average_hsia(&c1, &c2);
-        printer(i, &c, dataPtr, parentDataPtr);
+        printer->print(i, &c, printer);
     }
-
-    /*
-    
-
-    float distance = fabsf(i - frame->p);
-
-    if (distance <= data->width)
-    {
-        float distanceMultiplier = (1 - (distance / (float)data->width));
-        HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
-        if (data->affectSaturation)
-        {
-            hsi.s *= distanceMultiplier;   
-        }
-        
-        printer(i, &hsi, dataPtr, parentDataPtr);
-    }
-    else
-    {
-        printer(i, &transparent, dataPtr, parentDataPtr);
-    }
-    */
 }
 
 void pattern_register_test()

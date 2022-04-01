@@ -54,12 +54,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    printer(i, &frame->hsi, dataPtr, parentDataPtr);
+    printer->print(i, &frame->hsi, printer);
 }
 
 void pattern_register_rainbow()

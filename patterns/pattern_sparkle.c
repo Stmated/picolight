@@ -31,7 +31,7 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     bool *bools = (bool *)data->values;
@@ -49,11 +49,11 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
 
     if (bools[ptrAddress])
     {
-        printer(i, &data->colorOn, dataPtr, parentDataPtr);
+        printer->print(i, &data->colorOn, printer);
     }
     else
     {
-        printer(i, &data->colorOff, dataPtr, parentDataPtr);
+        printer->print(i, &data->colorOff, printer);
     }
 }
 

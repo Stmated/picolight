@@ -94,27 +94,16 @@ HsiaColor rgbw2hsia(RgbwColor c, float a)
     {
         hue = 0;
     }
-    if (M == r)
+    else
     {
-        if (M == m)
-            hue = 0.0;
-        else
+        if (M == r)
             hue = 60.0 * (0.0 + ((g - b) / (M - m)));
-    }
-    if (M == g)
-    {
-        if (M == m)
-            hue = 0.0;
-        else
+        else if (M == g)
             hue = 60.0 * (2.0 + ((b - r) / (M - m)));
-    }
-    if (M == b)
-    {
-        if (M == m)
-            hue = 0.0;
-        else
+        else if (M == b)
             hue = 60.0 * (4.0 + ((r - g) / (M - m)));
     }
+
     if (hue < 0.0)
     {
         hue = hue + 360;

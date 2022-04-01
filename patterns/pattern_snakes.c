@@ -2,7 +2,7 @@
 
 typedef struct data_struct
 {
-    data_pixel_blending_struct base;
+    //data_pixel_blending_struct base;
 
     PatternModule *snakeModule;
 
@@ -14,10 +14,9 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    void *snake1frame;
-    void *snake2frame;
+    void *frame1;
+    void *frame2;
     void *snake3frame;
-
 } frame_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -30,8 +29,8 @@ static void data_destroyer(void *dataPtr)
     data->snake2data = NULL;
     data->snakeModule->destroyer(data->snake3data);
     data->snake3data = NULL;
-    free(data->base.pixels);
-    data->base.pixels = NULL;
+    //free(data->base.pixels);
+    //data->base.pixels = NULL;
     free(dataPtr);
 }
 
@@ -43,7 +42,7 @@ static void *data_creator(uint16_t len, float intensity)
     data->snake1data = data->snakeModule->creator(len, intensity * 4);
     data->snake2data = data->snakeModule->creator(len, intensity * 2);
     data->snake3data = data->snakeModule->creator(len, intensity);
-    data->base.pixels = calloc(3, sizeof(HsiaColor));
+    //data->base.pixels = calloc(3, sizeof(HsiaColor));
 
     return data;
 }
@@ -53,8 +52,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    frame->snake1frame = data->snakeModule->frameCreator(len, t, data->snake1data);
-    frame->snake2frame = data->snakeModule->frameCreator(len, t, data->snake2data);
+    frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data);
+    frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data);
     frame->snake3frame = data->snakeModule->frameCreator(len, t, data->snake3data);
 
     return frame;
@@ -65,19 +64,25 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->snakeModule->frameDestroyer(data->snake1data, frame->snake1frame);
-    data->snakeModule->frameDestroyer(data->snake2data, frame->snake2frame);
+    data->snakeModule->frameDestroyer(data->snake1data, frame->frame1);
+    data->snakeModule->frameDestroyer(data->snake2data, frame->frame2);
     data->snakeModule->frameDestroyer(data->snake3data, frame->snake3frame);
     free(framePtr);
 }
 
-static inline void snakes_printer(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
+typedef struct SnakePrinter
 {
-    // Important to use the parent data here, since "dataPtr" is from the sub-pattern
-    data_struct *data = parentDataPtr;
+    Printer base;
+    int stepIndex;
+    HsiaColor pixels[3];
 
-    data->base.pixels[sizeof(HsiaColor) * data->base.stepIndex] = *c;
-    data->base.stepIndex++;
+} SnakePrinter;
+
+static inline void snakes_printer(uint16_t index, HsiaColor *c, void *printerPtr)
+{
+    SnakePrinter *printer = printerPtr;
+    printer->pixels[printer->stepIndex] = *c;
+    printer->stepIndex++;
 }
 
 // TODO: This will write to the wrong data pointer if Snakes is ran inside Random! The parentDataPtr was not a good idea!
@@ -85,23 +90,25 @@ static inline void snakes_printer(uint16_t index, HsiaColor *c, void *dataPtr, v
 // TODO: Figure out how to handle nested Random -> Snakes
 // TODO: Figure out how to make it so that if inside Random, that we do not re-create the frameData every time! It is too slow!
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+// TODO: Remove this whole pattern! Instead make it somehow able to inherit from "random" but tell it that the "random" has to be 3 snakes. Then move code from Random into a "Composition" pattern helper of sorts
+
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = (data_struct *)dataPtr;
     frame_struct *frame = framePtr;
 
-    data->base.stepIndex = 0;
-    data->snakeModule->executor(i, data->snake1data, frame->snake1frame, data, snakes_printer);
-    data->snakeModule->executor(i, data->snake2data, frame->snake2frame, data, snakes_printer);
-    data->snakeModule->executor(i, data->snake3data, frame->snake3frame, data, snakes_printer);
+    SnakePrinter snakePrinter = {*printer};
+    Printer *downcast = (void*)&snakePrinter;
+
+    data->snakeModule->executor(i, data->snake1data, frame->frame1, downcast);
+    data->snakeModule->executor(i, data->snake2data, frame->frame2, downcast);
+    data->snakeModule->executor(i, data->snake3data, frame->snake3frame, downcast);
 
     // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?
-    HsiaColor step1 = math_average_hsia(&data->base.pixels[sizeof(HsiaColor) * 0], &data->base.pixels[sizeof(HsiaColor) * 1]);
-    HsiaColor c = math_average_hsia(&step1, &data->base.pixels[sizeof(HsiaColor) * 2]);
+    HsiaColor step1 = math_average_hsia(&snakePrinter.pixels[0], &snakePrinter.pixels[1]);
+    HsiaColor c = math_average_hsia(&step1, &snakePrinter.pixels[2]);
 
-    // Parent as ourself, since we are just a virtual pattern
-    // THIS IS WRONG! IT ONLY WORKS FOR RANDOM, NOT NESTED!
-    printer(i, &c, dataPtr, dataPtr);
+    printer->print(i, &c, printer);
 }
 
 void pattern_register_snakes()

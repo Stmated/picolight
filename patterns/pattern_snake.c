@@ -44,7 +44,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -60,11 +60,11 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
             hsi.s *= distanceMultiplier;   
         }
         
-        printer(i, &hsi, dataPtr, parentDataPtr);
+        printer->print(i, &hsi, printer);
     }
     else
     {
-        printer(i, &transparent, dataPtr, parentDataPtr);
+        printer->print(i, &transparent, printer);
     }
 }
 

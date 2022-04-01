@@ -60,7 +60,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *parentDataPtr, PatternPrinter printer)
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -74,7 +74,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, void *par
 
     HsiaColor c = (HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1};
 
-    printer(i, &c, dataPtr, parentDataPtr);
+    printer->print(i, &c, printer);
 }
 
 void pattern_register_rainbow_wave()
