@@ -3,15 +3,6 @@
 HsiaColor transparent = {0, 0, 0, 0};
 HsiaColor white = {0, 0, 1, 1};
 
-/*
-void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, Printer *printer)
-{
-
-    // We sleep 1 ms, since this is usually too fast.
-    sleep_ms(1);
-}
-*/
-
 void *pattern_creator_default(uint16_t len, float intensity)
 {
     return NULL;

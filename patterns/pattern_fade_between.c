@@ -69,5 +69,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
 void pattern_register_fade_between()
 {
-    pattern_register("fade", executor, data_creator, data_destroyer, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("fade", executor, data_creator, data_destroyer, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

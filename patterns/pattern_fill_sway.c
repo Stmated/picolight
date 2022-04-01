@@ -78,5 +78,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
 void pattern_register_fill_sway()
 {
-    pattern_register("sway", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("sway", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

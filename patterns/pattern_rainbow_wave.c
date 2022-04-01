@@ -20,7 +20,7 @@ static void *data_creator(uint16_t len, float intensity)
     data_struct *data = calloc(1, sizeof(data_struct));
 
     data->easing = randint(getEasingCount());
-    if (randint_weighted_towards_max(0, 1000, intensity) > 500)
+    if (randint(1000) > 500)
     {
         if (randint(1000) > 500)
         {
@@ -79,5 +79,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
 void pattern_register_rainbow_wave()
 {
-    pattern_register("rainbow_wave", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("rainbow_wave", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

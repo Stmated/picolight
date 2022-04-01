@@ -40,6 +40,7 @@ typedef struct PatternOptions
 {
     float randomChance;
     int randomMultiplier;
+    bool opaque;
 } PatternOptions;
 
 typedef struct PatternModule

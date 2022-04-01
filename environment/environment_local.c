@@ -24,12 +24,11 @@ void put_pixel(uint16_t index, RgbwColor *c)
     int column = (index % width);
     int byteStartIndex = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (row * stride) + (column * BYTES_PER_PIXEL);
 
-    // printf("%d, %d, %d, %d, %d, %d, %d\n", width, widthInBytes, paddingSize, stride, row, column, byteStartIndex);
-
     if (imageFile == NULL)
     {
         imageFile = fopen("local_dev_output.bmp", "r+b");
     }
+    
     fseek(imageFile, byteStartIndex, SEEK_SET);
 
     fwrite(&c->b, 1, 1, imageFile);

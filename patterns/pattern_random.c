@@ -6,6 +6,7 @@ typedef struct data_struct
     void *data2;
     PatternModule *pattern1;
     PatternModule *pattern2;
+    float pattern2alpha;
     int period;
     uint32_t updatedAt;
     float intensity;
@@ -16,6 +17,7 @@ typedef struct frame_struct
 {
     void *frame1;
     void *frame2;
+    float p;
 
 } frame_struct;
 
@@ -42,27 +44,18 @@ static void *data_creator(uint16_t len, float intensity)
     data->period = randint_weighted_towards_min(10000, 15000, intensity);
     data->updatedAt = 0;
 
-    data->pattern1 = pattern_get_by_name("rainbow_wave");
-    data->pattern2 = pattern_get_by_name("snakes");
-    data->data1 = data->pattern1->creator(len, intensity);
-    data->data2 = data->pattern2->creator(len, intensity);
-
-    // Allocate memory for each sub-pattern, which we will need to blend
-    //data->base.pixels = calloc(2, sizeof(HsiaColor));
-
     return data;
 }
 
-static int pattern_random_get_next_pattern_index(int previous, int other)
+static PatternModule *pattern_get_next(PatternModule *prev, PatternModule *other)
 {
     // TODO: Some patterns do not mix well. Those that cover 100% with 100% alpha. Do we care? Up to chance?
     int chances = 3;
     float f100 = (float)100;
-    int next = -1;
+    PatternModule *module = NULL;
     while (chances > 0)
     {
-        next = randint(getPatternCount());
-        PatternModule *module = pattern_get_by_index(next);
+        module = pattern_get_by_index(randint(getPatternCount()));
 
         float ourChance = randint(100) / f100;
         if (ourChance >= module->options.randomChance)
@@ -71,17 +64,17 @@ static int pattern_random_get_next_pattern_index(int previous, int other)
             continue;
         }
 
-        if (next == previous || next == other)
+        if (module == prev || module == other)
         {
             // Give it another chance.
             chances--;
             continue;
         }
 
-        break;
+        return module;
     }
 
-    return next;
+    return module;
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -89,17 +82,15 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    /*
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
         // It is time to move on to the next random mix.
         data->updatedAt = t;
 
-        if (data->patternIndex2 == -1)
+        if (!data->pattern2)
         {
             // This is the first time. So assign pattern 2, which will be moved to 1 straight away.
-            data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
-            data->pattern2 = getPatternByIndex(data->patternIndex2);
+            data->pattern2 = pattern_get_next(NULL, NULL);
             data->data2 = data->pattern2->creator(len, data->intensity);
         }
 
@@ -109,12 +100,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
             data->data1 = NULL;
         }
 
-        data->patternIndex1 = data->patternIndex2;
+        PatternModule *next = pattern_get_next(data->pattern2, data->pattern1);
+
         data->data1 = data->data2;
         data->pattern1 = data->pattern2;
 
-        data->patternIndex2 = pattern_random_get_next_pattern_index(data->patternIndex2, data->patternIndex1);
-        data->pattern2 = getPatternByIndex(data->patternIndex2);
+        data->pattern2 = next;
         data->data2 = data->pattern2->creator(len, data->intensity);
 
         printf("Going to '%s' and '%s'\n", data->pattern1->name, data->pattern2->name);
@@ -123,13 +114,13 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
         // This way there should not be an instant JUMP when we switch to next pattern.
         // data->base.progressReversed = !data->base.progressReversed;
     }
-    */
 
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
     frame->frame1 = data->pattern1->frameCreator(len, t, data->data1);
     frame->frame2 = data->pattern2->frameCreator(len, t, data->data2);
+    frame->p = ((t - data->updatedAt) % data->period) / (float)data->period;
 
     return frame;
 }
@@ -141,7 +132,7 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
 
     data->pattern1->frameDestroyer(data->data1, frame->frame1);
     data->pattern2->frameDestroyer(data->data2, frame->frame2);
-    
+
     free(framePtr);
 }
 
@@ -153,30 +144,31 @@ typedef struct RandomPrinter
 
 } RandomPrinter;
 
-static inline void random_printer(uint16_t index, HsiaColor *c, Printer* printer)
+static inline void random_printer(uint16_t index, HsiaColor *c, Printer *printer)
 {
-    RandomPrinter *ourPrinter = (void*) printer;
+    RandomPrinter *ourPrinter = (void *)printer;
     ourPrinter->pixels[ourPrinter->stepIndex] = *c;
     ourPrinter->stepIndex++;
 }
 
 static void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
-    // TODO: Need to test each combination separately, and accurately, and make each one work EXACTLY as intended -- because something is seriously wrong... especially rainbow_wave + whatever.
-
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
     RandomPrinter bufferingPrinter = {{random_printer}};
 
-    data->pattern1->executor(i, data->data1, frame->frame1, (void*)&bufferingPrinter);
-    data->pattern2->executor(i, data->data2, frame->frame2, (void*)&bufferingPrinter);
+    data->pattern1->executor(i, data->data1, frame->frame1, (void *)&bufferingPrinter);
+    data->pattern2->executor(i, data->data2, frame->frame2, (void *)&bufferingPrinter);
+
+    HsiaColor a = bufferingPrinter.pixels[0];
+    HsiaColor b = bufferingPrinter.pixels[1];
+
+    a.a = a.a * (1 - frame->p);
+    b.a = b.a * frame->p;
 
     // Now let's send the data to the original printer
-    // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
-    // TODO: Could this be sent to the parent printer directly somehow? So we do not need to average twice?
-    // TODO: Can we skip sending along the parentDataPtr, and instead sent Printer as a semi-opaque struct that contains its own functionality?
-    HsiaColor c = math_average_hsia(&bufferingPrinter.pixels[0], &bufferingPrinter.pixels[1]);
+    HsiaColor c = math_average_hsia(&a, &b);
     printer->print(i, &c, printer);
 }
 

@@ -22,9 +22,7 @@ static void *data_creator(uint16_t len, float intensity)
 
     data->easing = randint(getEasingCount());
     data->endless = randint(1000) > 500;
-    printf("3\n");
     data->period = randint_weighted_towards_min(5000, 60000, intensity);
-    printf("4\n");
     data->hue_from = randint(360);
     data->hue_width = 360 + (360 * randint_weighted_towards_min(10, 1, intensity));
     data->hsi_s = 0.7 + (0.3 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
@@ -64,5 +62,5 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
 void pattern_register_rainbow()
 {
-    pattern_register("rainbow", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("rainbow", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

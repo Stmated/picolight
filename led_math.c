@@ -12,13 +12,16 @@
 // This method has to be blazingly fast! Find ways to spee it up if possible!
 
 #ifdef MATH_PRECOMPUTE
-static float lookup_h2cos[HSI_H_MAX] = {0};
-static float lookup_h2sin[HSI_H_MAX] = {0};
-static float lookup_h2cos_60h[HSI_H_MAX] = {0};
-static float lookup_h2cos_h120[HSI_H_MAX] = {0};
-static float lookup_h2cos_180h[HSI_H_MAX] = {0};
-static float lookup_h2cos_h240[HSI_H_MAX] = {0};
-static float lookup_h2cos_300h[HSI_H_MAX] = {0};
+static double lookup_h2cos[HSI_H_MAX] = {0};
+static double lookup_h2sin[HSI_H_MAX] = {0};
+static double lookup_h2cos_60h[HSI_H_MAX] = {0};
+static double lookup_h2cos_h120[HSI_H_MAX] = {0};
+static double lookup_h2cos_180h[HSI_H_MAX] = {0};
+static double lookup_h2cos_h240[HSI_H_MAX] = {0};
+static double lookup_h2cos_300h[HSI_H_MAX] = {0};
+#ifndef MATH_RGBW_BY_COORDINATES
+static double lookup_z[HSI_H_MAX] = {0};
+#endif
 #endif
 
 void math_precompute()
@@ -31,13 +34,17 @@ void math_precompute()
         // float cos_1047_h = cosf(1.047196667 - r);
         // float div = cos_h / cos_1047_h;
 
-        lookup_h2sin[h] = sinf(r);
-        lookup_h2cos[h] = cosf(r);
-        lookup_h2cos_60h[h] = cosf(DEG_TO_RAD(60 - h));
-        lookup_h2cos_h120[h] = cosf(DEG_TO_RAD(h - 120));
-        lookup_h2cos_180h[h] = cosf(DEG_TO_RAD(180 - h));
-        lookup_h2cos_h240[h] = cosf(DEG_TO_RAD(h - 240));
-        lookup_h2cos_300h[h] = cosf(DEG_TO_RAD(300 - h));
+        lookup_h2sin[h] = sin(r);
+        lookup_h2cos[h] = cos(r);
+        lookup_h2cos_60h[h] = cos(DEG_TO_RAD(60 - h));
+        lookup_h2cos_h120[h] = cos(DEG_TO_RAD(h - 120));
+        lookup_h2cos_180h[h] = cos(DEG_TO_RAD(180 - h));
+        lookup_h2cos_h240[h] = cos(DEG_TO_RAD(h - 240));
+        lookup_h2cos_300h[h] = cos(DEG_TO_RAD(300 - h));
+
+        #ifndef MATH_RGBW_BY_COORDINATES
+        lookup_z[h] = 1 - fabs(fmod(h / (double)60, 2) - 1);
+        #endif
     }
 #endif
 }
@@ -203,45 +210,53 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
     double S = hsia->s;
     double I = hsia->i;
 
-    double Htag = H / (double)60;
-    double Z = 1 - fabs(fmod(Htag, 2) - 1);
+    if (H < 0 || H > 360 || S < 0 || S > 1 || I < 0 || I > 1)
+    {
+        printf("THERE IS AN INCORRECT COLOR HERE");
+    }
+
+#ifdef MATH_PRECOMPUTE
+    double Z = lookup_z[H];
+#else
+    double Z = 1 - fabs(fmod(H / (double)60, 2) - 1);
+#endif
     double C = (3 * I * S) / (1 + Z);
     double X = C * Z;
 
     double R1;
     double G1;
     double B1;
-    if (0 <= Htag && Htag <= 1)
+    if (H <= 60)
     {
         R1 = C;
         G1 = X;
         B1 = 0;
     }
-    else if (1 <= Htag && Htag <= 2)
+    else if (H <= 120)
     {
         R1 = X;
         G1 = C;
         B1 = 0;
     }
-    else if (2 <= Htag && Htag <= 3)
+    else if (H <= 180)
     {
         R1 = 0;
         G1 = C;
         B1 = X;
     }
-    else if (3 <= Htag && Htag <= 4)
+    else if (H <= 240)
     {
         R1 = 0;
         G1 = X;
         B1 = C;
     }
-    else if (4 <= Htag && Htag <= 5)
+    else if (H <= 300)
     {
         R1 = X;
         G1 = 0;
         B1 = C;
     }
-    else if (5 <= Htag && Htag <= 6)
+    else if (H <= 360)
     {
         R1 = C;
         G1 = 0;
@@ -271,11 +286,20 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         max_rgb = B;
     }
 
+    // These two both have their strong suits, but also clipping weaknesses.
+    /*
     if (max_rgb > 1)
     {
         R = R / 3; // R / max_rgb;
         G = G / 3; // G / max_rgb;
         B = B / 3; // B / max_rgb;
+    }
+    */
+    if (max_rgb > 1)
+    {
+        R = R / max_rgb;
+        G = G / max_rgb;
+        B = B / max_rgb;
     }
 
     return (RgbwColor){

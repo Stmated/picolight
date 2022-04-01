@@ -63,15 +63,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
         HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
         if (data->affectSaturation)
         {
-            //if (distanceMultiplier > 1)
-            //{
-            //    hello();
-            //}
             hsi.s *= distanceMultiplier;
-            //if (hsi.s > 1)
-            //{
-            //    hello();
-            //}
         }
         
         printer->print(i, &hsi, printer);
