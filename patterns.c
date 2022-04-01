@@ -61,6 +61,8 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_test();
+    
     pattern_register_random();
 
     pattern_register_snakes();
@@ -72,7 +74,7 @@ void pattern_find_and_register_patterns()
     pattern_register_sparkle();
     pattern_register_rainbow();
 
-    pattern_register_test();
+    
 }
 
 void pattern_register(

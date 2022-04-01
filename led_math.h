@@ -7,18 +7,17 @@
 
 // Disable this define if you do not want to waste memory on 
 #define MATH_PRECOMPUTE
+//#undef MATH_PRECOMPUTE
 
-bool gcd(int a, int b);
-
-int getCoPrime(int a);
+#define HUE_UPPER_LIMIT 360
+#define MATH_RGBW_BY_COORDINATES
+#undef MATH_RGBW_BY_COORDINATES
 
 int randint(int n);
 
 int randint_weighted_towards_min(int min, int max, float weight);
 
 int randint_weighted_towards_max(int min, int max, float weight);
-
-int math_average_angle(int *angles, int length);
 
 // TODO: Add blend mode, and maybe different blend progress between the different colors?
 HsiaColor math_average_hsia(HsiaColor *a, HsiaColor *b);
@@ -39,6 +38,13 @@ void math_precompute();
 #define HSI_I_MAX 1
 
 #define DEG_TO_RAD(X) (M_PI * (X) / 180)
+
+#ifndef MAX
+#define MAX(a, b) (a > b ? a : b)
+#endif
+#ifndef MIN
+#define MIN(a, b) (a > b ? b : a)
+#endif
 
 #define ChannelBlend_Normal(A,B)     ((uint8)(A))
 #define ChannelBlend_Lighten(A,B)    ((uint8)((B > A) ? B:A))

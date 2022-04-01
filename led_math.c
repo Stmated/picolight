@@ -1,5 +1,16 @@
 #include "led_math.h"
 
+// Add "brightness" that is used to modify the values right before it it sent to the GPIO
+// Add "dithering" which should be done by giving a rounding method that alternates between "round up" and "round down"
+
+// Add "color correction"
+// TypicalSMD5050 =0xFFB0F0, TypicalLEDStrip =0xFFB0F0, Typical8mmPixel =0xFFE08C, TypicalPixelString =0xFFE08C,
+// UncorrectedColor =0xFFFFFF
+
+// Need a way of converting HSV to RGBW -- where the W has dynamic warmth!
+
+// This method has to be blazingly fast! Find ways to spee it up if possible!
+
 #ifdef MATH_PRECOMPUTE
 static float lookup_h2cos[HSI_H_MAX] = {0};
 static float lookup_h2sin[HSI_H_MAX] = {0};
@@ -31,59 +42,8 @@ void math_precompute()
 #endif
 }
 
-bool gcd(int a, int b)
+int math_shortest_hue_distance_lerp(int origin, int target, float t)
 {
-    while (b)
-    {
-        int t = a % b;
-        a = b;
-        b = t;
-    }
-    return a == 1;
-}
-
-int getCoPrime(int a)
-{
-
-    int coprime = -1;
-    int max = a * 100;
-    for (int i = a; i < max; i++)
-    {
-        if (gcd(a, i))
-        {
-            coprime = i;
-            break;
-        }
-    }
-
-    return coprime;
-}
-
-inline int math_average_angle(int *angles, int length)
-{
-    float x = 0;
-    float y = 0;
-
-    for (int i = 0; i < length; i++)
-    {
-#ifdef MATH_PRECOMPUTE
-        x += lookup_h2cos[angles[i]];
-        y += lookup_h2sin[angles[i]];
-#else
-        float r = angles[i] * (M_PI / 180.0);
-        x += cosf(r);
-        y += sinf(r);
-#endif
-    }
-
-    return (int)roundf(atan2f(y, x) * (180.0 / M_PI)) % 360;
-}
-
-static const float RADIAN_TO_PI = (180.0 / M_PI);
-
-int math_shortest_path_lerp(int origin, int target, float t)
-{
-
     if (origin > target)
     {
         int raw_diff = origin - target;
@@ -113,31 +73,23 @@ int math_shortest_path_lerp(int origin, int target, float t)
     }
 }
 
-#ifndef MAX
-#define MAX(a, b) (a > b ? a : b)
-#endif
-#ifndef MIN
-#define MIN(a, b) (a > b ? b : a)
-#endif
-
 HsiaColor rgbw2hsia(RgbwColor c, float a)
 {
-    float r = c.r / (float)255.0;
-    float g = c.g / (float)255.0;
-    float b = c.b / (float)255.0;
-    float intensity = (r + g + b) / (float)3;
+    double r = c.r / (double)255.0;
+    double g = c.g / (double)255.0;
+    double b = c.b / (double)255.0;
+    double intensity = (r + g + b) / (double)3;
 
-    float M = MAX(r, MAX(g, b));
-    float m = MIN(r, MIN(g, b));
-    // float C = M - m;
+    double M = MAX(r, MAX(g, b));
+    double m = MIN(r, MIN(g, b));
 
-    float saturation = 0.0;
+    double saturation = 0.0;
     if (intensity == 0.0)
         saturation = 0.0;
     else
         saturation = 1.0 - (m / intensity);
 
-    float hue = 0;
+    double hue = 0;
     if (M == m)
     {
         hue = 0;
@@ -252,41 +204,17 @@ double rand_gaussian()
     double a = ((double)(rand())) / ((double)RAND_MAX);
     double b = ((double)(rand())) / ((double)RAND_MAX);
 
-    double R0 = sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
-    /*
-        double R1 = sqrt(-2.0 * log(a)) * sin(2 * M_PI * b);
-    */
-
-    return R0;
+    return sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
 }
 
-// Add "brightness" that is used to modify the values right before it it sent to the GPIO
-// Add "dithering" which should be done by giving a rounding method that alternates between "round up" and "round down"
-
-// Add "color correction"
-// TypicalSMD5050 =0xFFB0F0, TypicalLEDStrip =0xFFB0F0, Typical8mmPixel =0xFFE08C, TypicalPixelString =0xFFE08C,
-// UncorrectedColor =0xFFFFFF
-
-// Need a way of converting HSV to RGBW -- where the W has dynamic warmth!
-
-// This method has to be blazingly fast! Find ways to spee it up if possible!
-
-#define HUE_UPPER_LIMIT 360
-
+#ifndef MATH_RGBW_BY_COORDINATES
 RgbwColor hsia2rgbw(HsiaColor *hsia)
 {
     int H = hsia->h;
     double S = hsia->s;
     double I = hsia->i;
-    
-    //if (hsia->a < 1)
-    //{
-        // Since we are doing the final conversion from HSIA to RGBW, we cannot bring along the alpha channel.
-        // We will simulate this by moving the alpha as a multiplier of the given intensity.
-    //    I = I * hsia->a;
-    //}
 
-    double Htag = H / (double) 60;
+    double Htag = H / (double)60;
     double Z = 1 - fabs(fmod(Htag, 2) - 1);
     double C = (3 * I * S) / (1 + Z);
     double X = C * Z;
@@ -294,92 +222,85 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
     double R1;
     double G1;
     double B1;
-    if (0 <= Htag && Htag <= 1) {
+    if (0 <= Htag && Htag <= 1)
+    {
         R1 = C;
         G1 = X;
-        B1 = 0; //R1, G1, B1 = C, X, 0
+        B1 = 0;
     }
-    else if (1 <= Htag && Htag <= 2) {
+    else if (1 <= Htag && Htag <= 2)
+    {
         R1 = X;
         G1 = C;
-        B1 = 0; //R1, G1, B1 = X, C, 0
+        B1 = 0;
     }
-    else if (2 <= Htag && Htag <= 3) {
+    else if (2 <= Htag && Htag <= 3)
+    {
         R1 = 0;
         G1 = C;
-        B1 = X; //R1, G1, B1 = 0, C, X
+        B1 = X;
     }
-    else if (3 <= Htag && Htag <= 4) {
+    else if (3 <= Htag && Htag <= 4)
+    {
         R1 = 0;
         G1 = X;
-        B1 = C; //R1, G1, B1 = 0, X, C
+        B1 = C;
     }
-    else if (4 <= Htag && Htag <= 5) {
+    else if (4 <= Htag && Htag <= 5)
+    {
         R1 = X;
         G1 = 0;
-        B1 = C; //R1, G1, B1 = X, 0, C
+        B1 = C;
     }
-    else if (5 <= Htag && Htag <= 6) {
+    else if (5 <= Htag && Htag <= 6)
+    {
         R1 = C;
         G1 = 0;
-        B1 = X; //R1, G1, B1 = C, 0, X
+        B1 = X;
     }
-    else {
+    else
+    {
         R1 = 0;
         G1 = 0;
-        B1 = 0; //R1, G1, B1 = 0, 0, 0  # Undefined
+        B1 = 0;
     }
 
     // Calculation rgb
     double m = I * (1 - S);
     double R = R1 + m;
     double G = G1 + m;
-    double B = B1 + m; //, G, B = R1 + m, G1 + m, B1 + m
+    double B = B1 + m;
 
-    // Limit R, G, B to valid range:
-    //R = max(min(R, 1), 0)
-    //G = max(min(G, 1), 0)
-    //B = max(min(B, 1), 0)
-
-    // Handling RGB values above 1:
-    // -----------------------------
-    // Avoiding weird colours - see the comment of Giacomo Catenazzi.
-    // Find the maximum between R, G, B, and if the value is above 1, divide the 3 channels with such numbers.
-    //int max_rgb = MAX(R, MAX(G, B));
+    // Limit R, G, B to valid ranges (since not all HSI values are in gamut range):
     double max_rgb = R;
-    if (G > max_rgb) {
+    if (G > max_rgb)
+    {
         max_rgb = G;
     }
-    if (B > max_rgb) {
+    if (B > max_rgb)
+    {
         max_rgb = B;
     }
 
-    if (max_rgb > 1) {
-        //printf("More than 1, %f, %f, %f\n", R, G, B);
-        R = R / 3; //R / max_rgb;
-        G = G / 3; //G / max_rgb;
-        B = B / 3; //B / max_rgb;
+    if (max_rgb > 1)
+    {
+        R = R / 3; // R / max_rgb;
+        G = G / 3; // G / max_rgb;
+        B = B / 3; // B / max_rgb;
     }
-    
+
     return (RgbwColor){
         (int)floorf(255 * R),
         (int)floorf(255 * G),
         (int)floorf(255 * B),
-        (int) (255 * ((float)((1 - S) * I)))
-    };
-
-    /*
-    float i = hsia->i;
-    if (hsia->a < 1)
-    {
-        // Since we are doing the final conversion from HSIA to RGBW, we cannot bring along the alpha channel.
-        // We will simulate this by moving the alpha as a multiplier of the given intensity.
-        i = i * hsia->a;
-    }
-
-    uint8_t r, g, b;
-
+        (int)(255 * ((float)((1 - S) * I)))};
+}
+#else
 #ifdef MATH_PRECOMPUTE
+RgbwColor hsia2rgbw(HsiaColor *hsia)
+{
+    float i = hsia->i;
+    uint8_t r, g, b;
     if (hsia->h == 0)
     {
         r = 255 * (i + 2 * i * hsia->s);
@@ -416,7 +337,15 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         g = 255 * (i - i * hsia->s);
         b = 255 * (i + i * hsia->s * lookup_h2cos_h240[hsia->h] / lookup_h2cos_300h[hsia->h]);
     }
+
+    return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
+}
 #else
+RgbwColor hsia2rgbw(HsiaColor *hsia)
+{
+    float i = hsia->i;
+    uint8_t r, g, b;
+
     if (hsia->h < 120)
     {
         float rad = DEG_TO_RAD(hsia->h);
@@ -446,11 +375,11 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         r = hsia->s * 255 * i / 3 * (1 + (1 - cos_h / cos_1047_h));
         g = 0;
     }
-#endif
 
     return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
-    */
 }
+#endif
+#endif
 
 HsiaColor LerpHSIA(HsiaColor *a, HsiaColor *b, float t)
 {
