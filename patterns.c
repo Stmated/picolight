@@ -100,9 +100,9 @@ void pattern_register(
 
 HsiaColor BLACK = {0, 0, 0, 1};
 
-static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer* printer)
+static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer *printer)
 {
-    // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals?
+    // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals? Just previous [1-3] pixels?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
     if (c->a < 1)
     {
@@ -116,26 +116,6 @@ static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer
         put_pixel(index, &rgbw);
     }
 }
-
-/*
-inline void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
-{
-    // Important to use the parent data here, since "dataPtr" is from the sub-pattern
-    data_pixel_blending_struct *data = parentDataPtr;
-
-    data->pixels[sizeof(HsiaColor) * data->stepIndex] = *c;
-    data->stepIndex++;
-}
-
-inline void pattern_printer_merging(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr)
-{
-    // Important to use the parent data here, since "dataPtr" is from the sub-pattern
-    data_pixel_blending_struct *data = parentDataPtr;
-
-    data->pixels[sizeof(HsiaColor) * data->stepIndex] = math_average_hsia(&data->pixels[sizeof(HsiaColor) * data->stepIndex], c);
-    data->stepIndex++;
-}
-*/
 
 void pattern_execute(uint16_t len, uint32_t t)
 {

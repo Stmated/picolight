@@ -76,16 +76,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     else if (i < data->len * 0.7)
     {
         HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.8};
-        HsiaColor c3 = {120, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia(&c1, &c2);
-        HsiaColor c = math_average_hsia(&mix1, &c3);
-        printer->print(i, &c, printer);
-    }
-    else if (i < data->len * 0.8)
-    {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.6};
+        HsiaColor c2 = {240, 1, 1, 0.4};
         HsiaColor c3 = {120, 1, 1, 0.5};
         HsiaColor mix1 = math_average_hsia(&c1, &c2);
         HsiaColor c = math_average_hsia(&mix1, &c3);
@@ -93,11 +84,13 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     }
     else if (i < data->len * 0.9)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.4};
-        HsiaColor c3 = {120, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia(&c1, &c2);
-        HsiaColor c = math_average_hsia(&mix1, &c3);
+        float start = data->len * 0.7;
+        float end = data->len * 0.9;
+        float width = (end - start);
+        float mid = start + (width / (float)2);
+        float p = (i - start) / width;
+        float distance = fabsf(i - mid) / (width / (float)2);
+        HsiaColor c = {317, 1, 0.588, 1 - distance};
         printer->print(i, &c, printer);
     }
     else

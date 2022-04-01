@@ -44,11 +44,17 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
+//void hello()
+//{
+//    int i = 0;
+//}
+
 static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
-
+    // TODO: Ability for a pattern to say "I am done. Ignore me for the rest of the frame"
+    // TODO: Also add ability for pattern to say "I will not start yet for this frame. I will start on index 'i'"
     float distance = fabsf(i - frame->p);
 
     if (distance <= data->width)
@@ -57,7 +63,15 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
         HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
         if (data->affectSaturation)
         {
-            hsi.s *= distanceMultiplier;   
+            //if (distanceMultiplier > 1)
+            //{
+            //    hello();
+            //}
+            hsi.s *= distanceMultiplier;
+            //if (hsi.s > 1)
+            //{
+            //    hello();
+            //}
         }
         
         printer->print(i, &hsi, printer);

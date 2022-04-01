@@ -43,7 +43,7 @@ static void *data_creator(uint16_t len, float intensity)
     data->updatedAt = 0;
 
     data->pattern1 = pattern_get_by_name("rainbow_wave");
-    data->pattern2 = pattern_get_by_name("snake");
+    data->pattern2 = pattern_get_by_name("snakes");
     data->data1 = data->pattern1->creator(len, intensity);
     data->data2 = data->pattern2->creator(len, intensity);
 
@@ -153,11 +153,11 @@ typedef struct RandomPrinter
 
 } RandomPrinter;
 
-static inline void random_printer(uint16_t index, HsiaColor *c, void *printerPtr)
+static inline void random_printer(uint16_t index, HsiaColor *c, Printer* printer)
 {
-    RandomPrinter *printer = printerPtr;
-    printer->pixels[printer->stepIndex] = *c;
-    printer->stepIndex++;
+    RandomPrinter *ourPrinter = (void*) printer;
+    ourPrinter->pixels[ourPrinter->stepIndex] = *c;
+    ourPrinter->stepIndex++;
 }
 
 static void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
@@ -167,18 +167,17 @@ static void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    RandomPrinter randomPrinter = {*printer};
-    Printer *downcast = (void*)&randomPrinter;
+    RandomPrinter bufferingPrinter = {{random_printer}};
 
-    data->pattern1->executor(i, data->data1, frame->frame1, downcast);
-    data->pattern2->executor(i, data->data2, frame->frame2, downcast);
+    data->pattern1->executor(i, data->data1, frame->frame1, (void*)&bufferingPrinter);
+    data->pattern2->executor(i, data->data2, frame->frame2, (void*)&bufferingPrinter);
 
     // Now let's send the data to the original printer
     // TODO: The blending should be done differently! It should be done by a percentage! So we can smoothly transition between patterns!
     // TODO: Could this be sent to the parent printer directly somehow? So we do not need to average twice?
     // TODO: Can we skip sending along the parentDataPtr, and instead sent Printer as a semi-opaque struct that contains its own functionality?
-    HsiaColor c = math_average_hsia(&randomPrinter.pixels[0], &randomPrinter.pixels[1]);
-    printer->print(i, &c, printer); // Parent as ourself, since we are just a virtual pattern
+    HsiaColor c = math_average_hsia(&bufferingPrinter.pixels[0], &bufferingPrinter.pixels[1]);
+    printer->print(i, &c, printer);
 }
 
 void pattern_register_random()

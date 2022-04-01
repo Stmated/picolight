@@ -2,8 +2,6 @@
 
 typedef struct data_struct
 {
-    //data_pixel_blending_struct base;
-
     PatternModule *snakeModule;
 
     void *snake1data;
@@ -16,7 +14,7 @@ typedef struct frame_struct
 {
     void *frame1;
     void *frame2;
-    void *snake3frame;
+    void *frame3;
 } frame_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -29,8 +27,6 @@ static void data_destroyer(void *dataPtr)
     data->snake2data = NULL;
     data->snakeModule->destroyer(data->snake3data);
     data->snake3data = NULL;
-    //free(data->base.pixels);
-    //data->base.pixels = NULL;
     free(dataPtr);
 }
 
@@ -42,7 +38,6 @@ static void *data_creator(uint16_t len, float intensity)
     data->snake1data = data->snakeModule->creator(len, intensity * 4);
     data->snake2data = data->snakeModule->creator(len, intensity * 2);
     data->snake3data = data->snakeModule->creator(len, intensity);
-    //data->base.pixels = calloc(3, sizeof(HsiaColor));
 
     return data;
 }
@@ -54,7 +49,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 
     frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data);
     frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data);
-    frame->snake3frame = data->snakeModule->frameCreator(len, t, data->snake3data);
+    frame->frame3 = data->snakeModule->frameCreator(len, t, data->snake3data);
 
     return frame;
 }
@@ -66,29 +61,24 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
 
     data->snakeModule->frameDestroyer(data->snake1data, frame->frame1);
     data->snakeModule->frameDestroyer(data->snake2data, frame->frame2);
-    data->snakeModule->frameDestroyer(data->snake3data, frame->snake3frame);
+    data->snakeModule->frameDestroyer(data->snake3data, frame->frame3);
     free(framePtr);
 }
 
-typedef struct SnakePrinter
+typedef struct SnakesPrinter
 {
     Printer base;
     int stepIndex;
     HsiaColor pixels[3];
 
-} SnakePrinter;
+} SnakesPrinter;
 
-static inline void snakes_printer(uint16_t index, HsiaColor *c, void *printerPtr)
+static inline void snakes_printer(uint16_t index, HsiaColor *c, Printer *printer)
 {
-    SnakePrinter *printer = printerPtr;
-    printer->pixels[printer->stepIndex] = *c;
-    printer->stepIndex++;
+    SnakesPrinter *ourPrinter = (void *)printer;
+    ourPrinter->pixels[ourPrinter->stepIndex] = *c;
+    ourPrinter->stepIndex++;
 }
-
-// TODO: This will write to the wrong data pointer if Snakes is ran inside Random! The parentDataPtr was not a good idea!
-// TODO: Redo so that we send a struct with all the common arguments, so we do not send so many
-// TODO: Figure out how to handle nested Random -> Snakes
-// TODO: Figure out how to make it so that if inside Random, that we do not re-create the frameData every time! It is too slow!
 
 // TODO: Remove this whole pattern! Instead make it somehow able to inherit from "random" but tell it that the "random" has to be 3 snakes. Then move code from Random into a "Composition" pattern helper of sorts
 
@@ -97,16 +87,14 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     data_struct *data = (data_struct *)dataPtr;
     frame_struct *frame = framePtr;
 
-    SnakePrinter snakePrinter = {*printer};
-    Printer *downcast = (void*)&snakePrinter;
+    SnakesPrinter bufferingPrinter = {{snakes_printer}};
 
-    data->snakeModule->executor(i, data->snake1data, frame->frame1, downcast);
-    data->snakeModule->executor(i, data->snake2data, frame->frame2, downcast);
-    data->snakeModule->executor(i, data->snake3data, frame->snake3frame, downcast);
+    data->snakeModule->executor(i, data->snake1data, frame->frame1, (void *)&bufferingPrinter);
+    data->snakeModule->executor(i, data->snake2data, frame->frame2, (void *)&bufferingPrinter);
+    data->snakeModule->executor(i, data->snake3data, frame->frame3, (void *)&bufferingPrinter);
 
-    // TODO: Can we somehow skip doing the averaging here if not needed? Could it instead be done by the parent printer if there is one?
-    HsiaColor step1 = math_average_hsia(&snakePrinter.pixels[0], &snakePrinter.pixels[1]);
-    HsiaColor c = math_average_hsia(&step1, &snakePrinter.pixels[2]);
+    HsiaColor step1 = math_average_hsia(&bufferingPrinter.pixels[0], &bufferingPrinter.pixels[1]);
+    HsiaColor c = math_average_hsia(&step1, &bufferingPrinter.pixels[2]);
 
     printer->print(i, &c, printer);
 }
