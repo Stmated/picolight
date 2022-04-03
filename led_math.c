@@ -49,12 +49,12 @@ void math_precompute()
 #endif
 }
 
-int math_shortest_hue_distance_lerp(int origin, int target, float t)
+float math_shortest_hue_distance_lerp(float origin, float target, float t)
 {
     if (origin > target)
     {
-        int raw_diff = origin - target;
-        int mod_diff = raw_diff % HSI_H_MAX;
+        float raw_diff = origin - target;
+        float mod_diff = fmodf(raw_diff, HSI_H_MAX);
         if (mod_diff > HSI_H_HALF)
         {
             return t * (HSI_H_MAX - mod_diff);
@@ -66,8 +66,8 @@ int math_shortest_hue_distance_lerp(int origin, int target, float t)
     }
     else
     {
-        int raw_diff = target - origin;
-        int mod_diff = raw_diff % HSI_H_MAX;
+        float raw_diff = target - origin;
+        float mod_diff = fmodf(raw_diff, HSI_H_MAX);
         if (mod_diff > HSI_H_HALF)
         {
             float signedDiff = (HSI_H_MAX - mod_diff);
@@ -212,7 +212,7 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
 
     if (H < 0 || H > 360 || S < 0 || S > 1 || I < 0 || I > 1)
     {
-        printf("THERE IS AN INCORRECT COLOR HERE");
+        printf("THERE IS AN INCORRECT COLOR HERE\n");
     }
 
 #ifdef MATH_PRECOMPUTE
@@ -393,36 +393,3 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
 }
 #endif
 #endif
-
-HsiaColor LerpHSIA(HsiaColor *a, HsiaColor *b, float t)
-{
-    // Hue interpolation
-    int h;
-    int d = b->h - a->h;
-    if (a->h > b->h)
-    {
-        // Swap (a.h, b.h)
-        int h3 = b->h;
-        b->h = a->h;
-        a->h = h3;
-        d = -d;
-        t = 1 - t;
-    }
-
-    if (d > 180) // 180deg
-    {
-        a->h = a->h + 360;
-        h = ((int)(a->h + t * (b->h - a->h))) % 360;
-    }
-    else
-    {
-        h = a->h + t * d;
-    }
-
-    // Interpolates the rest
-    return (HsiaColor){
-        h,
-        a->s + t * (b->s - a->s),
-        a->i + t * (b->i - a->i),
-        (a->a + b->a) / 2};
-}

@@ -54,12 +54,13 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_fade_between();
+
     pattern_register_random();
 
     pattern_register_snakes();
     pattern_register_snake();
     pattern_register_rainbow_wave();
-    pattern_register_fade_between();
     pattern_register_fill_sway();
     pattern_register_strobe();
     pattern_register_sparkle();

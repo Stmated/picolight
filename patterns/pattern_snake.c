@@ -7,6 +7,7 @@ typedef struct data_struct
     int period;
     int width;
     bool affectSaturation;
+    float edgeHarshness;
     float saturation;
     float brightness;
     int offset;
@@ -29,7 +30,8 @@ static void *data_creator(uint16_t len, float intensity)
     data->offset = randint(data->period * 3);
     data->saturation = randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000;
     data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
-    data->brightness = randint_weighted_towards_max(300, 1000, intensity) / (float)1000;
+    data->brightness = randint_weighted_towards_max(500, 1000, intensity) / (float)1000;
+    data->edgeHarshness = randint_weighted_towards_max(1, 100, intensity / 4);
 
     return data;
 }
@@ -44,22 +46,15 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-//void hello()
-//{
-//    int i = 0;
-//}
-
 static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
-    // TODO: Ability for a pattern to say "I am done. Ignore me for the rest of the frame"
-    // TODO: Also add ability for pattern to say "I will not start yet for this frame. I will start on index 'i'"
     float distance = fabsf(i - frame->p);
 
     if (distance <= data->width)
     {
-        float distanceMultiplier = (1 - (distance / (float)data->width));
+        float distanceMultiplier = 1 - powf(distance / (float)data->width, data->edgeHarshness);
         HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
         if (data->affectSaturation)
         {
