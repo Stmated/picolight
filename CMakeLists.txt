@@ -45,13 +45,17 @@ set (SRC_LIST
     # Figure out how to include these dynamically
     patterns/pattern_snake.c
     patterns/pattern_fade_between.c
-    patterns/pattern_fill_sway.c
-    patterns/pattern_rainbow.c
+    patterns/pattern_color_lerp.c
+    patterns/pattern_hue_lerp.c
     patterns/pattern_rainbow_wave.c
     patterns/pattern_random.c
     patterns/pattern_snakes.c
     patterns/pattern_sparkle.c
+    patterns/pattern_gas_fade.c
+    patterns/pattern_knightrider.c
+    patterns/pattern_firework.c
     patterns/pattern_strobe.c
+    patterns/pattern_meteor.c
     patterns/pattern_test.c
 
     patterns.c

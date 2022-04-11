@@ -102,3 +102,8 @@ void setPermanentInt(int i, int v)
 
     restore_interrupts(interrupts);
 }
+
+void register_action_listeners()
+{
+    // Add GPIO triggers for all action pins
+}

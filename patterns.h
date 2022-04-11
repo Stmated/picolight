@@ -13,6 +13,9 @@ struct Printer;
 
 typedef void (*PrinterFunction)(uint16_t index, HsiaColor *c, struct Printer *printer);
 
+// TODO: Add a way of being able to send different color-spaces to the printer, and they are propagated upwards.
+//       This way we can send RGBW directly if that is all we need, and skip any translation from HSIA to RGBW
+//       Could theoretically add more obscure color spaces then, like CIECAM02
 typedef struct Printer
 {
     PrinterFunction print;
@@ -84,12 +87,16 @@ void pattern_register(const char *name, PatternExecutor pattern, PatternDataCrea
 void pattern_register_test();
 void pattern_register_snake();
 void pattern_register_fade_between();
-void pattern_register_fill_sway();
-void pattern_register_rainbow();
+void pattern_register_color_lerp();
+void pattern_register_hue_lerp();
 void pattern_register_rainbow_wave();
 void pattern_register_snakes();
 void pattern_register_sparkle();
+void pattern_register_gas_fade();
 void pattern_register_strobe();
+void pattern_register_knightrider();
+void pattern_register_firework();
+void pattern_register_meteor();
 
 void pattern_register_random();
 

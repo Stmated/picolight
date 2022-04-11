@@ -41,7 +41,7 @@ static void *data_creator(uint16_t len, float intensity)
     data_struct *data = calloc(1, sizeof(data_struct));
 
     data->intensity = intensity;
-    data->period = randint_weighted_towards_min(10000, 15000, intensity);
+    data->period = randint_weighted_towards_min(10000, 60000, intensity);
     data->updatedAt = 0;
 
     return data;

@@ -20,9 +20,11 @@ int randint_weighted_towards_min(int min, int max, float weight);
 int randint_weighted_towards_max(int min, int max, float weight);
 
 float math_shortest_hue_distance_lerp(float origin, float target, float t);
+int math_hue_lerp(float origin, float target, float t);
 
 // TODO: Add blend mode, and maybe different blend progress between the different colors?
 HsiaColor math_average_hsia(HsiaColor *a, HsiaColor *b);
+HsiaColor math_average_hsia_lerp(HsiaColor *a, HsiaColor *b, float p);
 
 RgbwColor hsia2rgbw(HsiaColor *hsi);
 

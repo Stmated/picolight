@@ -76,7 +76,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     printer->print(i, &frame->hsi, printer);
 }
 
-void pattern_register_fill_sway()
+void pattern_register_color_lerp()
 {
-    pattern_register("sway", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
+    pattern_register("color_lerp", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

@@ -22,8 +22,7 @@ static void *data_creator(uint16_t len, float intensity)
     // TODO: Create a bunch of data for different kinds of fades
     data_struct *data = malloc(sizeof(data_struct));
 
-    //data->time_per_color = 3000 + randint_weighted_towards_min(0, 30000, intensity);
-    data->time_per_color = 1000; // + randint_weighted_towards_min(0, 30000, intensity);
+    data->time_per_color = 3000 + randint_weighted_towards_min(0, 30000, intensity);
 
     // We use the same saturation and intensity for all different hues for this pattern.
     float hsi_s = MIN(1, 0.65 + 0.35 * (randint_weighted_towards_max(0, 10000, intensity) / (float)10000));
@@ -49,13 +48,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     HsiaColor hsi_to = data->colors[colorIndex2];
 
     float pOfColor = ((t % data->time_per_color) / (float) data->time_per_color);
-
-    float distance = math_shortest_hue_distance_lerp(hsi_from.h, hsi_to.h, pOfColor);
-    int hue = floorf(hsi_from.h + distance);
-    if (hue < 0)
-    {
-        hue = 360 + hue;
-    }
+    int hue = math_hue_lerp(hsi_from.h, hsi_to.h, pOfColor);
 
     frame->hsi = (HsiaColor) {
         hue,

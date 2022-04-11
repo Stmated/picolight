@@ -42,9 +42,9 @@ void math_precompute()
         lookup_h2cos_h240[h] = cos(DEG_TO_RAD(h - 240));
         lookup_h2cos_300h[h] = cos(DEG_TO_RAD(300 - h));
 
-        #ifndef MATH_RGBW_BY_COORDINATES
+#ifndef MATH_RGBW_BY_COORDINATES
         lookup_z[h] = 1 - fabs(fmod(h / (double)60, 2) - 1);
-        #endif
+#endif
     }
 #endif
 }
@@ -78,6 +78,23 @@ float math_shortest_hue_distance_lerp(float origin, float target, float t)
             return t * (mod_diff);
         }
     }
+}
+
+int math_hue_lerp(float origin, float target, float t)
+{
+    float distance = math_shortest_hue_distance_lerp(origin, target, t);
+    float hue = origin + distance;
+
+    if (hue < 0)
+    {
+        return floorf(360 + hue);
+    }
+    else if (hue > 360)
+    {
+        return (int)floorf(hue - 360) % HSI_H_MAX;
+    }
+
+    return floorf(hue);
 }
 
 HsiaColor rgbw2hsia(RgbwColor c, float a)
@@ -146,6 +163,40 @@ inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
     return rgbw2hsia(rgbw, a);
 }
 
+inline HsiaColor math_average_hsia_lerp(HsiaColor *hsia_a, HsiaColor *hsia_b, float p)
+{
+    /*
+    if (p <= 0.02)
+        return *hsia_a;
+    if (p >= 0.98)
+        return *hsia_b;
+
+    // TODO: Can this be replaced with full ONLY HSI calculations?
+    // Or even cooler:  https://en.wikipedia.org/wiki/CIECAM02
+    //                  https://github.com/dannyvi/ciecam02
+    RgbwColor ca = hsia2rgbw(hsia_a);
+    RgbwColor cb = hsia2rgbw(hsia_b);
+
+    int r = (int)((cb.r * p) + (ca.r * (1.0 - p)));
+    int g = (int)((cb.g * p) + (ca.g * (1.0 - p)));
+    int b = (int)((cb.b * p) + (ca.b * (1.0 - p)));
+    int w = (int)((cb.w * p) + (ca.w * (1.0 - p)));
+
+    RgbwColor rgbw = {r, g, b, w};
+    float a = ((hsia_b->a * p) + (hsia_a->a * (1.0 - p))); //hsia_a->a + (hsia_b->a * (1 - hsia_a->a));
+
+    return rgbw2hsia(rgbw, a);
+    */
+
+    // ???
+    int hue = math_hue_lerp(hsia_a->h, hsia_b->h, p);
+    float saturation = hsia_a->s + (hsia_b->s - hsia_a->s) * p;
+    float intensity = hsia_a->i + (hsia_b->i - hsia_a->i) * p;
+    float alpha = hsia_a->a + (hsia_b->a - hsia_a->a) * p;
+
+    return (HsiaColor){hue, saturation, intensity, alpha};
+}
+
 int randint(int n)
 {
     if (n >= RAND_MAX)
@@ -177,7 +228,7 @@ int randint(int n)
 int randint_weighted_towards_min(int min, int max, float weight)
 {
     float random = rand() / (float)RAND_MAX; // 0..1
-    return (int)floorf(min + (max - min) * (powf(random, weight)));
+    return (int)roundf(min + (max - min) * (powf(random, weight)));
 }
 
 /**
@@ -188,7 +239,7 @@ int randint_weighted_towards_max(int min, int max, float weight)
 {
     weight = 1 / weight;
     float random = rand() / (float)RAND_MAX; // 0..1
-    return (int)floorf(min + (max - min) * (powf(random, weight)));
+    return (int)roundf(min + (max - min) * (powf(random, weight)));
 }
 
 /**

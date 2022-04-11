@@ -93,6 +93,8 @@ int main()
     state.nextPatternIndex = 0;
     //pattern_update_data(LED_COUNT, state.patternIndex, 0.1);
 
+    register_action_listeners();
+
     if (count_of(PIN_TX) > 1)
     {
         while (1)

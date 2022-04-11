@@ -2,7 +2,10 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include <stdatomic.h>
 
 FILE *fp;
 uint32_t time_startup = 0;
@@ -11,6 +14,7 @@ const int BYTES_PER_PIXEL = 3; /// red, green, & blue
 const int FILE_HEADER_SIZE = 14;
 const int INFO_HEADER_SIZE = 40;
 const int width = 1;
+const int spacing = 0;
 
 FILE *imageFile = NULL;
 
@@ -22,13 +26,13 @@ void put_pixel(uint16_t index, RgbwColor *c)
 
     int row = (index / width);
     int column = (index % width);
-    int byteStartIndex = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (row * stride) + (column * BYTES_PER_PIXEL);
+    int byteStartIndex = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (row * stride + (row * spacing * stride)) + (column * BYTES_PER_PIXEL);
 
     if (imageFile == NULL)
     {
         imageFile = fopen("local_dev_output.bmp", "r+b");
     }
-    
+
     fseek(imageFile, byteStartIndex, SEEK_SET);
 
     fwrite(&c->b, 1, 1, imageFile);
@@ -76,9 +80,10 @@ void sleep_ms(uint32_t ms)
     sleep_us(ms * 1000);
 }
 
-void sleep_us(uint64_t ms)
+void sleep_us(uint64_t us)
 {
     // Do we even care to? Maybe?
+    //sleep(us * 1000);
 }
 
 uint32_t get_running_ms()
@@ -157,8 +162,7 @@ void picolight_boot(int led_count)
 {
     printf("Booted up\n");
 
-    // int width = 8;
-    int height = ceil(led_count / (double)width);
+    int height = ceil((led_count / (double)width) + (led_count * spacing));
 
     unsigned char image[height][width][BYTES_PER_PIXEL];
 
@@ -218,4 +222,20 @@ int getPermanentInt(int i)
 void setPermanentInt(int i, int v)
 {
     // TODO: Do something?
+}
+
+void *keyboard_action_listener()
+{
+    while (1)
+    {
+        // TODO: Read action from file, which was activated from JavaScript somehow?
+
+        sleep(1);
+    }
+}
+
+void register_action_listeners()
+{
+    pthread_t thread;
+    pthread_create(&thread, NULL, keyboard_action_listener, NULL);
 }

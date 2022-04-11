@@ -6,7 +6,7 @@ typedef struct data_struct
     bool endless;
     int period;
     int hue_from;
-    int hue_width;
+    int hue_to;
     float hsi_s;
     float hsi_i;
 } data_struct;
@@ -24,7 +24,7 @@ static void *data_creator(uint16_t len, float intensity)
     data->endless = randint(1000) > 500;
     data->period = randint_weighted_towards_min(5000, 60000, intensity);
     data->hue_from = randint(360);
-    data->hue_width = 360 + (360 * randint_weighted_towards_min(10, 1, intensity));
+    data->hue_to = randint_weighted_towards_max(data->hue_from + 50, data->hue_from + 180, intensity) % 360;
     data->hsi_s = 0.7 + (0.3 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
     data->hsi_i = 0.1 + (0.4 * (randint_weighted_towards_max(0, 1000, intensity) / (float)1000));
     
@@ -47,7 +47,11 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
         periodProgress = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    frame->hsi = (HsiaColor){(int)(roundf(data->hue_from + (data->hue_width * periodProgress))) % 360, data->hsi_s, data->hsi_i, 1};
+    //TODO: IF ENDLESS, THEN PERIODPROGRESS CAN BE OVER 1, HENCE GIVING FAULTY HUE IN THE THOUSANDS! NEED TO COVER THIS CASE!
+    //ALSO: Rename this pattern from "rainbow" to HUE_LERP, and rename FILL_SWAY to COLOR_LERP
+
+    int hue = math_hue_lerp(data->hue_from, data->hue_to, periodProgress);
+    frame->hsi = (HsiaColor){hue, data->hsi_s, data->hsi_i, 1};
 
     return frame;
 }
@@ -60,7 +64,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     printer->print(i, &frame->hsi, printer);
 }
 
-void pattern_register_rainbow()
+void pattern_register_hue_lerp()
 {
-    pattern_register("rainbow", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
+    pattern_register("hue_lerp", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 0, true});
 }

@@ -42,13 +42,13 @@ inline float OutBack(float p)
 
 inline float InOutBack(float p) { return InOut(InBack, OutBack, p); }
 
-const float r = 1 / 2.75;   // reciprocal
-const float k1 = r;         // 36.36%
-const float k2 = 2 * r;     // 72.72%
-const float k3 = 1.5 * r;   // 54.54%
-const float k4 = 2.5 * r;   // 90.90%
-const float k5 = 2.25 * r;  // 81.81%
-const float k6 = 2.625 * r; // 95.45%
+//const float r = 1 / 2.75;   // reciprocal
+const float k1 = (1 / 2.75);         // 36.36%
+const float k2 = 2 * (1 / 2.75);     // 72.72%
+const float k3 = 1.5 * (1 / 2.75);   // 54.54%
+const float k4 = 2.5 * (1 / 2.75);   // 90.90%
+const float k5 = 2.25 * (1 / 2.75);  // 81.81%
+const float k6 = 2.625 * (1 / 2.75); // 95.45%
 const float k0 = 7.5625;
 
 inline float OutBounce(float p)
