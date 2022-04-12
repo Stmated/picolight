@@ -6,7 +6,7 @@ The idea is to create one as fast and versatile as possible.
 This is done by creating algorithms that require virtually no memory, and have very high refresh rates.
 
 # Basic overview
-There main concepts of the whole project are:
+The main concepts of the whole project are:
 * Pattern Module
     > The main driver of a particular type of LED theme. This could be `rainbow` or `snake` or similar.
 * Pattern Data

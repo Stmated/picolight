@@ -1,11 +1,11 @@
 #include "../patterns.h"
 
-// Larger size, more random falloff, but nobody would ever notice the consistency.
+// If larger size, more random falloff, but nobody would ever notice the repetitiveness.
 #define RANDOM_FALLOFF_BUCKET_SIZE 20
 
-// Larger size, more time until starting points repeat, but nobody would ever notice.
+// If larger size, more time until starting points repeat, but nobody would ever notice.
 #define RANDOM_START_BUCKET_SIZE 10
-// Use start bucket size as base, but offset, to create faked randomness.
+// Use start bucket size as base, but offset, to create faked randomness (the will very rarely sync up)
 #define RANDOM_END_BUCKET_SIZE (RANDOM_START_BUCKET_SIZE + 3)
 
 typedef struct data_struct
