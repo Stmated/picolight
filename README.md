@@ -63,7 +63,7 @@ typedef struct frame_struct ...
 typedef struct SnakesPrinter
 {
     Printer override;
-    int stepIndex;
+    int pixelIndex;
     HsiaColor pixels[2];
 
 } SnakesPrinter;
@@ -71,8 +71,8 @@ typedef struct SnakesPrinter
 static inline void snakes_printer(uint16_t index, HsiaColor *c, Printer *printer)
 {
     SnakesPrinter *ourPrinter = (void *)printer;
-    ourPrinter->pixels[ourPrinter->stepIndex] = *c;
-    ourPrinter->stepIndex++;
+    ourPrinter->pixels[ourPrinter->pixelIndex] = *c;
+    ourPrinter->pixelIndex++;
 }
 
 static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
