@@ -10,25 +10,27 @@ There main concepts of the whole project are:
 * Pattern Module
     > The main driver of a particular type of LED theme. This could be `rainbow` or `snake` or similar.
 * Pattern Data
-    > An instance of `Pattern Module` attributes, randomly calculated only once at its creation on `Pattern Module` start.
+    > Instance of `Pattern Module` attributes, randomly calculated once at `Pattern Module` start.
 * Pattern Intensity
-    > Used when creating a `Pattern Data` to advice the random attributes on how to behave. Higher intensity: more speed/color.
+    > Used when creating `Pattern Data`. Advices random attributes on behavior.
 * Pattern Data Creator
-    > The method that creates the instance of the `Pattern Data`. Takes parameters like `number of lights` (`len`), and `intensity`.
+    > Creates `Pattern Data`. Takes parameters `number of lights` (`len`), and `intensity`.
 * Pattern Data Destroyer
-    > Handles the freeing of memory allocated by the `Pattern Data Creator`. If you do not manually alloc any in the creator, then none is needed from you.
+    > Handles freeing of memory allocated by `Pattern Data Creator`.
 * Frame Data
     > An instance of `Frame` attributes, created once at the beginning of a frame (a new rendering of all light on a strip)
     
     > Useful for caching values that are common between multiple pixels during the Time of the beginning of the frame.
 * Frame Creator
-    > The method that created the instance of the `Frame Data`. Takes parameters like `number of lights` (`len`) and `time` (`t`).
+    > Creates `Frame Data`. Takes parameters `number of lights` (`len`) and `time` (`t`).
 * Frame Destroyer
-    > Handles the freeing of memory allocated by the `Frame Creator`. If you do not manually alloc any in the creator, then none is needed from you.
+    > Handles the freeing of memory allocated by `Frame Creator`.
 * Pattern Executor
-    > Used to do the actual calculations of the pixels. Usually streaming pixels without any storage in memory to a `Pattern Printer`, hence theoretically giving no upper limit to number of lights (except refresh rate).
+    > Does final calculations that are then printed to a `Pattern Printer`
+    
+    > Pixels are streamed as much as possible, so to not keep them in memory. Refresh rate is only limit.
 * Pattern Printer
-    > Used to print a pixel to the strips. These can be wrapped over each other to give functionality such as mixing two patterns.
+    > Prints to the strips. Can be wrapped over each other for compositioning.
 
 # How the rendering pipeline can work
 
