@@ -18,9 +18,9 @@ There main concepts of the whole project are:
 * Pattern Data Destroyer
     > Handles freeing of memory allocated by `Pattern Data Creator`.
 * Frame Data
-    > An instance of `Frame` attributes, created once at the beginning of a frame (a new rendering of all light on a strip)
+    > Frame attributes, created once at beginning of frame (time of first light in loop).
     
-    > Useful for caching values that are common between multiple pixels during the Time of the beginning of the frame.
+    > Caches values which are common between multiple pixels.
 * Frame Creator
     > Creates `Frame Data`. Takes parameters `number of lights` (`len`) and `time` (`t`).
 * Frame Destroyer
