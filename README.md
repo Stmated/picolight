@@ -80,6 +80,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     data_struct *data = (data_struct *)dataPtr;
     frame_struct *frame = framePtr;
 
+    // Create a fake printer that buffers 2 pixels from 2 other modules.
     SnakesPrinter bufferingPrinter = {{snakes_printer}};
 
     data->snakeModule->executor(i, data->snake1data, frame->frame1, (void *)&bufferingPrinter);
@@ -87,6 +88,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
     HsiaColor c = math_average_hsia(&bufferingPrinter.pixels[0], &bufferingPrinter.pixels[1]);
 
+    // Now send to our real printer.
     printer->print(i, &c, printer);
 }
 ```
