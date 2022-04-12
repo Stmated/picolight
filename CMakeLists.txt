@@ -14,7 +14,7 @@ else()
     include($ENV{PICO_SDK_PATH}/tools/CMakeLists.txt)
 endif()
 
-project(ws2812 C CXX ASM)
+project(picolight C CXX ASM)
 
 if(OPTION_ENVIRONMENT_LOCAL)
     set(CMAKE_BUILD_TYPE Debug)
@@ -60,7 +60,7 @@ set (SRC_LIST
 
     patterns.c
 
-    ws2812.c
+    picolight.c
 )
 
 if(OPTION_ENVIRONMENT_LOCAL)
@@ -86,7 +86,7 @@ else()
     pico_enable_stdio_usb(${PROJECT_NAME} 0)
     pico_enable_stdio_uart(${PROJECT_NAME} 1)
     pico_generate_pio_header(${PROJECT_NAME}
-        ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio
+        ${CMAKE_CURRENT_LIST_DIR}/picolight.pio
     )
 
     target_link_libraries(${PROJECT_NAME}

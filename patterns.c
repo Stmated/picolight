@@ -113,6 +113,8 @@ static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer
     }
 }
 
+Printer pixelPrinter = {pattern_printer_default};
+
 void pattern_execute(uint16_t len, uint32_t t)
 {
     if (state.nextPatternIndex >= 0)
@@ -142,7 +144,6 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
         void *framePtr = module->frameCreator(len, t, state.patternData);
-        Printer pixelPrinter = {pattern_printer_default};
         for (int i = 0; i < len; i++)
         {
             module->executor(i, state.patternData, framePtr, &pixelPrinter);

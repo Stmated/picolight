@@ -53,9 +53,6 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
 {
     uint32_t time = get_running_ms();
     uint32_t time_elapsed = (time - time_start);
-
-    // TODO: The speed should be random based on the intensity, and only calculated once.
-    // TODO: We can do this if we get the factory pattern working!
     uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
 
     if (state.withOffset)
@@ -91,7 +88,6 @@ int main()
     pattern_find_and_register_patterns();
     math_precompute();
     state.nextPatternIndex = 0;
-    //pattern_update_data(LED_COUNT, state.patternIndex, 0.1);
 
     register_action_listeners();
 
@@ -106,7 +102,7 @@ int main()
                 execute_for_led_pin(time_start, offset, pinIndex);
 
                 // We sleep less between each program, the more programs we have. How to sleep less than 1?
-                // TODO: We should never sleep; we should instead process pre-frame and just wait if we're done too early
+                // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
                 sleep_us(150 / count_of(PIN_TX)); // minimum is 50, but need safety margins
             }
         }
@@ -118,7 +114,7 @@ int main()
         {
             execute_for_led_pin(time_start, offset, 0);
 
-            // TODO: We should never sleep; we should instead process pre-frame and just wait if we're done too early
+            // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
             sleep_us(150); // minimum is 50us, but need safety margins
         }
     }

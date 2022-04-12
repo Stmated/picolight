@@ -87,7 +87,15 @@ static inline void executor_lit(uint16_t i, void *dataPtr, void *framePtr, Print
   // This way it will feel like the sparkle is falling of with a glitter.
   // The weight will be a [0..1] float, and should exponentially, but initially weakly, impact fading.
   float weight = data->weights[i % RANDOM_FALLOFF_BUCKET_SIZE];
-  float alpha = MAX(0, 1 - (powf(distance, 1 + (0.1 * weight)) / data->tail_length));
+  float weightedDistance = powf(distance, 1 + (0.05 * weight));
+  float alpha = MAX(0, 1 - (weightedDistance / data->tail_length));
+  if (distance > 1)
+  {
+
+    // Comet head should be slightly brighter than the tail. So weaken anything further than 1 pixel.
+    alpha = alpha * 0.6;
+  }
+
   HsiaColor c = {0, 0, 1, alpha};
   printer->print(i, &c, printer);
 }

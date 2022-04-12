@@ -3,7 +3,9 @@
         "*.h": "c",
         "ios": "c",
         "iterator": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "limits": "c",
+        "type_traits": "c"
     },
     "cmake.buildBeforeRun": true,
     "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}

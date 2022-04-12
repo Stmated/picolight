@@ -67,7 +67,7 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
 
 typedef struct SnakesPrinter
 {
-    Printer base;
+    Printer override;
     int stepIndex;
     HsiaColor pixels[3];
 
