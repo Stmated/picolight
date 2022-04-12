@@ -19,6 +19,7 @@ There main concepts of the whole project are:
     > Handles the freeing of memory allocated by the `Pattern Data Creator`. If you do not manually alloc any in the creator, then none is needed from you.
 * Frame Data
     > An instance of `Frame` attributes, created once at the beginning of a frame (a new rendering of all light on a strip)
+    
     > Useful for caching values that are common between multiple pixels during the Time of the beginning of the frame.
 * Frame Creator
     > The method that created the instance of the `Frame Data`. Takes parameters like `number of lights` (`len`) and `time` (`t`).
