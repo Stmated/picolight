@@ -1,108 +1,142 @@
 #include "../patterns.h"
 
+// Larger size, more random falloff, but nobody would ever notice the consistency.
+#define RANDOM_FALLOFF_BUCKET_SIZE 20
+
+// Larger size, more time until starting points repeat, but nobody would ever notice.
+#define RANDOM_START_BUCKET_SIZE 10
+// Use start bucket size as base, but offset, to create faked randomness.
+#define RANDOM_END_BUCKET_SIZE (RANDOM_START_BUCKET_SIZE + 3)
+
 typedef struct data_struct
 {
-    HsiaColor color;
-    float tail_length;
-    int period;
+  HsiaColor color;
+  float tail_length;
+  int period;
+  float weights[RANDOM_FALLOFF_BUCKET_SIZE];
+
+  // The starting point of a meteor.
+  // It will be on this index that the meteor appears,
+  int starts[RANDOM_START_BUCKET_SIZE];
+  int ends[RANDOM_END_BUCKET_SIZE];
 
 } data_struct;
 
 typedef struct frame_struct
 {
-
+  float progress_raw;
+  float progress;
+  float head_index;
+  int start_index;
+  int end_index;
 } frame_struct;
-
-static void data_destroyer(void *dataPtr)
-{
-    free(dataPtr);
-}
 
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *data = malloc(sizeof(data_struct));
+  data_struct *data = malloc(sizeof(data_struct));
 
-    data->color = (HsiaColor){0, 0, 1, 1};
-    data->period = randint_weighted_towards_min(3000, 20000, intensity);
-    //data->intensity = intensity;
+  data->color = (HsiaColor){0, 0, 1, 1};
+  data->period = randint_weighted_towards_min(5000, 30000, intensity);
+  data->tail_length = len / 2.0;
 
-    return data;
+  for (int i = 0; i < RANDOM_FALLOFF_BUCKET_SIZE; i++)
+  {
+    data->weights[i] = randint(1000) / (float)1000.0;
+  }
+
+  // TODO: This should have some sanity checks, so we can make sure the meteor at least lives longer than X pixels.
+  //       Right now the meteor could spawn at index 3 on a downward path. So we see it for only 3 pixels. Yikes.
+  for (int i = 0; i < RANDOM_START_BUCKET_SIZE; i++)
+  {
+    data->starts[i] = randint(len);
+  }
+
+  // The end could possibly never be reached, since it can be before the start.
+  // This is as intended, since the meteor should sometimes fly outside of bounds.
+  for (int i = 0; i < RANDOM_END_BUCKET_SIZE; i++)
+  {
+    data->ends[i] = randint(len);
+  }
+
+  return data;
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = calloc(1, sizeof(frame_struct));
+  data_struct *data = dataPtr;
+  frame_struct *frame = calloc(1, sizeof(frame_struct));
 
-    // The "pointer" should fly back and forth all the time
-    // The meteor should only be visible sometimes
-    // It should never bounce
-    // It should live for a certain amount of time
-    // The tail should be a certain length
-    // The head should slightly flicker
-    // The tail should flicker quite a bit (fade out like with fire -- but try to avoid using sin. Maybe just make it index-based so that index is always slow/fast/medium/whatever)
+  frame->progress_raw = (t % data->period) / (float)data->period;
+  frame->progress = InOutLinear(frame->progress_raw);
 
-    /*
-    if (t > data->dies_at)
-    {
-        // Time to build a new one
+  // We fake the head index, to be able to go outside of bounds: [-tail..(len + tail)]
+  frame->head_index = ((len + (data->tail_length * 2)) * frame->progress) - data->tail_length;
 
-        data->color = (HsiaColor) {0, 0, 1, 1};
-        data->tail_length = randint_weighted_towards_min(len / 20.0, len / 4, data->intensity);
-        data->spawn_at = t;
-        data->dies_at = t + randint_weighted_towards_min(2000, 6000, data->intensity);
-        data->wait = randint_weighted_towards_min(100, 5000, data->intensity);
-    }
-    */
+  const int era = floor(t / data->period);
+  frame->start_index = data->starts[era % RANDOM_START_BUCKET_SIZE];
+  frame->end_index = data->ends[era % RANDOM_END_BUCKET_SIZE];
 
-    //float age = (t - data->spawn_at);
-    //float ttl = (data->dies_at - data->spawn_at);
-    //float p = age / ttl;
+  return frame;
+}
 
-    //data->head_index =
+static inline void executor_lit(uint16_t i, void *dataPtr, void *framePtr, Printer *printer, float distance)
+{
+  data_struct *data = dataPtr;
 
-    //float p = (t % data->period) / (float)data->period;
-    //frame->head_index = len * InOutLinear(frame->p);
-
-    return frame;
+  // The falloff per distance should be different for each pixel index.
+  // This way it will feel like the sparkle is falling of with a glitter.
+  // The weight will be a [0..1] float, and should exponentially, but initially weakly, impact fading.
+  float weight = data->weights[i % RANDOM_FALLOFF_BUCKET_SIZE];
+  float alpha = MAX(0, 1 - (powf(distance, 1 + (0.1 * weight)) / data->tail_length));
+  HsiaColor c = {0, 0, 1, alpha};
+  printer->print(i, &c, printer);
 }
 
 static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+  data_struct *data = dataPtr;
+  frame_struct *frame = framePtr;
 
-    HsiaColor c = {0, 1, 1, a};
-    printer->print(i, &c, printer);
+  float rawDistance = (i - frame->head_index);
+  float distance = fabs(rawDistance);
 
-    /*
-void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {
-  setAll(0,0,0);
-
-  for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
-
-
-    // fade brightness all LEDs one step
-    for(int j=0; j<NUM_LEDS; j++) {
-      if( (!meteorRandomDecay) || (random(10)>5) ) {
-        fadeToBlack(j, meteorTrailDecay );
+  if (distance < data->tail_length)
+  {
+    if (frame->progress_raw < 0.5)
+    {
+      // We're going upwards
+      if (rawDistance < 0 && i >= frame->start_index && i <= frame->end_index)
+      {
+        executor_lit(i, dataPtr, framePtr, printer, distance);
+      }
+      else
+      {
+        HsiaColor c = {0, 0, 0, 0};
+        printer->print(i, &c, printer);
       }
     }
-
-    // draw meteor
-    for(int j = 0; j < meteorSize; j++) {
-      if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
-        setPixel(i-j, red, green, blue);
+    else
+    {
+      // We're going downwards
+      if (rawDistance > 0 && i <= frame->start_index && i >= frame->end_index)
+      {
+        executor_lit(i, dataPtr, framePtr, printer, distance);
+      }
+      else
+      {
+        HsiaColor c = {0, 0, 0, 0};
+        printer->print(i, &c, printer);
       }
     }
-
-    showStrip();
-    delay(SpeedDelay);
   }
-  */
+  else
+  {
+    HsiaColor c = {0, 0, 0, 0};
+    printer->print(i, &c, printer);
+  }
 }
 
 void pattern_register_meteor()
 {
-    pattern_register("meteor", executor, data_creator, data_destroyer, frame_creator, NULL, (PatternOptions){1});
+  pattern_register("meteor", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
 }
