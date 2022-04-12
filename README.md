@@ -37,24 +37,29 @@ There main concepts of the whole project are:
 ## Simple
 1. Enter `main()` (`picolight.c`)
 2. Enter endless loop which calls `execute_for_led_pin` (in theory we could have multiple pins/strips, but not yet fully implemented)
-3. Run `pattern_execute`, send along current time (`patter.c`)
+3. Run `pattern_execute`, send along current time (`pattern.c`)
 4. If a `next pattern` has been set, then initialize that pattern
-    * Get the pattern module, run its `Data Creator`. Save the data to global state (this hinders multiple strips, for now)
+    * Get the pattern module, run its `Data Creator`.
+    * Save the data to global state (this hinders multiple strips, for now)
 5. Get current pattern module
 6. Create `Frame Data` based on current time
 7. Run loop over each LED light index
 8. Run `Pattern Executor`, sending along `light index`, `Pattern Data`, `Frame Data` and default `Pattern Printer`
-9. Do whatever inside the executor, but as extremely little calculations as possible
+9. Do whatever inside the executor, but as extremely few calculations as possible
 10. Call the `Pattern Printer` with the output pixel `HsiaColor`
 11. `Pattern Printer` calls the final target, be it to the Pico pin or to elsewhere
-12. After all pixels are printer, destroy the `Frame Data`
-13. Repeat from #3 over and over
+12. After all pixels are printed, destroy `Frame Data`
+13. Repeat from `3.` over and over
 
 ## Complex
-What can be done at step `9` is to create a custom `Pattern Printer` and send that along to one or multiple other `Pattern Module`s.
-This way we can create composite of patterns. A somewhat simplified example is the `Snakes` module, which just prints 2 snakes.
+What can be done at `9.` is to create a custom `Pattern Printer` and send that along to one or multiple other `Pattern Module`s.
+This way we can create composite patterns. A somewhat simplified example is the `Snakes` module, which just prints multiple snakes.
 
 ```C
+
+typedef struct data_struct ...
+typedef struct frame_struct ...
+
 typedef struct SnakesPrinter
 {
     Printer override;
