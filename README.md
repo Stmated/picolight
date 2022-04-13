@@ -26,11 +26,9 @@ The main concepts of the whole project are:
 * Frame Destroyer
     > Handles the freeing of memory allocated by `Frame Creator`.
 * Pattern Executor
-    > Does final calculations that are then printed to a `Pattern Printer`
+    > Does final calculations that are then return a `HsiaColor` pixel.
     
     > Pixels are streamed as much as possible, so to not keep them in memory. Refresh rate is only limit.
-* Pattern Printer
-    > Prints to the strips. Can be wrapped over each other for compositioning.
 
 # How the rendering pipeline can work
 
@@ -46,56 +44,27 @@ The main concepts of the whole project are:
 7. Run loop over each LED light index
 8. Run `Pattern Executor`, sending along `light index`, `Pattern Data`, `Frame Data` and default `Pattern Printer`
 9. Do whatever inside the executor, but as extremely few calculations as possible
-10. Call the `Pattern Printer` with the output pixel `HsiaColor`
-11. `Pattern Printer` calls the final target, be it to the Pico pin or to elsewhere
+10. Return output pixel as `HsiaColor`
+11. Calls the final target, be it to the Pico pin or to elsewhere
 12. After all pixels are printed, destroy `Frame Data`
 13. Repeat from `3.` over and over
 
 ## Complex
-What can be done at `9.` is to create a custom `Pattern Printer` and send that along to one or multiple other `Pattern Module`s.
+What can be done at `9.` is to send along to one or multiple other `Pattern Module`s.
 This way we can create composite patterns. A somewhat simplified example is the `Snakes` module, which just prints multiple snakes.
 
 ```C
-
-typedef struct data_struct ...
-typedef struct frame_struct ...
-
-typedef struct SnakesPrinter
+static inline void executor(uint16_t i, void *dataPtr, void *framePtr)
 {
-    Printer override;
-    int pixelIndex;
-    HsiaColor pixels[2];
-
-} SnakesPrinter;
-
-static inline void snakes_printer(uint16_t index, HsiaColor *c, Printer *printer)
-{
-    SnakesPrinter *ourPrinter = (void *)printer;
-    ourPrinter->pixels[ourPrinter->pixelIndex] = *c;
-    ourPrinter->pixelIndex++;
-}
-
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
-{
-    data_struct *data = (data_struct *)dataPtr;
+    data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    // Create a fake printer that buffers 2 pixels from 2 other modules.
-    SnakesPrinter bufferingPrinter = {{snakes_printer}};
+    HsiaColor a = data->snakeModule->executor(i, data->snake1data, frame->frame1);
+    HsiaColor b = data->snakeModule->executor(i, data->snake2data, frame->frame2);
 
-    data->snakeModule->executor(i, data->snake1data, frame->frame1, (void *)&bufferingPrinter);
-    data->snakeModule->executor(i, data->snake2data, frame->frame2, (void *)&bufferingPrinter);
-
-    HsiaColor c = math_average_hsia(&bufferingPrinter.pixels[0], &bufferingPrinter.pixels[1]);
-
-    // Now send to our real printer.
-    printer->print(i, &c, printer);
+    return math_average_hsia(&a, &b);
 }
 ```
-
-This works, because the `override` field of the `SnakesPrinter` will take the same memory address offset as just the simple `Printer` function reference.
-
-This is called a `struct composition` or `struct inheritance`. So we can send a `Printer` function reference that actually holds more custom data for us, that we cast back into our custom `SnakesPrinter` inside the `snakes_printer` callback function.
 
 # Future plans
 * Create better dimming by dithering between two levels of lights

@@ -56,6 +56,7 @@ set (SRC_LIST
     patterns/pattern_firework.c
     patterns/pattern_strobe.c
     patterns/pattern_meteor.c
+    patterns/pattern_eyes.c
     patterns/pattern_test.c
 
     patterns.c

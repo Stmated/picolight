@@ -140,7 +140,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -155,7 +155,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
     // Find the closest color in the bag.
     int bagIndex = (int)round((data->color_bag_length - 1) * y);
-    printer->print(i, &data->color_bag[sizeof(HsiaColor) * bagIndex], printer);
+    return data->color_bag[sizeof(HsiaColor) * bagIndex];
 }
 
 void pattern_register_gas_fade()

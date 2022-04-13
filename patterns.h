@@ -11,21 +11,21 @@
 
 struct Printer;
 
-typedef void (*PrinterFunction)(uint16_t index, HsiaColor *c, struct Printer *printer);
+//typedef void (*PrinterFunction)(uint16_t index, HsiaColor *c, struct Printer *printer);
 
 // TODO: Add a way of being able to send different color-spaces to the printer, and they are propagated upwards.
 //       This way we can send RGBW directly if that is all we need, and skip any translation from HSIA to RGBW
 //       Could theoretically add more obscure color spaces then, like CIECAM02
-typedef struct Printer
-{
-    PrinterFunction print;
-} Printer;
+
+#define COLOR_TRANSPARENT (HsiaColor) {0, 0, 0, 0}
+#define COLOR_WHITE (HsiaColor) {0, 0, 1, 1}
+#define COLOR_BLACK (HsiaColor) {0, 0, 0, 1}
 
 // TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "FrameData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a frame way too often
-typedef void (*PatternExecutor)(uint16_t i, void *dataPtr, void *framePtr, Printer *printer);
+typedef HsiaColor (*PatternExecutor)(uint16_t i, void *dataPtr, void *framePtr/*, Printer *printer*/);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
@@ -57,15 +57,6 @@ typedef struct PatternModule
     PatternOptions options;
 } PatternModule;
 
-/*
-typedef struct data_pixel_blending_struct
-{
-    HsiaColor *pixels;
-    uint8_t stepIndex;
-
-} data_pixel_blending_struct;
-*/
-
 PatternModule *pattern_get_by_index(int index);
 PatternModule *pattern_get_by_name(const char* name);
 
@@ -74,11 +65,6 @@ void pattern_destroyer_default(void *data);
 
 void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr);
 void pattern_frame_destroyer_default(void *data, void *framePtr);
-
-//void pattern_printer_default(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr);
-//void pattern_printer_set(uint16_t index, HsiaColor *c, void *dataPtr, void *parentDataPtr);
-
-//void setAll(uint16_t offset, uint16_t len, HsiaColor *c, void *dataPtr, void *framePtr, Printer *printer);
 
 void pattern_find_and_register_patterns();
 
@@ -97,6 +83,7 @@ void pattern_register_strobe();
 void pattern_register_knightrider();
 void pattern_register_firework();
 void pattern_register_meteor();
+void pattern_register_eyes();
 
 void pattern_register_random();
 

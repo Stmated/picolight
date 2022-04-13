@@ -31,7 +31,7 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     bool *bools = (bool *)data->values;
@@ -49,11 +49,11 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
 
     if (bools[ptrAddress])
     {
-        printer->print(i, &data->colorOn, printer);
+        return data->colorOn;
     }
     else
     {
-        printer->print(i, &data->colorOff, printer);
+        return data->colorOff;
     }
 }
 

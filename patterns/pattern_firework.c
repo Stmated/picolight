@@ -40,7 +40,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     // TODO: Add an edge sparkle, like actual fireworks do
 
@@ -56,21 +56,20 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
             // Only do something if larger than half a pixel.
             float p = 1 - (fullDistance / currentWidth);
 
-            HsiaColor c = (HsiaColor){
+            return (HsiaColor){
                 frame->hue,
                 data->s,
                 data->i,
                 1 * p};
-            printer->print(i, &c, printer);
         }
         else
         {
-            printer->print(i, &(HsiaColor){0, 0, 0, 0}, printer);
+            return (HsiaColor){0, 0, 0, 0};
         }
     }
     else
     {
-        printer->print(i, &(HsiaColor){0, 0, 0, 0}, printer);
+        return (HsiaColor){0, 0, 0, 0};
     }
 }
 

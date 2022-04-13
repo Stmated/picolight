@@ -136,40 +136,19 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     free(framePtr);
 }
 
-typedef struct RandomPrinter
-{
-    Printer base;
-    int stepIndex;
-    HsiaColor pixels[2];
-
-} RandomPrinter;
-
-static inline void random_printer(uint16_t index, HsiaColor *c, Printer *printer)
-{
-    RandomPrinter *ourPrinter = (void *)printer;
-    ourPrinter->pixels[ourPrinter->stepIndex] = *c;
-    ourPrinter->stepIndex++;
-}
-
-static void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    RandomPrinter bufferingPrinter = {{random_printer}};
-
-    data->pattern1->executor(i, data->data1, frame->frame1, (void *)&bufferingPrinter);
-    data->pattern2->executor(i, data->data2, frame->frame2, (void *)&bufferingPrinter);
-
-    HsiaColor a = bufferingPrinter.pixels[0];
-    HsiaColor b = bufferingPrinter.pixels[1];
+    HsiaColor a = data->pattern1->executor(i, data->data1, frame->frame1);
+    HsiaColor b = data->pattern2->executor(i, data->data2, frame->frame2);
 
     a.a = a.a * (1 - frame->p);
     b.a = b.a * frame->p;
 
     // Now let's send the data to the original printer
-    HsiaColor c = math_average_hsia(&a, &b);
-    printer->print(i, &c, printer);
+    return math_average_hsia(&a, &b);
 }
 
 void pattern_register_random()

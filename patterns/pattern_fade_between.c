@@ -60,12 +60,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    printer->print(i, &frame->hsi, printer);
+    return frame->hsi;
 }
 
 void pattern_register_fade_between()

@@ -79,7 +79,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
   return frame;
 }
 
-static inline void executor_lit(uint16_t i, void *dataPtr, void *framePtr, Printer *printer, float distance)
+static inline HsiaColor executor_lit(uint16_t i, void *dataPtr, void *framePtr, float distance)
 {
   data_struct *data = dataPtr;
 
@@ -97,10 +97,10 @@ static inline void executor_lit(uint16_t i, void *dataPtr, void *framePtr, Print
   }
 
   HsiaColor c = {0, 0, 1, alpha};
-  printer->print(i, &c, printer);
+  return c;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
   data_struct *data = dataPtr;
   frame_struct *frame = framePtr;
@@ -115,12 +115,12 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
       // We're going upwards
       if (rawDistance < 0 && i >= frame->start_index && i <= frame->end_index)
       {
-        executor_lit(i, dataPtr, framePtr, printer, distance);
+        return executor_lit(i, dataPtr, framePtr, distance);
       }
       else
       {
         HsiaColor c = {0, 0, 0, 0};
-        printer->print(i, &c, printer);
+        return c;
       }
     }
     else
@@ -128,19 +128,19 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
       // We're going downwards
       if (rawDistance > 0 && i <= frame->start_index && i >= frame->end_index)
       {
-        executor_lit(i, dataPtr, framePtr, printer, distance);
+        return executor_lit(i, dataPtr, framePtr, distance);
       }
       else
       {
         HsiaColor c = {0, 0, 0, 0};
-        printer->print(i, &c, printer);
+        return c;
       }
     }
   }
   else
   {
     HsiaColor c = {0, 0, 0, 0};
-    printer->print(i, &c, printer);
+    return c;
   }
 }
 

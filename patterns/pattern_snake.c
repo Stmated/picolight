@@ -46,7 +46,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -61,11 +61,11 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
             hsi.s *= distanceMultiplier;
         }
         
-        printer->print(i, &hsi, printer);
+        return hsi;
     }
     else
     {
-        printer->print(i, &transparent, printer);
+        return COLOR_TRANSPARENT;
     }
 }
 

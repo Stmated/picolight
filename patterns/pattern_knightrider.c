@@ -40,7 +40,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *printer)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
@@ -67,8 +67,7 @@ static inline void executor(uint16_t i, void *dataPtr, void *framePtr, Printer *
     }
 
     float a = 1 - (distance / data->width);
-    HsiaColor c = {0, 1, 1, a};
-    printer->print(i, &c, printer);
+    return (HsiaColor){0, 1, 1, a};
 }
 
 void pattern_register_knightrider()

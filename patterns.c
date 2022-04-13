@@ -1,8 +1,5 @@
 #include "patterns.h"
 
-HsiaColor transparent = {0, 0, 0, 0};
-HsiaColor white = {0, 0, 1, 1};
-
 void *pattern_creator_default(uint16_t len, float intensity)
 {
     return NULL;
@@ -54,13 +51,14 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_meteor();
+    pattern_register_knightrider();
+    pattern_register_eyes();
 
     pattern_register_random();
 
     pattern_register_gas_fade();
     pattern_register_firework();
-    pattern_register_knightrider();
+    
     pattern_register_fade_between();
     pattern_register_snakes();
     pattern_register_snake();
@@ -69,6 +67,7 @@ void pattern_find_and_register_patterns()
     pattern_register_strobe();
     pattern_register_sparkle();
     pattern_register_hue_lerp();
+    pattern_register_meteor();
 
     pattern_register_test();
 }
@@ -96,7 +95,7 @@ void pattern_register(
 
 HsiaColor BLACK = {0, 0, 0, 1};
 
-static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer *printer)
+static inline void pattern_printer_default(uint16_t index, HsiaColor *c)
 {
     // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals? Just previous [1-3] pixels?
     //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
@@ -112,8 +111,6 @@ static inline void pattern_printer_default(uint16_t index, HsiaColor *c, Printer
         put_pixel(index, &rgbw);
     }
 }
-
-Printer pixelPrinter = {pattern_printer_default};
 
 void pattern_execute(uint16_t len, uint32_t t)
 {
@@ -146,16 +143,16 @@ void pattern_execute(uint16_t len, uint32_t t)
         void *framePtr = module->frameCreator(len, t, state.patternData);
         for (int i = 0; i < len; i++)
         {
-            module->executor(i, state.patternData, framePtr, &pixelPrinter);
+            HsiaColor c = module->executor(i, state.patternData, framePtr);
+            pattern_printer_default(i, &c);
         }
         module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
-        HsiaColor transparent = {0, 0, 0};
         for (int i = 0; i < len; i++)
         {
-            pattern_printer_default(i, &transparent, NULL);
+            pattern_printer_default(i, &COLOR_TRANSPARENT);
         }
     }
 }
