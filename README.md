@@ -54,7 +54,7 @@ What can be done at `9.` is to send along to one or multiple other `Pattern Modu
 This way we can create composite patterns. A somewhat simplified example is the `Snakes` module, which just prints multiple snakes.
 
 ```C
-static inline void executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;

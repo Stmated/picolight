@@ -51,14 +51,13 @@ PatternModule *pattern_get_by_name(const char *name)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_knightrider();
     pattern_register_eyes();
 
     pattern_register_random();
 
     pattern_register_gas_fade();
     pattern_register_firework();
-    
+    pattern_register_knightrider();
     pattern_register_fade_between();
     pattern_register_snakes();
     pattern_register_snake();
