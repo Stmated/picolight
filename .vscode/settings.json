@@ -5,7 +5,12 @@
         "iterator": "c",
         "algorithm": "c",
         "limits": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "__node_handle": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "vector": "c",
+        "functional": "c"
     },
     "cmake.buildBeforeRun": true,
     "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}

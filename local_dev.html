@@ -7,7 +7,15 @@
     }
 
     img {
-        height: 100%; width: 50%; image-rendering: crisp-edges; text-align: center; display: block; margin-left: auto; margin-right: auto;
+        height: 100%; width: 50%; text-align: center; display: block; margin-left: auto; margin-right: auto;
+
+        image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+        image-rendering: -moz-crisp-edges;          /* Firefox                        */
+        image-rendering: -o-crisp-edges;            /* Opera                          */
+        image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+        image-rendering: pixelated; /* Chrome */
+        image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+        -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
     }
 </style>
 </head>
