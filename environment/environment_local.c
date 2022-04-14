@@ -83,23 +83,21 @@ void sleep_ms(uint32_t ms)
 void sleep_us(uint64_t us)
 {
     // Do we even care to? Maybe?
-    //sleep(us * 1000);
+    // sleep(us * 1000);
 }
 
 uint32_t get_running_ms()
 {
-    // TODO: Get the real time! sys/time does not seem to exist!
-    // time_startup += 10;
-    // return time_startup;
-
-    struct timespec time; //, end;
+    struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
-    // do stuff
-    // clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+    return (time.tv_sec * 1000) + (time.tv_nsec / 1000000);
+}
 
-    // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-
-    return (time.tv_sec * 1000) + (time.tv_nsec / 1000000); // clock();
+uint64_t get_running_us()
+{
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    return (time.tv_sec * 1000 * 1000) + (time.tv_nsec / 1000);
 }
 
 void picolight_blink(bool on)

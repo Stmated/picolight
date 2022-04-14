@@ -25,46 +25,46 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    if (i < data->len * 0.1)
+    if (args->i < data->len * 0.1)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c = c1;
         return c;
     }
-    else if (i < data->len * 0.2)
+    else if (args->i < data->len * 0.2)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 1};
         HsiaColor c = math_average_hsia(&c1, &c2);
         return c;
     }
-    else if (i < data->len * 0.3)
+    else if (args->i < data->len * 0.3)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.8};
         HsiaColor c = math_average_hsia(&c1, &c2);
         return c;
     }
-    else if (i < data->len * 0.4)
+    else if (args->i < data->len * 0.4)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.6};
         HsiaColor c = math_average_hsia(&c1, &c2);
         return c;
     }
-    else if (i < data->len * 0.5)
+    else if (args->i < data->len * 0.5)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.4};
         HsiaColor c = math_average_hsia(&c1, &c2);
         return c;
     }
-    else if (i < data->len * 0.6)
+    else if (args->i < data->len * 0.6)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 1};
@@ -73,7 +73,7 @@ static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
         HsiaColor c = math_average_hsia(&mix1, &c3);
         return c;
     }
-    else if (i < data->len * 0.7)
+    else if (args->i < data->len * 0.7)
     {
         HsiaColor c1 = {0, 1, 1, 1};
         HsiaColor c2 = {240, 1, 1, 0.4};
@@ -82,14 +82,14 @@ static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
         HsiaColor c = math_average_hsia(&mix1, &c3);
         return c;
     }
-    else if (i < data->len * 0.9)
+    else if (args->i < data->len * 0.9)
     {
         float start = data->len * 0.7;
         float end = data->len * 0.9;
         float width = (end - start);
         float mid = start + (width / (float)2);
-        float p = (i - start) / width;
-        float distance = fabsf(i - mid) / (width / (float)2);
+        float p = (args->i - start) / width;
+        float distance = fabsf(args->i - mid) / (width / (float)2);
         HsiaColor c = {317, 1, 0.588, 1 - distance};
         return c;
     }

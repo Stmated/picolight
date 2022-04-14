@@ -17,6 +17,18 @@ typedef struct frame_struct
     void *frame3;
 } frame_struct;
 
+static void *data_creator(uint16_t len, float intensity)
+{
+    data_struct *data = calloc(1, sizeof(data_struct));
+
+    data->snakeModule = pattern_get_by_name("snake");
+    data->snake1data = data->snakeModule->creator(len, intensity * 4);
+    data->snake2data = data->snakeModule->creator(len, intensity * 2);
+    data->snake3data = data->snakeModule->creator(len, intensity);
+
+    return data;
+}
+
 static void data_destroyer(void *dataPtr)
 {
     data_struct *data = dataPtr;
@@ -28,18 +40,6 @@ static void data_destroyer(void *dataPtr)
     data->snakeModule->destroyer(data->snake3data);
     data->snake3data = NULL;
     free(dataPtr);
-}
-
-static void *data_creator(uint16_t len, float intensity)
-{
-    data_struct *data = calloc(1, sizeof(data_struct));
-
-    data->snakeModule = pattern_get_by_name("snake");
-    data->snake1data = data->snakeModule->creator(len, intensity * 4);
-    data->snake2data = data->snakeModule->creator(len, intensity * 2);
-    data->snake3data = data->snakeModule->creator(len, intensity);
-
-    return data;
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -67,14 +67,14 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
 
 // TODO: Remove this whole pattern! Instead make it somehow able to inherit from "random" but tell it that the "random" has to be 3 snakes. Then move code from Random into a "Composition" pattern helper of sorts
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    HsiaColor a = data->snakeModule->executor(i, data->snake1data, frame->frame1);
-    HsiaColor b = data->snakeModule->executor(i, data->snake2data, frame->frame2);
-    HsiaColor c = data->snakeModule->executor(i, data->snake3data, frame->frame3);
+    HsiaColor a = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake1data, frame->frame1});
+    HsiaColor b = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake2data, frame->frame2});
+    HsiaColor c = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake3data, frame->frame3});
 
     HsiaColor blend_a_b = math_average_hsia(&a, &b);
     return math_average_hsia(&blend_a_b, &c);

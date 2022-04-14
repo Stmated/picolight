@@ -31,12 +31,12 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
+    data_struct *data =args-> dataPtr;
     bool *bools = (bool *)data->values;
 
-    int ptrAddress = sizeof(bool) * i;
+    int ptrAddress = sizeof(bool) * args->i;
     int chance = randint(10000);
     if (chance < data->chanceToLightUp)
     {

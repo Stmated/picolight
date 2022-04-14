@@ -68,6 +68,11 @@ uint32_t get_running_ms()
     return to_ms_since_boot(get_absolute_time());
 }
 
+uint64_t get_running_us()
+{
+    return to_us_since_boot(get_absolute_time());
+}
+
 void picolight_boot(int led_count)
 {
     gpio_init(25);

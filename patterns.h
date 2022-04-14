@@ -21,11 +21,18 @@ struct Printer;
 #define COLOR_WHITE (HsiaColor) {0, 0, 1, 1}
 #define COLOR_BLACK (HsiaColor) {0, 0, 0, 1}
 
+typedef struct ExecutorArgs
+{
+    uint_fast16_t i;
+    void *dataPtr;
+    void *framePtr;
+} ExecutorArgs;
+
 // TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "FrameData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a frame way too often
-typedef HsiaColor (*PatternExecutor)(uint16_t i, void *dataPtr, void *framePtr/*, Printer *printer*/);
+typedef HsiaColor (*PatternExecutor)(ExecutorArgs *args);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
@@ -65,6 +72,7 @@ void pattern_destroyer_default(void *data);
 
 void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr);
 void pattern_frame_destroyer_default(void *data, void *framePtr);
+//HsiaColor pattern_executor_default(uint16_t i, void *dataPtr, void *framePtr);
 
 void pattern_find_and_register_patterns();
 

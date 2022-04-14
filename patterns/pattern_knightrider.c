@@ -40,29 +40,29 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    float distance = fabsf(i - frame->headIndex);
+    float distance = fabsf(args->i - frame->headIndex);
 
     if (frame->p < 0.5)
     {
         // Going up
-        if (i > frame->headIndex)
+        if (args->i > frame->headIndex)
         {
             // Add distance to tail
-            distance = (i) + (frame->headIndex);
+            distance = (args->i) + (frame->headIndex);
         }
     }
     else
     {
         // Going back down
-        if (i < frame->headIndex)
+        if (args->i < frame->headIndex)
         {
             // Add distance to tail
-            distance = (data->len - i) + (data->len - frame->headIndex);
+            distance = (data->len - args->i) + (data->len - frame->headIndex);
         }
     }
 

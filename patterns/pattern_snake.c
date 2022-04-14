@@ -46,11 +46,11 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
-    float distance = fabsf(i - frame->p);
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
+    float distance = fabsf(args->i - frame->p);
 
     if (distance <= data->width)
     {

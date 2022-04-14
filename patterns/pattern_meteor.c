@@ -79,14 +79,14 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
   return frame;
 }
 
-static inline HsiaColor executor_lit(uint16_t i, void *dataPtr, void *framePtr, float distance)
+static inline HsiaColor executor_lit(ExecutorArgs *args, float distance)
 {
-  data_struct *data = dataPtr;
+  data_struct *data = args->dataPtr;
 
   // The falloff per distance should be different for each pixel index.
   // This way it will feel like the sparkle is falling of with a glitter.
   // The weight will be a [0..1] float, and should exponentially, but initially weakly, impact fading.
-  float weight = data->weights[i % RANDOM_FALLOFF_BUCKET_SIZE];
+  float weight = data->weights[args->i % RANDOM_FALLOFF_BUCKET_SIZE];
   float weightedDistance = powf(distance, 1 + (0.05 * weight));
   float alpha = MAX(0, 1 - (weightedDistance / data->tail_length));
   if (distance > 1)
@@ -100,12 +100,12 @@ static inline HsiaColor executor_lit(uint16_t i, void *dataPtr, void *framePtr, 
   return c;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-  data_struct *data = dataPtr;
-  frame_struct *frame = framePtr;
+  data_struct *data = args->dataPtr;
+  frame_struct *frame = args->framePtr;
 
-  float rawDistance = (i - frame->head_index);
+  float rawDistance = (args->i - frame->head_index);
   float distance = fabs(rawDistance);
 
   if (distance < data->tail_length)
@@ -113,9 +113,9 @@ static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
     if (frame->progress_raw < 0.5)
     {
       // We're going upwards
-      if (rawDistance < 0 && i >= frame->start_index && i <= frame->end_index)
+      if (rawDistance < 0 && args->i >= frame->start_index && args->i <= frame->end_index)
       {
-        return executor_lit(i, dataPtr, framePtr, distance);
+        return executor_lit(args, distance);
       }
       else
       {
@@ -126,9 +126,9 @@ static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
     else
     {
       // We're going downwards
-      if (rawDistance > 0 && i <= frame->start_index && i >= frame->end_index)
+      if (rawDistance > 0 && args->i <= frame->start_index && args->i >= frame->end_index)
       {
-        return executor_lit(i, dataPtr, framePtr, distance);
+        return executor_lit(args, distance);
       }
       else
       {

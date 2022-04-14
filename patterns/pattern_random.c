@@ -136,13 +136,13 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     free(framePtr);
 }
 
-static HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    HsiaColor a = data->pattern1->executor(i, data->data1, frame->frame1);
-    HsiaColor b = data->pattern2->executor(i, data->data2, frame->frame2);
+    HsiaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
+    HsiaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
 
     a.a = a.a * (1 - frame->p);
     b.a = b.a * frame->p;

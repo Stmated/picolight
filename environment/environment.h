@@ -24,6 +24,8 @@ void picolight_post_boot();
 
 uint32_t get_running_ms();
 
+uint64_t get_running_us();
+
 void launch_thread(void (*entry)(void));
 
 void picolight_blink(bool on);

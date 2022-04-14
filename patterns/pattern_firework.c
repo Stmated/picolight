@@ -40,14 +40,14 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
     // TODO: Add an edge sparkle, like actual fireworks do
 
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    float fullDistance = fabsf(i - frame->middle);
+    float fullDistance = fabsf(args->i - frame->middle);
     if (fullDistance < data->width)
     {
         float currentWidth = data->width * InOut(InExponentE, OutSquareRoot, frame->p);

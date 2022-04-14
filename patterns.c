@@ -49,21 +49,38 @@ PatternModule *pattern_get_by_name(const char *name)
     return NULL;
 }
 
+static inline void pattern_printer_default(uint16_t index, HsiaColor *c)
+{
+    static HsiaColor black = (HsiaColor){0, 0, 0, 1};
+
+    // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals? Just previous [1-3] pixels?
+    //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
+    if (c->a < 1)
+    {
+        HsiaColor blended = math_average_hsia(&black, c);
+        RgbwColor rgbw = hsia2rgbw(&blended);
+        put_pixel(index, &rgbw);
+    }
+    else
+    {
+        RgbwColor rgbw = hsia2rgbw(c);
+        put_pixel(index, &rgbw);
+    }
+}
+
 void pattern_find_and_register_patterns()
 {
     pattern_register_eyes();
 
     pattern_register_random();
-
+    pattern_register_strobe();
+    pattern_register_knightrider();
+    pattern_register_snakes();
     pattern_register_gas_fade();
     pattern_register_firework();
-    pattern_register_knightrider();
     pattern_register_fade_between();
-    pattern_register_snakes();
     pattern_register_snake();
-    pattern_register_rainbow_wave();
     pattern_register_color_lerp();
-    pattern_register_strobe();
     pattern_register_sparkle();
     pattern_register_hue_lerp();
     pattern_register_meteor();
@@ -80,7 +97,8 @@ void pattern_register(
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
     memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
-    PatternModule module = {name, executor,
+    PatternModule module = {name,
+                            executor,
                             creator ? creator : pattern_creator_default,
                             destroyer ? destroyer : pattern_destroyer_default,
                             frameCreator ? frameCreator : pattern_frame_creator_default,
@@ -90,25 +108,6 @@ void pattern_register(
 
     state.modules = array_new;
     state.modules_size++;
-}
-
-HsiaColor BLACK = {0, 0, 0, 1};
-
-static inline void pattern_printer_default(uint16_t index, HsiaColor *c)
-{
-    // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals? Just previous [1-3] pixels?
-    //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
-    if (c->a < 1)
-    {
-        HsiaColor blended = math_average_hsia(&BLACK, c);
-        RgbwColor rgbw = hsia2rgbw(&blended);
-        put_pixel(index, &rgbw);
-    }
-    else
-    {
-        RgbwColor rgbw = hsia2rgbw(c);
-        put_pixel(index, &rgbw);
-    }
 }
 
 void pattern_execute(uint16_t len, uint32_t t)
@@ -140,18 +139,33 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
         void *framePtr = module->frameCreator(len, t, state.patternData);
-        for (int i = 0; i < len; i++)
+        if (module->executor == NULL)
         {
-            HsiaColor c = module->executor(i, state.patternData, framePtr);
-            pattern_printer_default(i, &c);
+            for (uint_fast16_t i = 0; i < len; i++)
+            {
+                // The default executor just takes the frame pointer and converts it into a color.
+                // We expect the first field (at offset 0) to be a pixel color.
+                // This code is dangerous, but who cares. It gives us ability to inline code easier.
+                pattern_printer_default(i, framePtr);
+            }
+        }
+        else
+        {
+            ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, framePtr};
+            while (args->i < len)
+            {
+                HsiaColor c = module->executor(args);
+                pattern_printer_default(args->i, &c);
+                args->i++;
+            }
         }
         module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
-        for (int i = 0; i < len; i++)
+        for (uint_fast16_t i = 0; i < len; i++)
         {
-            pattern_printer_default(i, &COLOR_TRANSPARENT);
+            pattern_printer_default(i, &COLOR_BLACK);
         }
     }
 }

@@ -60,21 +60,19 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
-    uint16_t rowHueOffset = (uint16_t)roundf(frame->huePerLed * i);
+    uint16_t rowHueOffset = (uint16_t)roundf(frame->huePerLed * args->i);
     int32_t h = (rowHueOffset + frame->hueOffset);
     if (h < 0)
     {
         h = HSI_H_MAX - h;
     }
 
-    HsiaColor c = (HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1};
-
-    return c;
+    return (HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1};
 }
 
 void pattern_register_rainbow_wave()

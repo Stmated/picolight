@@ -4,6 +4,11 @@
 
 #include "actions.h"
 
+#define PERFORMANCE_STATS true
+#undef PERFORMANCE_STATS
+#define PERFORMANCE_SAMPLES 100
+#define NANO_IN_SECOND 1000000000.0
+
 GlobalState state;
 
 void core1_entry()
@@ -110,17 +115,51 @@ int main()
     else
     {
         program_init(offset, PIN_TX[0]);
+#ifdef PERFORMANCE_STATS
+        uint32_t timings[PERFORMANCE_SAMPLES];
+        int timingIndex = 0;
+#endif
         while (1)
         {
+#ifdef PERFORMANCE_STATS
+            uint64_t before = get_running_us();
+#endif
+
             execute_for_led_pin(time_start, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
             sleep_us(150); // minimum is 50us, but need safety margins
+
+#ifdef PERFORMANCE_STATS
+            uint64_t after = get_running_us();
+            timings[timingIndex] = (after - before);
+            timingIndex = (timingIndex + 1) % PERFORMANCE_SAMPLES;
+            if (timingIndex == 0)
+            {
+                uint64_t total = 0;
+                for (int i = 0; i < PERFORMANCE_SAMPLES; i++)
+                {
+                    total += timings[i];
+                }
+
+                float average = total / (float)PERFORMANCE_SAMPLES;
+                float fps = NANO_IN_SECOND / average;
+
+                // TODO: Show this some other way depending on environment. If on Pico, the first LEDs should have a colored base64 system of showing the FPS (higher hue, higher value)
+                printf("%f, %f\n", average, fps);
+            }
+#endif
         }
     }
 }
 
 // TODO:
 // * https://github.com/google/orbit
-//      Profile like a madman, find out where the time is spent! 
+//      Profile like a madman, find out where the time is spent!
 //      (or add simple #DEFINE guards and run all patterns and print a performance table)
+
+// TODO:
+// * Make two kinds of "random" -- one that blends while fading between, and one that fades in and out one by one
+// * Make a test where we try to blend different colors at different opacities and look at which one actually turns out the most realistic (rgbw blend vs hsia blend)
+// * Need a better system of "random" that has more versatile weighting system so we can more reliably say what kind of number we prefer, unless the intensity is really strong/weak
+// * Move away from only "intensity" and instead move into multiple parameters: Colorfulness, Intensity, Speed, Brightness, Randomness

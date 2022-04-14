@@ -1,5 +1,7 @@
 #include "../patterns.h"
 
+#define BASE_COLOR_LENGTH 10
+
 typedef struct data_struct
 {
     HsiaColor *color_bag;
@@ -16,13 +18,6 @@ typedef struct frame_struct
 {
     int offset;
 } frame_struct;
-
-static void data_destroyer(void *dataPtr)
-{
-    data_struct *data = dataPtr;
-    free(data->color_bag);
-    free(dataPtr);
-}
 
 static void set_fire(HsiaColor colors[10])
 {
@@ -48,11 +43,9 @@ static void set_grayscale(HsiaColor colors[10])
     colors[7] = (HsiaColor){0, 0, 1, 1};
 }
 
-#define BASE_COLOR_LENGTH 10
-
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *data = malloc(sizeof(data_struct));
+    data_struct *data = calloc(1, sizeof(data_struct));
 
     data->len = len;
 
@@ -68,7 +61,7 @@ static void *data_creator(uint16_t len, float intensity)
     }
 
     int interpolations;
-    if (randint_weighted_towards_max(0, 100, intensity) > 50)
+    if (randint_weighted_towards_max(0, 100, intensity) > 75)
     {
         if (randint_weighted_towards_max(0, 100, intensity) > 50)
         {
@@ -122,11 +115,19 @@ static void *data_creator(uint16_t len, float intensity)
         {
             float p = (n / (float)(interpolations + 1));
             HsiaColor interpolated = math_average_hsia_lerp(&current, &next, p);
-            data->color_bag[(sizeof(HsiaColor) * b) + (sizeof(HsiaColor) * n)] = interpolated;
+            data->color_bag[(sizeof(HsiaColor) * b) + (sizeof(HsiaColor) * n)] = interpolated; // SEGMENTATION FAULT???
         }
     }
 
     return data;
+}
+
+static void data_destroyer(void *dataPtr)
+{
+    data_struct *data = dataPtr;
+
+    free(data->color_bag);
+    free(dataPtr);
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -140,21 +141,27 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(uint16_t i, void *dataPtr, void *framePtr)
+static inline HsiaColor executor(ExecutorArgs *args)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = framePtr;
+    data_struct *data = args->dataPtr;
+    frame_struct *frame = args->framePtr;
 
     // TODO: Figure out a way to cache the sin() calculations!
     // (Could be done by calculating ### points, and then interpolating between them here, like with the colors bag)
     // Can use a method in math.c, and if precomputation is enabled, then use it. The accuracy should be DYNAMIC
-    double wave_a = fabs(sin((i + frame->offset) * data->frequency_multiplier_1));
-    double wave_b = fabs(sin((i + frame->offset) * data->frequency_multiplier_2));
-    double wave_c = fabs(sin((i + frame->offset) * data->frequency_multiplier_3));
-    double y = ((wave_a + wave_b + wave_c) * (1 - (i / data->len))) / 3.0;
+    int virtualIndex = (args->i + frame->offset);
+
+    double wave_a_radian = virtualIndex * data->frequency_multiplier_1;
+    double wave_b_radian = virtualIndex * data->frequency_multiplier_2;
+    double wave_c_radian = virtualIndex * data->frequency_multiplier_3;
+
+    double wave_a = fabs(sin(wave_a_radian));
+    double wave_b = fabs(sin(wave_b_radian));
+    double wave_c = fabs(sin(wave_c_radian));
+    double y = ((wave_a + wave_b + wave_c) * (1 - (args->i / data->len))) / 3.0;
 
     // Find the closest color in the bag.
-    int bagIndex = (int)round((data->color_bag_length - 1) * y);
+    int bagIndex = (int)floor((data->color_bag_length - 1) * y);
     return data->color_bag[sizeof(HsiaColor) * bagIndex];
 }
 
