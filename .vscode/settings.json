@@ -10,7 +10,8 @@
         "string": "c",
         "unordered_map": "c",
         "vector": "c",
-        "functional": "c"
+        "functional": "c",
+        "typeinfo": "c"
     },
     "cmake.buildBeforeRun": true,
     "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}

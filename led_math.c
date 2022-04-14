@@ -141,9 +141,9 @@ HsiaColor rgbw2hsia(RgbwColor c, float a)
 inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
 {
     // If above very low/high alpha, just replace. Faster and won't notice a difference.
-    if (hsia_b->a <= 0.05)
+    if (hsia_b->a <= 0.02)
         return *hsia_a;
-    if (hsia_b->a >= 0.95)
+    if (hsia_b->a >= 0.98)
         return *hsia_b;
 
     // TODO: Can this be replaced with full ONLY HSI calculations?

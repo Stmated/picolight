@@ -1,10 +1,10 @@
 #include "../patterns.h"
 
-#define BASE_COLOR_LENGTH 10
+#define BUCKET_SIZE_COLORS 25
 
 typedef struct data_struct
 {
-    HsiaColor *color_bag;
+    HsiaColor color_bag[BUCKET_SIZE_COLORS];
     int color_bag_length;
 
     double frequency_multiplier_1;
@@ -19,29 +19,35 @@ typedef struct frame_struct
     int offset;
 } frame_struct;
 
-static void set_fire(HsiaColor colors[10])
+static int set_fire(data_struct *data)
 {
-    colors[0] = (HsiaColor){0, 0, 0, 0.0};
-    colors[1] = (HsiaColor){12, 0, 0, 0};
-    colors[2] = (HsiaColor){12, 0.84, 0.91, 1};
-    colors[3] = (HsiaColor){26, 0.87, 0.93, 1};
-    colors[4] = (HsiaColor){50, 0.95, 0.95, 1};
-    colors[5] = (HsiaColor){55, 0.75, 0.95, 1};
-    colors[6] = (HsiaColor){55, 0, 1, 1};
-    colors[7] = (HsiaColor){0, 0, 1, 1};
+    data->color_bag[0] = (HsiaColor){0, 0, 0, 0.0};
+    data->color_bag[1] = (HsiaColor){12, 0, 0, 0};
+    data->color_bag[2] = (HsiaColor){12, 0.84, 0.91, 1};
+    data->color_bag[3] = (HsiaColor){26, 0.87, 0.93, 1};
+    data->color_bag[4] = (HsiaColor){50, 0.95, 0.95, 1};
+    data->color_bag[5] = (HsiaColor){55, 0.75, 0.95, 1};
+    data->color_bag[6] = (HsiaColor){55, 0, 1, 1};
+    data->color_bag[7] = (HsiaColor){0, 0, 1, 1};
+
+    return 8;
 }
 
-static void set_grayscale(HsiaColor colors[10])
+static int set_grayscale(data_struct *data)
 {
-    colors[0] = (HsiaColor){0, 0, 0, 0.0};
-    colors[1] = (HsiaColor){0, 0, 0, 0};
-    colors[2] = (HsiaColor){0, 0, 1, 0.2};
-    colors[3] = (HsiaColor){0, 0, 1, 0.4};
-    colors[4] = (HsiaColor){0, 0, 1, 0.6};
-    colors[5] = (HsiaColor){0, 0, 1, 0.8};
-    colors[6] = (HsiaColor){0, 0, 1, 0.9};
-    colors[7] = (HsiaColor){0, 0, 1, 1};
+    data->color_bag[0] = (HsiaColor){0, 0, 0, 0.0};
+    data->color_bag[1] = (HsiaColor){0, 0, 0, 0};
+    data->color_bag[2] = (HsiaColor){0, 0, 1, 0.2};
+    data->color_bag[3] = (HsiaColor){0, 0, 1, 0.4};
+    data->color_bag[4] = (HsiaColor){0, 0, 1, 0.6};
+    data->color_bag[5] = (HsiaColor){0, 0, 1, 0.8};
+    data->color_bag[6] = (HsiaColor){0, 0, 1, 0.9};
+    data->color_bag[7] = (HsiaColor){0, 0, 1, 1};
+
+    return 8;
 }
+
+// TODO: Something is wrong with this pattern! There is a memory leak! Remove the color bag, or redo it so it is *simpler*. Maybe just make it an array of size 25, but don't use all the colors?
 
 static void *data_creator(uint16_t len, float intensity)
 {
@@ -53,20 +59,21 @@ static void *data_creator(uint16_t len, float intensity)
     data->frequency_multiplier_2 = (180 + randint(150)) / (double)1000; // 0.22 is a good value
     data->frequency_multiplier_3 = (250 + randint(220)) / (double)1000; // 0.31 is a good value
 
-    HsiaColor colors[BASE_COLOR_LENGTH];
-    for (int i = 0; i < BASE_COLOR_LENGTH; i++)
+    // HsiaColor colors[BUCKET_SIZE_COLORS];
+    /*for (int i = 0; i < BASE_COLOR_LENGTH; i++)
     {
         // Initialize as -1 to say that this is not set.
         colors[i].a = -1;
     }
+    */
 
-    int interpolations;
+    // int interpolations;
     if (randint_weighted_towards_max(0, 100, intensity) > 75)
     {
         if (randint_weighted_towards_max(0, 100, intensity) > 50)
         {
-            interpolations = 0;
-            set_grayscale(colors);
+            // interpolations = 0;
+            data->color_bag_length = set_grayscale(data);
         }
         else
         {
@@ -74,29 +81,26 @@ static void *data_creator(uint16_t len, float intensity)
             for (int i = 0; i < randomColorCount; i++)
             {
                 // TODO: Make this less random and a bit more beautiful.
-                colors[i] = (HsiaColor){randint(360), 1, 1, 1 - (i / (float) randomColorCount)};
+                data->color_bag[i] = (HsiaColor){randint(360), 1, 1, 1 - (i / (float)randomColorCount)};
             }
 
-            interpolations = randint_weighted_towards_min(0, 5, intensity);
+            data->color_bag_length = randomColorCount;
+
+            // interpolations = randint_weighted_towards_min(0, 5, intensity);
         }
     }
     else
     {
         // This is for "fire" -- but we should be able to handle any "sparkle" with a disappearing effect
-        set_fire(colors);
-        interpolations = randint_weighted_towards_min(0, 5, intensity);
+        data->color_bag_length = set_fire(data);
+        // interpolations = randint_weighted_towards_min(0, 5, intensity);
     }
 
-    int base_bag_length = 0;
-    for (int i = 0; i < BASE_COLOR_LENGTH; i++)
-    {
-        if (colors[i].a >= 0)
-        {
-            base_bag_length++;
-        }
-    }
+    // int base_bag_length = 0;
+    // data->color_bag_length =
 
-    data->color_bag_length = base_bag_length + ((base_bag_length - 1) * interpolations);
+    /*
+     base_bag_length + ((base_bag_length - 1) * interpolations);
     data->color_bag = calloc(data->color_bag_length, sizeof(HsiaColor));
 
     int stepSize = (interpolations + 1);
@@ -118,16 +122,9 @@ static void *data_creator(uint16_t len, float intensity)
             data->color_bag[(sizeof(HsiaColor) * b) + (sizeof(HsiaColor) * n)] = interpolated; // SEGMENTATION FAULT???
         }
     }
+    */
 
     return data;
-}
-
-static void data_destroyer(void *dataPtr)
-{
-    data_struct *data = dataPtr;
-
-    free(data->color_bag);
-    free(dataPtr);
 }
 
 static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
@@ -162,10 +159,10 @@ static inline HsiaColor executor(ExecutorArgs *args)
 
     // Find the closest color in the bag.
     int bagIndex = (int)floor((data->color_bag_length - 1) * y);
-    return data->color_bag[sizeof(HsiaColor) * bagIndex];
+    return data->color_bag[bagIndex];
 }
 
 void pattern_register_gas_fade()
 {
-    pattern_register("gas_fade", executor, data_creator, data_destroyer, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("gas_fade", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
 }

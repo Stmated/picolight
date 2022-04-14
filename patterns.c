@@ -70,6 +70,8 @@ static inline void pattern_printer_default(uint16_t index, HsiaColor *c)
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_random_sequence();
+
     pattern_register_eyes();
 
     pattern_register_random();

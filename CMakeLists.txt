@@ -49,6 +49,7 @@ set (SRC_LIST
     patterns/pattern_hue_lerp.c
     patterns/pattern_rainbow_wave.c
     patterns/pattern_random.c
+    patterns/pattern_random_sequence.c
     patterns/pattern_snakes.c
     patterns/pattern_sparkle.c
     patterns/pattern_gas_fade.c

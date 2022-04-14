@@ -94,6 +94,7 @@ void pattern_register_meteor();
 void pattern_register_eyes();
 
 void pattern_register_random();
+void pattern_register_random_sequence();
 
 typedef struct GlobalState
 {
