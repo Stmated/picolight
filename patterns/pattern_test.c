@@ -7,6 +7,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
+    int 
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
@@ -25,61 +26,61 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
     if (args->i < data->len * 0.1)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c = c1;
+        RgbwaColor c1 = {0, RGB_ALPHA_MAX, RGB_ALPHA_MAX, 0, RGB_ALPHA_MAX};
+        RgbwaColor c = c1;
         return c;
     }
     else if (args->i < data->len * 0.2)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 1};
-        HsiaColor c = math_average_hsia(&c1, &c2);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c = math_average_rgbwa(&c1, &c2);
         return c;
     }
     else if (args->i < data->len * 0.3)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.8};
-        HsiaColor c = math_average_hsia(&c1, &c2);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 0, RGB_ALPHA_MAX * 0.8};
+        RgbwaColor c = math_average_rgbwa(&c1, &c2);
         return c;
     }
     else if (args->i < data->len * 0.4)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.6};
-        HsiaColor c = math_average_hsia(&c1, &c2);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 0, RGB_ALPHA_MAX * 0.6};
+        RgbwaColor c = math_average_rgbwa(&c1, &c2);
         return c;
     }
     else if (args->i < data->len * 0.5)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.4};
-        HsiaColor c = math_average_hsia(&c1, &c2);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 0, RGB_ALPHA_MAX * 0.4};
+        RgbwaColor c = math_average_rgbwa(&c1, &c2);
         return c;
     }
     else if (args->i < data->len * 0.6)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 1};
-        HsiaColor c3 = {120, 1, 1, 1};
-        HsiaColor mix1 = math_average_hsia(&c1, &c2);
-        HsiaColor c = math_average_hsia(&mix1, &c3);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c3 = {120, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor mix1 = math_average_rgbwa(&c1, &c2);
+        RgbwaColor c = math_average_rgbwa(&mix1, &c3);
         return c;
     }
     else if (args->i < data->len * 0.7)
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {240, 1, 1, 0.4};
-        HsiaColor c3 = {120, 1, 1, 0.5};
-        HsiaColor mix1 = math_average_hsia(&c1, &c2);
-        HsiaColor c = math_average_hsia(&mix1, &c3);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {240, 1, 1, 0, RGB_ALPHA_MAX * 0.4};
+        RgbwaColor c3 = {120, 1, 1, 0, RGB_ALPHA_MAX * 0.5};
+        RgbwaColor mix1 = math_average_rgbwa(&c1, &c2);
+        RgbwaColor c = math_average_rgbwa(&mix1, &c3);
         return c;
     }
     else if (args->i < data->len * 0.9)
@@ -90,14 +91,14 @@ static inline HsiaColor executor(ExecutorArgs *args)
         float mid = start + (width / (float)2);
         float p = (args->i - start) / width;
         float distance = fabsf(args->i - mid) / (width / (float)2);
-        HsiaColor c = {317, 1, 0.588, 1 - distance};
+        RgbwaColor c = {317, 1, 0.588, 0, RGB_ALPHA_MAX * (1 - distance)};
         return c;
     }
     else
     {
-        HsiaColor c1 = {0, 1, 1, 1};
-        HsiaColor c2 = {120, 1, 1, 0.5};
-        HsiaColor c = math_average_hsia(&c1, &c2);
+        RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
+        RgbwaColor c2 = {120, 1, 1, 0, RGB_ALPHA_MAX * 0.5};
+        RgbwaColor c = math_average_rgbwa(&c1, &c2);
         return c;
     }
 }

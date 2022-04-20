@@ -79,7 +79,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
   return frame;
 }
 
-static inline HsiaColor executor_lit(ExecutorArgs *args, float distance)
+static inline RgbwaColor executor_lit(ExecutorArgs *args, float distance)
 {
   data_struct *data = args->dataPtr;
 
@@ -96,11 +96,10 @@ static inline HsiaColor executor_lit(ExecutorArgs *args, float distance)
     alpha = alpha * 0.6;
   }
 
-  HsiaColor c = {0, 0, 1, alpha};
-  return c;
+  return hsia2rgbwa(&(HsiaColor){0, 0, 1, alpha});
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
   data_struct *data = args->dataPtr;
   frame_struct *frame = args->framePtr;
@@ -110,38 +109,19 @@ static inline HsiaColor executor(ExecutorArgs *args)
 
   if (distance < data->tail_length)
   {
-    if (frame->progress_raw < 0.5)
+    if (frame->progress_raw < 0.5 && rawDistance < 0 && args->i >= frame->start_index && args->i <= frame->end_index)
     {
       // We're going upwards
-      if (rawDistance < 0 && args->i >= frame->start_index && args->i <= frame->end_index)
-      {
-        return executor_lit(args, distance);
-      }
-      else
-      {
-        HsiaColor c = {0, 0, 0, 0};
-        return c;
-      }
+      return executor_lit(args, distance);
     }
-    else
+    else if (frame->progress_raw >= 0.5 && rawDistance > 0 && args->i <= frame->start_index && args->i >= frame->end_index)
     {
       // We're going downwards
-      if (rawDistance > 0 && args->i <= frame->start_index && args->i >= frame->end_index)
-      {
-        return executor_lit(args, distance);
-      }
-      else
-      {
-        HsiaColor c = {0, 0, 0, 0};
-        return c;
-      }
+      return executor_lit(args, distance);
     }
   }
-  else
-  {
-    HsiaColor c = {0, 0, 0, 0};
-    return c;
-  }
+
+  return (RgbwaColor){0, 0, 0, 0, 0};
 }
 
 void pattern_register_meteor()

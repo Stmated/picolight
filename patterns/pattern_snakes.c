@@ -67,17 +67,17 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
 
 // TODO: Remove this whole pattern! Instead make it somehow able to inherit from "random" but tell it that the "random" has to be 3 snakes. Then move code from Random into a "Composition" pattern helper of sorts
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
-    HsiaColor a = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake1data, frame->frame1});
-    HsiaColor b = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake2data, frame->frame2});
-    HsiaColor c = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake3data, frame->frame3});
+    RgbwaColor a = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake1data, frame->frame1});
+    RgbwaColor b = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake2data, frame->frame2});
+    RgbwaColor c = data->snakeModule->executor(&(ExecutorArgs){args->i, data->snake3data, frame->frame3});
 
-    HsiaColor blend_a_b = math_average_hsia(&a, &b);
-    return math_average_hsia(&blend_a_b, &c);
+    RgbwaColor blend_a_b = math_average_rgbwa(&a, &b);
+    return math_average_rgbwa(&blend_a_b, &c);
 }
 
 void pattern_register_snakes()

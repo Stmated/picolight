@@ -1,11 +1,4 @@
 #include "environment_local.h"
-#include <inttypes.h>
-#include <math.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <stdatomic.h>
 
 FILE *fp;
 uint32_t time_startup = 0;

@@ -23,7 +23,7 @@ static void *data_creator(uint16_t len, float intensity)
     data_struct *data = malloc(sizeof(data_struct));
 
     data->period = randint_weighted_towards_min(5000, 12000, intensity);
-    data->width = len * 0.60;
+    data->width = len * 0.50;
     data->len = len;
 
     return data;
@@ -40,7 +40,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
@@ -66,8 +66,7 @@ static inline HsiaColor executor(ExecutorArgs *args)
         }
     }
 
-    float a = 1 - (distance / data->width);
-    return (HsiaColor){0, 1, 1, a};
+    return (RgbwaColor) {RGB_ALPHA_MAX, 0, 0, 0, RGB_ALPHA_MAX * (1 - (distance / data->width))};
 }
 
 void pattern_register_knightrider()

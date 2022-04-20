@@ -1,6 +1,6 @@
 #include "options.h"
 
-bool isRgbw(uint16_t index)
+inline bool isRgbw(uint16_t index)
 {
     return true;
 }

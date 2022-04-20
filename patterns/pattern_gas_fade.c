@@ -4,7 +4,7 @@
 
 typedef struct data_struct
 {
-    HsiaColor color_bag[BUCKET_SIZE_COLORS];
+    RgbwaColor color_bag[BUCKET_SIZE_COLORS];
     int color_bag_length;
 
     double frequency_multiplier_1;
@@ -21,28 +21,33 @@ typedef struct frame_struct
 
 static int set_fire(data_struct *data)
 {
-    data->color_bag[0] = (HsiaColor){0, 0, 0, 0.0};
-    data->color_bag[1] = (HsiaColor){12, 0, 0, 0};
-    data->color_bag[2] = (HsiaColor){12, 0.84, 0.91, 1};
-    data->color_bag[3] = (HsiaColor){26, 0.87, 0.93, 1};
-    data->color_bag[4] = (HsiaColor){50, 0.95, 0.95, 1};
-    data->color_bag[5] = (HsiaColor){55, 0.75, 0.95, 1};
-    data->color_bag[6] = (HsiaColor){55, 0, 1, 1};
-    data->color_bag[7] = (HsiaColor){0, 0, 1, 1};
+    data->color_bag[0] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0.0});
+    data->color_bag[1] = hsia2rgbwa(&(HsiaColor){12, 0, 0, 0});
+    data->color_bag[2] = hsia2rgbwa(&(HsiaColor){12, 0.84, 0.61, 1});
+    data->color_bag[3] = hsia2rgbwa(&(HsiaColor){26, 0.87, 0.63, 1});
+    data->color_bag[4] = hsia2rgbwa(&(HsiaColor){50, 0.95, 0.65, 1});
+    data->color_bag[5] = hsia2rgbwa(&(HsiaColor){55, 0.75, 0.75, 1});
+    data->color_bag[6] = hsia2rgbwa(&(HsiaColor){55, 0, 1, 1});
+    data->color_bag[7] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 1});
+
+    for (int i = 0; i < 8; i++)
+    {
+        data->color_bag[i].w = 0;
+    }
 
     return 8;
 }
 
 static int set_grayscale(data_struct *data)
 {
-    data->color_bag[0] = (HsiaColor){0, 0, 0, 0.0};
-    data->color_bag[1] = (HsiaColor){0, 0, 0, 0};
-    data->color_bag[2] = (HsiaColor){0, 0, 1, 0.2};
-    data->color_bag[3] = (HsiaColor){0, 0, 1, 0.4};
-    data->color_bag[4] = (HsiaColor){0, 0, 1, 0.6};
-    data->color_bag[5] = (HsiaColor){0, 0, 1, 0.8};
-    data->color_bag[6] = (HsiaColor){0, 0, 1, 0.9};
-    data->color_bag[7] = (HsiaColor){0, 0, 1, 1};
+    data->color_bag[0] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0.0});
+    data->color_bag[1] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0});
+    data->color_bag[2] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.2});
+    data->color_bag[3] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.4});
+    data->color_bag[4] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.6});
+    data->color_bag[5] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.8});
+    data->color_bag[6] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.9});
+    data->color_bag[7] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 1});
 
     return 8;
 }
@@ -81,7 +86,7 @@ static void *data_creator(uint16_t len, float intensity)
             for (int i = 0; i < randomColorCount; i++)
             {
                 // TODO: Make this less random and a bit more beautiful.
-                data->color_bag[i] = (HsiaColor){randint(360), 1, 1, 1 - (i / (float)randomColorCount)};
+                data->color_bag[i] = (RgbwaColor){randint(255), randint(255), randint(255), 0, RGB_ALPHA_MAX};
             }
 
             data->color_bag_length = randomColorCount;
@@ -138,7 +143,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
@@ -158,7 +163,7 @@ static inline HsiaColor executor(ExecutorArgs *args)
     double y = ((wave_a + wave_b + wave_c) * (1 - (args->i / data->len))) / 3.0;
 
     // Find the closest color in the bag.
-    int bagIndex = (int)floor((data->color_bag_length - 1) * y);
+    int bagIndex = (int)round((data->color_bag_length - 1) * y);
     return data->color_bag[bagIndex];
 }
 

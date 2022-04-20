@@ -8,7 +8,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    HsiaColor hsi;
+    RgbwaColor rgbwa;
 } frame_struct;
 
 static void data_destroyer(void *dataPtr)
@@ -50,12 +50,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     float pOfColor = ((t % data->time_per_color) / (float) data->time_per_color);
     int hue = math_hue_lerp(hsi_from.h, hsi_to.h, pOfColor);
 
-    frame->hsi = (HsiaColor) {
+    frame->rgbwa = hsia2rgbwa(&(HsiaColor) {
         hue,
         hsi_from.s,
         hsi_from.i,
         hsi_from.a
-    };
+    });
 
     return frame;
 }

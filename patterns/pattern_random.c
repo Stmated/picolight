@@ -136,19 +136,19 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     free(framePtr);
 }
 
-static HsiaColor executor(ExecutorArgs *args)
+static RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
-    HsiaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
-    HsiaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
+    RgbwaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
+    RgbwaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
 
     a.a = a.a * (1 - frame->p);
     b.a = b.a * frame->p;
 
     // Now let's send the data to the original printer
-    return math_average_hsia(&a, &b);
+    return math_average_rgbwa(&a, &b);
 }
 
 void pattern_register_random()

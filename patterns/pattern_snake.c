@@ -3,13 +3,16 @@
 typedef struct data_struct
 {
     int easing;
-    int hue;
+    // int hue;
     int period;
-    int width;
-    bool affectSaturation;
-    float edgeHarshness;
-    float saturation;
-    float brightness;
+    double width;
+    // bool affectSaturation;
+    double edgeHarshness;
+    // float saturation;
+    // float brightness;
+
+    RgbwaColor color;
+
     int offset;
 } data_struct;
 
@@ -24,13 +27,22 @@ static void *data_creator(uint16_t len, float intensity)
     data_struct *data = calloc(1, sizeof(data_struct));
 
     data->easing = randint(getEasingCount());
-    data->hue = randint(360);
+
+    HsiaColor hsia = (HsiaColor){
+        randint(360),
+        randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000,
+        randint_weighted_towards_max(500, 1000, intensity) / (float)1000,
+        1};
+    data->color = (RgbwaColor)hsia2rgbwa(&hsia);
+
+    // data->hue = ;
+    // data->saturation = ;
+    // data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
+    // data->brightness = ;
+
     data->width = randint_weighted_towards_min(MAX(3, len / 32), len / 8, intensity);
     data->period = randint_weighted_towards_min(2000, 30000, intensity);
     data->offset = randint(data->period * 3);
-    data->saturation = randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000;
-    data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
-    data->brightness = randint_weighted_towards_max(500, 1000, intensity) / (float)1000;
     data->edgeHarshness = randint_weighted_towards_max(1, 100, intensity / 4);
 
     return data;
@@ -46,7 +58,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
@@ -54,18 +66,19 @@ static inline HsiaColor executor(ExecutorArgs *args)
 
     if (distance <= data->width)
     {
-        float distanceMultiplier = 1 - powf(distance / (float)data->width, data->edgeHarshness);
-        HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
-        if (data->affectSaturation)
-        {
-            hsi.s *= distanceMultiplier;
-        }
-        
-        return hsi;
+        // float distanceMultiplier = ;
+        // HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
+        // if (data->affectSaturation)
+        //{
+        // hsi.s *= distanceMultiplier;
+        //    hsi.i *= distanceMultiplier;
+        //}
+
+        return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - pow(distance / data->width, data->edgeHarshness))};
     }
     else
     {
-        return COLOR_TRANSPARENT;
+        return (RgbwaColor){0, 0, 0, 0, 0};
     }
 }
 

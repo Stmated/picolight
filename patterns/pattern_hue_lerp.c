@@ -13,7 +13,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    HsiaColor hsi;
+    RgbwaColor rgbwa;
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
@@ -47,11 +47,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
         periodProgress = executeEasing(data->easing, (t % data->period) / (float)data->period);
     }
 
-    //TODO: IF ENDLESS, THEN PERIODPROGRESS CAN BE OVER 1, HENCE GIVING FAULTY HUE IN THE THOUSANDS! NEED TO COVER THIS CASE!
-    //ALSO: Rename this pattern from "rainbow" to HUE_LERP, and rename FILL_SWAY to COLOR_LERP
-
     int hue = math_hue_lerp(data->hue_from, data->hue_to, periodProgress);
-    frame->hsi = (HsiaColor){hue, data->hsi_s, data->hsi_i, 1};
+    frame->rgbwa = hsia2rgbwa(&(HsiaColor){hue, data->hsi_s, data->hsi_i, 1});
 
     return frame;
 }

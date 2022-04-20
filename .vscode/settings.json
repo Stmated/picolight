@@ -14,5 +14,5 @@
         "typeinfo": "c"
     },
     "cmake.buildBeforeRun": true,
-    "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "ON"}
+    "cmake.configureSettings": {"OPTION_ENVIRONMENT_LOCAL": "OFF"}
 }

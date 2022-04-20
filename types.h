@@ -9,6 +9,10 @@
 // Use uint_least8_t or uint_fast8_t ?
 // Somehow use a very small vector for colors, so we can predict future movement and use automatic dithering where applicable?
 
+#define CHANNEL_MAX 255
+#define RGB_ALPHA_MAX CHANNEL_MAX
+#define ALPHA_NEGLIGIBLE_MAX 245
+
 typedef struct RgbwColor
 {
     uint_fast8_t r;
@@ -16,6 +20,15 @@ typedef struct RgbwColor
     uint_fast8_t b;
     uint_fast8_t w;
 } RgbwColor;
+
+typedef struct RgbwaColor
+{
+    uint_fast8_t r;
+    uint_fast8_t g;
+    uint_fast8_t b;
+    uint_fast8_t w;
+    uint_fast8_t a;
+} RgbwaColor;
 
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255
 typedef struct HsiaColor

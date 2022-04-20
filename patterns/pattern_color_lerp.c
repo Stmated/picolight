@@ -21,7 +21,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    HsiaColor hsi;
+    RgbwaColor rgbwa;
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
@@ -38,11 +38,11 @@ static void *data_creator(uint16_t len, float intensity)
     data->easing_s = randint(getEasingCount());
     data->easing_i = randint(getEasingCount());
 
-    float sat1 = 0.5 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
-    float sat2 = 0.5 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float sat1 = 0.65 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float sat2 = 0.65 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
-    float int1 = 0.2 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
-    float int2 = 0.2 + (0.5 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float int1 = 0.15 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
+    float int2 = 0.15 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
 
     data->sat_from = MIN(sat1, sat2);
     data->sat_width = MAX(sat1, sat2) - data->sat_from;
@@ -63,7 +63,8 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
 
     int h = (int)(data->hue_start + (ph * data->hue_width)) % HSI_H_MAX;
-    frame->hsi = (HsiaColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width), 1};
+    HsiaColor hsia = (HsiaColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width), 1};
+    frame->rgbwa = hsia2rgbwa(&hsia);
 
     return frame;
 }

@@ -60,7 +60,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     return frame;
 }
 
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
@@ -72,7 +72,7 @@ static inline HsiaColor executor(ExecutorArgs *args)
         h = HSI_H_MAX - h;
     }
 
-    return (HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1};
+    return hsia2rgbwa(&(HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1});
 }
 
 void pattern_register_rainbow_wave()

@@ -1,17 +1,23 @@
 cmake_minimum_required(VERSION 3.20) # 3.21+ does not work!
 
-# Add -O0 to remove optimizations when using gcc
-IF(CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-ENDIF(CMAKE_COMPILER_IS_GNUCC)
-
-OPTION(OPTION_ENVIRONMENT_LOCAL "Build application for local development" OFF)
+#OPTION(OPTION_ENVIRONMENT_LOCAL "Build application for local development" ON)
 
 if(OPTION_ENVIRONMENT_LOCAL)
 else()
+
+    SET (CMAKE_C_COMPILER_WORKS 1)
+    SET (CMAKE_CXX_COMPILER_WORKS 1)
+
     include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
     include($ENV{PICO_SDK_PATH}/tools/CMakeLists.txt)
+
+    # Add -O0 to remove optimizations when using gcc
+    #IF(CMAKE_COMPILER_IS_GNUCC)
+    #    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    #    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+    #ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 endif()
 
 project(picolight C CXX ASM)
@@ -88,7 +94,7 @@ else()
     pico_enable_stdio_usb(${PROJECT_NAME} 0)
     pico_enable_stdio_uart(${PROJECT_NAME} 1)
     pico_generate_pio_header(${PROJECT_NAME}
-        ${CMAKE_CURRENT_LIST_DIR}/picolight.pio
+        ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio
     )
 
     target_link_libraries(${PROJECT_NAME}

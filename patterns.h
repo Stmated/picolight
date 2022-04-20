@@ -32,7 +32,7 @@ typedef struct ExecutorArgs
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "FrameData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a frame way too often
-typedef HsiaColor (*PatternExecutor)(ExecutorArgs *args);
+typedef RgbwaColor (*PatternExecutor)(ExecutorArgs *args);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 

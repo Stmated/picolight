@@ -26,7 +26,9 @@ int math_hue_lerp(float origin, float target, float t);
 HsiaColor math_average_hsia(HsiaColor *a, HsiaColor *b);
 HsiaColor math_average_hsia_lerp(HsiaColor *a, HsiaColor *b, float p);
 
-RgbwColor hsia2rgbw(HsiaColor *hsi);
+RgbwaColor math_average_rgbwa(RgbwaColor *a, RgbwaColor *b);
+
+RgbwaColor hsia2rgbwa(HsiaColor *hsi);
 
 void math_precompute();
 

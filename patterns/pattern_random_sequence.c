@@ -14,6 +14,7 @@ typedef struct frame_struct
 {
     void *frame;
     float p;
+    float alpha;
 
 } frame_struct;
 
@@ -105,7 +106,22 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     }
 
     data->era = era;
+
     frame->frame = data->pattern->frameCreator(len, t, data->data);
+
+    if (timeIntoPeriod < 1000)
+    {
+        frame->alpha = (timeIntoPeriod / 1000.0);
+    }
+    else if (timeIntoPeriod - 1000 > data->period)
+    {
+        int tRemaining = (data->period - timeIntoPeriod);
+        frame->alpha = (tRemaining / 1000.0);
+    }
+    else
+    {
+        frame->alpha = 1.0;
+    }
 
     return frame;
 }
@@ -124,26 +140,19 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     free(framePtr);
 }
 
-static HsiaColor executor(ExecutorArgs *args)
+static RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
     if (data->pattern != NULL)
     {
-        if (data->pattern->executor == NULL)
-        {
-            // TODO: This is ugly. Got to remove this "feature"
-            return *(HsiaColor *)frame->frame;
-        }
-        else
-        {
-            return data->pattern->executor(&(ExecutorArgs){args->i, data->data, frame->frame});
-        }
+        RgbwaColor c = data->pattern->executor(&(ExecutorArgs){args->i, data->data, frame->frame});
+        return (RgbwaColor){c.r, c.g, c.b, c.w, RGB_ALPHA_MAX * (frame->alpha * c.a)};
     }
     else
     {
-        return (HsiaColor){0, 0, 0, 0};
+        return (RgbwaColor){0, 0, 0, 0, 0};
     }
 }
 

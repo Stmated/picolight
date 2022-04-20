@@ -156,9 +156,9 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
 /**
  * TODO:
  * This pattern sucks. It flickers (a feature? :D) and the code is bad. Needs to be completely redone in a smarter way.
- * 
+ *
  * */
-static inline HsiaColor executor(ExecutorArgs *args)
+static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
@@ -170,10 +170,10 @@ static inline HsiaColor executor(ExecutorArgs *args)
 
     if (closestDistance <= frame->eye_width)
     {
-        return (HsiaColor){frame->c.h, frame->c.s, frame->c.i, frame->c.a * (1 - (closestDistance / frame->eye_width))};
+        return hsia2rgbwa(&(HsiaColor){frame->c.h, frame->c.s, frame->c.i, frame->c.a * (1 - (closestDistance / frame->eye_width))});
     }
 
-    return (HsiaColor){0, 0, 0, 0};
+    return (RgbwaColor){0, 0, 0, 0, 0};
 }
 
 void pattern_register_eyes()

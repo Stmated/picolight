@@ -49,45 +49,61 @@ PatternModule *pattern_get_by_name(const char *name)
     return NULL;
 }
 
-static inline void pattern_printer_default(uint16_t index, HsiaColor *c)
+static inline RgbwColor to_rgbw(uint16_t index, RgbwaColor *c)
 {
-    static HsiaColor black = (HsiaColor){0, 0, 0, 1};
+    static RgbwColor black_rgbw = (RgbwColor){0, 0, 0, 0};
 
-    // TODO: Create an EXTREMELY simple and fast caching of the last X colors. How? Hashing? Equals? Just previous [1-3] pixels?
-    //          Would probably speed things up generally, especially if we're using a filling or similar color next to each other
-    if (c->a < 1)
+    if (c->a < 0.05)
     {
-        HsiaColor blended = math_average_hsia(&black, c);
-        RgbwColor rgbw = hsia2rgbw(&blended);
-        put_pixel(index, &rgbw);
+        return black_rgbw;
     }
     else
     {
-        RgbwColor rgbw = hsia2rgbw(c);
-        put_pixel(index, &rgbw);
+        if (c->a < ALPHA_NEGLIGIBLE_MAX)
+        {
+            double a = (c->a / (double)RGB_ALPHA_MAX);
+            return (RgbwColor){c->r * a, c->g * a, c->b * a, c->w * a};
+        }
+
+        // TODO: Skip the moving, just return the RGBWA instead. How?
+        return (RgbwColor){c->r, c->g, c->b, c->w};
     }
+}
+
+static inline RgbwaColor pattern_default_executor(ExecutorArgs *args)
+{
+    // The default executor just takes the frame pointer and converts it into a color.
+    // We expect the first field (at offset 0) to be a pixel color.
+    // This code is dangerous, but who cares. It gives us ability to inline code easier... maybe.
+    return *((RgbwaColor *)args->framePtr);
 }
 
 void pattern_find_and_register_patterns()
 {
+    pattern_register_test();
+
     pattern_register_random_sequence();
-
-    pattern_register_eyes();
-
     pattern_register_random();
+
+    // OK:
+    pattern_register_hue_lerp();
     pattern_register_strobe();
     pattern_register_knightrider();
+    pattern_register_snake();
     pattern_register_snakes();
-    pattern_register_gas_fade();
     pattern_register_firework();
     pattern_register_fade_between();
-    pattern_register_snake();
     pattern_register_color_lerp();
     pattern_register_sparkle();
-    pattern_register_hue_lerp();
     pattern_register_meteor();
 
-    pattern_register_test();
+    // WEIRD:
+
+    // SLOW:
+    pattern_register_gas_fade();
+
+    // Hardfault???
+    // pattern_register_eyes();
 }
 
 void pattern_register(
@@ -100,7 +116,7 @@ void pattern_register(
     memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
     PatternModule module = {name,
-                            executor,
+                            executor ? executor : pattern_default_executor,
                             creator ? creator : pattern_creator_default,
                             destroyer ? destroyer : pattern_destroyer_default,
                             frameCreator ? frameCreator : pattern_frame_creator_default,
@@ -114,6 +130,8 @@ void pattern_register(
 
 void pattern_execute(uint16_t len, uint32_t t)
 {
+    static RgbwColor black_rgbw = (RgbwColor){0, 0, 0, 0};
+
     if (state.nextPatternIndex >= 0)
     {
         // Destroy/free any previous memory allocations
@@ -141,33 +159,23 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
         void *framePtr = module->frameCreator(len, t, state.patternData);
-        if (module->executor == NULL)
+
+        ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, framePtr};
+        while (args->i < len)
         {
-            for (uint_fast16_t i = 0; i < len; i++)
-            {
-                // The default executor just takes the frame pointer and converts it into a color.
-                // We expect the first field (at offset 0) to be a pixel color.
-                // This code is dangerous, but who cares. It gives us ability to inline code easier.
-                pattern_printer_default(i, framePtr);
-            }
+            RgbwaColor rgbwa = module->executor(args);
+            RgbwColor rgbw = to_rgbw(args->i, &rgbwa);
+            put_pixel(args->i, &rgbw);
+            args->i++;
         }
-        else
-        {
-            ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, framePtr};
-            while (args->i < len)
-            {
-                HsiaColor c = module->executor(args);
-                pattern_printer_default(args->i, &c);
-                args->i++;
-            }
-        }
+
         module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
         for (uint_fast16_t i = 0; i < len; i++)
         {
-            pattern_printer_default(i, &COLOR_BLACK);
+            put_pixel(i, &black_rgbw);
         }
     }
 }

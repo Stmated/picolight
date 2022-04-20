@@ -29,10 +29,7 @@ void math_precompute()
 #ifdef MATH_PRECOMPUTE
     for (int h = HSI_H_MIN; h < HSI_H_MAX; h++)
     {
-        float r = DEG_TO_RAD(h); // h * (M_PI / 180.0);
-        // float cos_h = cosf(r);
-        // float cos_1047_h = cosf(1.047196667 - r);
-        // float div = cos_h / cos_1047_h;
+        float r = DEG_TO_RAD(h);
 
         lookup_h2sin[h] = sin(r);
         lookup_h2cos[h] = cos(r);
@@ -149,8 +146,8 @@ inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
     // TODO: Can this be replaced with full ONLY HSI calculations?
     // Or even cooler:  https://en.wikipedia.org/wiki/CIECAM02
     //                  https://github.com/dannyvi/ciecam02
-    RgbwColor ca = hsia2rgbw(hsia_a);
-    RgbwColor cb = hsia2rgbw(hsia_b);
+    RgbwaColor ca = hsia2rgbwa(hsia_a);
+    RgbwaColor cb = hsia2rgbwa(hsia_b);
 
     int r = (int)((cb.r * hsia_b->a) + (ca.r * (1.0 - hsia_b->a)));
     int g = (int)((cb.g * hsia_b->a) + (ca.g * (1.0 - hsia_b->a)));
@@ -161,6 +158,17 @@ inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
     float a = hsia_a->a + (hsia_b->a * (1 - hsia_a->a));
 
     return rgbw2hsia(rgbw, a);
+}
+
+inline RgbwaColor math_average_rgbwa(RgbwaColor *ca, RgbwaColor *cb)
+{
+    int r = (int)((cb->r) + (ca->r)) / 2;
+    int g = (int)((cb->g) + (ca->g)) / 2;
+    int b = (int)((cb->b) + (ca->b)) / 2;
+    int w = (int)((cb->w) + (ca->w)) / 2;
+    int a = (int)((cb->a) + (ca->a)) / 2;
+
+    return (RgbwaColor){r, g, b, w, a};
 }
 
 inline HsiaColor math_average_hsia_lerp(HsiaColor *hsia_a, HsiaColor *hsia_b, float p)
@@ -255,16 +263,12 @@ double rand_gaussian()
 }
 
 #ifndef MATH_RGBW_BY_COORDINATES
-RgbwColor hsia2rgbw(HsiaColor *hsia)
+RgbwaColor hsia2rgbwa(HsiaColor *hsia)
 {
+    // TODO: How can this in *any* way be slower than the other method?!?!? Find out where the calculations lie, and try to go back to it! Or figure out something even faster!!
     int H = hsia->h;
     double S = hsia->s;
     double I = hsia->i;
-
-    if (H < 0 || H > 360 || S < 0 || S > 1 || I < 0 || I > 1)
-    {
-        printf("THERE IS AN INCORRECT COLOR HERE\n");
-    }
 
 #ifdef MATH_PRECOMPUTE
     double Z = lookup_z[H];
@@ -353,15 +357,16 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         B = B / max_rgb;
     }
 
-    return (RgbwColor){
+    return (RgbwaColor){
         (int)round(255 * R),
         (int)round(255 * G),
         (int)round(255 * B),
-        (int)(255 * ((float)((1 - S) * I)))};
+        (int)(255 * ((float)((1 - S) * I))),
+        RGB_ALPHA_MAX * hsia->a};
 }
 #else
 #ifdef MATH_PRECOMPUTE
-RgbwColor hsia2rgbw(HsiaColor *hsia)
+RgbwaColor hsia2rgbwa(HsiaColor *hsia)
 {
     float i = hsia->i;
     uint8_t r, g, b;
@@ -402,10 +407,12 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         b = 255 * (i + i * hsia->s * lookup_h2cos_h240[hsia->h] / lookup_h2cos_300h[hsia->h]);
     }
 
-    return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
+    uint_fast8_t w = 255 * ((1 - hsia->s) * i);
+    uint_fast8_t a = RGB_ALPHA_MAX * hsia->a;
+    return (RgbwaColor){r, g, b, w, a};
 }
 #else
-RgbwColor hsia2rgbw(HsiaColor *hsia)
+RgbwaColor hsia2rgbwa(HsiaColor *hsia)
 {
     float i = hsia->i;
     uint8_t r, g, b;
@@ -440,7 +447,7 @@ RgbwColor hsia2rgbw(HsiaColor *hsia)
         g = 0;
     }
 
-    return (RgbwColor){r, g, b, 255 * (1 - hsia->s) * i};
+    return (RgbwaColor){r, g, b, 255 * (1 - hsia->s) * i, hsia->a};
 }
 #endif
 #endif

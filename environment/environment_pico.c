@@ -1,16 +1,12 @@
 #include "environment_pico.h"
 
-void put_pixel(uint16_t index, RgbwColor *c)
+inline void put_pixel(uint16_t index, RgbwColor *c)
 {
-    // TODO: Rewrite all this so you can run the code in simulation! Without the pico!
-    //          Maybe an ugly web view that keeps polling for updates extremely quickly?
-    //          Maybe even better/faster: Just write to a file, and keep reading it from the HTML end
-
-    // TODO: Remake this so that we point to a reference to a method instead, and switch it once we move into a new pixel area!
-
+    // TODO: Remake this so that we point to a reference to a method instead, and switch it once we move into a new pixel area! To avoid branching.
     // TODO: Will this branching slow down the processing? Branching == bad, no? Need performance tests!
 
     // TODO: Add dithering
+
     if (isRgbw(index))
     {
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->g) << 24u);
