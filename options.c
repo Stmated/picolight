@@ -2,5 +2,5 @@
 
 inline bool isRgbw(uint16_t index)
 {
-    return true;
+    return false;
 }

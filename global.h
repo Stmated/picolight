@@ -11,9 +11,10 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static const int PIN_TX[] = {22}; //, 21, 20, 19 };
-//#define LED_COUNT 288 // When working on Pico
-#define LED_COUNT 288 // When working on PC
+static const int PIN_TX[] = {21}; //, 21, 20, 19 };
+#define LED_COUNT 90 // When working on Pico
+//#define LED_COUNT 288 // When working on PC
+//#define LED_COUNT 15
 
 #define LED_ROWS 16
 #define LED_PER_ROW roundf(LED_COUNT / LED_ROWS)

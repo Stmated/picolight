@@ -407,8 +407,8 @@ RgbwaColor hsia2rgbwa(HsiaColor *hsia)
         b = 255 * (i + i * hsia->s * lookup_h2cos_h240[hsia->h] / lookup_h2cos_300h[hsia->h]);
     }
 
-    uint_fast8_t w = 255 * ((1 - hsia->s) * i);
-    uint_fast8_t a = RGB_ALPHA_MAX * hsia->a;
+    uint8_t w = 255 * ((1 - hsia->s) * i);
+    uint8_t a = RGB_ALPHA_MAX * hsia->a;
     return (RgbwaColor){r, g, b, w, a};
 }
 #else

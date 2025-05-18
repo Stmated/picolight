@@ -79,5 +79,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_firework()
 {
-    pattern_register("firework", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("firework", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){0.5});
 }

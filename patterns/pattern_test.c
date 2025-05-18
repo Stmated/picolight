@@ -7,7 +7,7 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    int 
+    //int 
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
@@ -91,7 +91,8 @@ static inline RgbwaColor executor(ExecutorArgs *args)
         float mid = start + (width / (float)2);
         float p = (args->i - start) / width;
         float distance = fabsf(args->i - mid) / (width / (float)2);
-        RgbwaColor c = {317, 1, 0.588, 0, RGB_ALPHA_MAX * (1 - distance)};
+        //RgbwaColor c = {317, 1, 0.588, 0, RGB_ALPHA_MAX * (1 - distance)};
+        RgbwaColor c = {255, 1, 0.588, 0, RGB_ALPHA_MAX * (1 - distance)};
         return c;
     }
     else

@@ -96,7 +96,8 @@ static inline RgbwaColor executor_lit(ExecutorArgs *args, float distance)
     alpha = alpha * 0.6;
   }
 
-  return hsia2rgbwa(&(HsiaColor){0, 0, 1, alpha});
+  return (RgbwaColor){alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX};
+  // hsia2rgbwa(&(HsiaColor){0, 0, 1, alpha});
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)
@@ -126,5 +127,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_meteor()
 {
-  pattern_register("meteor", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+  pattern_register("meteor", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){0.25});
 }

@@ -15,26 +15,26 @@
 
 typedef struct RgbwColor
 {
-    uint_fast8_t r;
-    uint_fast8_t g;
-    uint_fast8_t b;
-    uint_fast8_t w;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t w;
 } RgbwColor;
 
 typedef struct RgbwaColor
 {
-    uint_fast8_t r;
-    uint_fast8_t g;
-    uint_fast8_t b;
-    uint_fast8_t w;
-    uint_fast8_t a;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t w;
+    uint8_t a;
 } RgbwaColor;
 
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255
 typedef struct HsiaColor
 {
     // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
-    uint_fast16_t h;
+    uint16_t h;
     float s;
     float i;
     float a;

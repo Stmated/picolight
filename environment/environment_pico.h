@@ -1,6 +1,6 @@
 #include "environment.h"
 
-#include "pico/platform.h"
+#include "pico.h"
 #include "pico/time.h"
 
 #include "hardware/pio.h"

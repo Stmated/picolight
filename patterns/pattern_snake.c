@@ -7,7 +7,7 @@ typedef struct data_struct
     int period;
     double width;
     // bool affectSaturation;
-    double edgeHarshness;
+    //double edgeHarshness;
     // float saturation;
     // float brightness;
 
@@ -40,10 +40,10 @@ static void *data_creator(uint16_t len, float intensity)
     // data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
     // data->brightness = ;
 
-    data->width = randint_weighted_towards_min(MAX(3, len / 32), len / 8, intensity);
+    data->width = randint_weighted_towards_min(MAX(3, len / 32), MAX(4, len / 8), intensity);
     data->period = randint_weighted_towards_min(2000, 30000, intensity);
     data->offset = randint(data->period * 3);
-    data->edgeHarshness = randint_weighted_towards_max(1, 100, intensity / 4);
+    //data->edgeHarshness = randint_weighted_towards_max(1, 100, intensity / (float)4);
 
     return data;
 }
@@ -66,15 +66,8 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
     if (distance <= data->width)
     {
-        // float distanceMultiplier = ;
-        // HsiaColor hsi = {data->hue, data->saturation, data->brightness, distanceMultiplier};
-        // if (data->affectSaturation)
-        //{
-        // hsi.s *= distanceMultiplier;
-        //    hsi.i *= distanceMultiplier;
-        //}
-
-        return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - pow(distance / data->width, data->edgeHarshness))};
+        //return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - pow(distance / data->width, data->edgeHarshness))};
+        return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - (distance / data->width))};
     }
     else
     {
@@ -84,5 +77,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_snake()
 {
-    pattern_register("snake", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1, 3});
+    pattern_register("snake", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){0.5, 3});
 }

@@ -53,7 +53,7 @@ static inline RgbwColor to_rgbw(uint16_t index, RgbwaColor *c)
 {
     static RgbwColor black_rgbw = (RgbwColor){0, 0, 0, 0};
 
-    if (c->a < 0.05)
+    if (c->a < 15)
     {
         return black_rgbw;
     }
@@ -80,27 +80,27 @@ static inline RgbwaColor pattern_default_executor(ExecutorArgs *args)
 
 void pattern_find_and_register_patterns()
 {
-    pattern_register_test();
-
-    pattern_register_random_sequence();
-    pattern_register_random();
+    //pattern_register_random_sequence();
+    //pattern_register_random();
 
     // OK:
     pattern_register_hue_lerp();
-    pattern_register_strobe();
-    pattern_register_knightrider();
-    pattern_register_snake();
-    pattern_register_snakes();
-    pattern_register_firework();
-    pattern_register_fade_between();
-    pattern_register_color_lerp();
-    pattern_register_sparkle();
-    pattern_register_meteor();
+    //pattern_register_knightrider();
+    //pattern_register_color_lerp();
+    //pattern_register_snake();
+    //pattern_register_snakes();
+    //pattern_register_firework();
+    //pattern_register_fade_between();
+    //pattern_register_strobe();
+    //pattern_register_sparkle();
+    //pattern_register_meteor();
+
+    //pattern_register_test();
 
     // WEIRD:
 
     // SLOW:
-    pattern_register_gas_fade();
+    //pattern_register_gas_fade();
 
     // Hardfault???
     // pattern_register_eyes();
@@ -165,7 +165,7 @@ void pattern_execute(uint16_t len, uint32_t t)
         {
             RgbwaColor rgbwa = module->executor(args);
             RgbwColor rgbw = to_rgbw(args->i, &rgbwa);
-            put_pixel(args->i, &rgbw);
+            put_pixel(args->i, len, &rgbw);
             args->i++;
         }
 
@@ -173,9 +173,9 @@ void pattern_execute(uint16_t len, uint32_t t)
     }
     else
     {
-        for (uint_fast16_t i = 0; i < len; i++)
+        for (uint16_t i = 0; i < len; i++)
         {
-            put_pixel(i, &black_rgbw);
+            put_pixel(i, len, &black_rgbw);
         }
     }
 }

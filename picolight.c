@@ -57,15 +57,15 @@ void core1_entry()
 inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinIndex)
 {
     uint32_t time = get_running_ms();
-    uint32_t time_elapsed = (time - time_start);
-    uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
+    //uint32_t time_elapsed = (time - time_start);
+    //uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
 
-    if (state.withOffset)
-    {
-        time_dilated += (pinIndex * 123456);
-    }
+    //if (state.withOffset)
+    //{
+    //    time_dilated += (pinIndex * 123456);
+    //}
 
-    pattern_execute(LED_COUNT, time_dilated);
+    pattern_execute(LED_COUNT, time);
 }
 
 int main()
@@ -128,7 +128,8 @@ int main()
             execute_for_led_pin(time_start, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
-            sleep_us(150); // minimum is 50us, but need safety margins
+            //sleep_us(150); // minimum is 50us, but need safety margins
+            sleep_us(300); // minimum is 50us, but need safety margins
 
 #ifdef PERFORMANCE_STATS
             uint64_t after = get_running_us();

@@ -1,33 +1,49 @@
-cmake_minimum_required(VERSION 3.20) # 3.21+ does not work!
+cmake_minimum_required(VERSION 3.13) # 3.21+ does not work!
 
 #OPTION(OPTION_ENVIRONMENT_LOCAL "Build application for local development" ON)
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(OPTION_ENVIRONMENT_LOCAL)
+    # Set some stuff if running locally?
 else()
-
-    SET (CMAKE_C_COMPILER_WORKS 1)
-    SET (CMAKE_CXX_COMPILER_WORKS 1)
-
-    include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
-    include($ENV{PICO_SDK_PATH}/tools/CMakeLists.txt)
-
-    # Add -O0 to remove optimizations when using gcc
-    #IF(CMAKE_COMPILER_IS_GNUCC)
-    #    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-    #    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-    #ENDIF(CMAKE_COMPILER_IS_GNUCC)
-
-    set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+    
 endif()
+
+# Initialise pico_sdk from installed location
+# (note this can come from environment, CMake cache etc)
+
+# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
+if(WIN32)
+    set(USERHOME $ENV{USERPROFILE})
+else()
+    set(USERHOME $ENV{HOME})
+endif()
+set(sdkVersion 2.1.1)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.1.1)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
+endif()
+# ====================================================================================
+set(PICO_BOARD pico CACHE STRING "Board type")
+
+# Pull in Raspberry Pi Pico SDK (must be before project)
+include(pico_sdk_import.cmake)
 
 project(picolight C CXX ASM)
 
-if(OPTION_ENVIRONMENT_LOCAL)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+
+#if(OPTION_ENVIRONMENT_LOCAL)
+#    set(CMAKE_BUILD_TYPE Debug)
+#endif()
+
+#set(CMAKE_C_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 17)
 
 set (SRC_LIST
     global.h
@@ -75,6 +91,7 @@ if(OPTION_ENVIRONMENT_LOCAL)
    set (SRC_LIST environment/environment_local.h environment/environment_local.c ${SRC_LIST})
 else()
     set (SRC_LIST environment/environment_pico.h environment/environment_pico.c ${SRC_LIST})
+    # Initialise the Raspberry Pi Pico SDK
     pico_sdk_init()
 endif()
 
@@ -83,6 +100,12 @@ add_executable(${PROJECT_NAME}
     environment/environment.c
     ${SRC_LIST}
 )
+
+# pull in common dependencies and additional pwm hardware support
+#target_link_libraries(pwm_led_fade pico_stdlib hardware_pwm)
+
+# create map/bin/hex file etc.
+#pico_add_extra_outputs(pwm_led_fade)
 
 if(OPTION_ENVIRONMENT_LOCAL)
     #target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} )

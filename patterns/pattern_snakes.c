@@ -82,5 +82,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_snakes()
 {
-    pattern_register("snakes", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){1});
+    pattern_register("snakes", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){0.5});
 }

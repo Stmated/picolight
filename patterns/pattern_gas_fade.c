@@ -169,5 +169,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_gas_fade()
 {
-    pattern_register("gas_fade", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("gas_fade", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){0.5});
 }

@@ -148,7 +148,7 @@ static RgbwaColor executor(ExecutorArgs *args)
     if (data->pattern != NULL)
     {
         RgbwaColor c = data->pattern->executor(&(ExecutorArgs){args->i, data->data, frame->frame});
-        return (RgbwaColor){c.r, c.g, c.b, c.w, RGB_ALPHA_MAX * (frame->alpha * c.a)};
+        return (RgbwaColor){c.r, c.g, c.b, c.w, (frame->alpha * (float) c.a)};
     }
     else
     {

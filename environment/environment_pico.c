@@ -1,6 +1,6 @@
 #include "environment_pico.h"
 
-inline void put_pixel(uint16_t index, RgbwColor *c)
+inline void put_pixel(uint16_t index, uint16_t len, RgbwColor *c)
 {
     // TODO: Remake this so that we point to a reference to a method instead, and switch it once we move into a new pixel area! To avoid branching.
     // TODO: Will this branching slow down the processing? Branching == bad, no? Need performance tests!
@@ -9,6 +9,11 @@ inline void put_pixel(uint16_t index, RgbwColor *c)
 
     if (isRgbw(index))
     {
+        // A hack to make this as fast as possible. Will only work on certain platforms!
+        // Will convert the RGBWColor with its 4 8bit fields into one 32bit integer.
+        // (More specifically the fields are saved in GRBW order, as the LEDs require)
+        //pio_sm_put_blocking(pio0, 0, *(uint32_t *)c);
+
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->g) << 24u);
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->r) << 24u);
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->b) << 24u);

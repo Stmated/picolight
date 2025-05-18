@@ -23,7 +23,7 @@ struct Printer;
 
 typedef struct ExecutorArgs
 {
-    uint_fast16_t i;
+    uint16_t i;
     void *dataPtr;
     void *framePtr;
 } ExecutorArgs;
