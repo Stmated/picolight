@@ -37,10 +37,15 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+{
+    return calloc(1, sizeof(frame_struct));
+}
+
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
 
     int era = floorf(t / (float)data->period);
 
@@ -79,5 +84,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_firework()
 {
-    pattern_register("firework", executor, data_creator, NULL, frame_creator, NULL, (PatternOptions){1});
+    pattern_register("firework", executor, data_creator, NULL, frame_allocator, frame_creator, NULL, (PatternOptions){1});
 }

@@ -42,14 +42,25 @@ static void data_destroyer(void *dataPtr)
     free(dataPtr);
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
+    frame->frame1 = data->snakeModule->frameAllocator(len, t, data->snake1data);
+    frame->frame2 = data->snakeModule->frameAllocator(len, t, data->snake2data);
+    frame->frame3 = data->snakeModule->frameAllocator(len, t, data->snake3data);
 
-    frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data);
-    frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data);
-    frame->frame3 = data->snakeModule->frameCreator(len, t, data->snake3data);
+    return frame;
+}
+
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+{
+    data_struct *data = dataPtr;
+    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+
+    frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data, frame->frame1);
+    frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data, frame->frame2);
+    frame->frame3 = data->snakeModule->frameCreator(len, t, data->snake3data, frame->frame3);
 
     return frame;
 }
@@ -82,5 +93,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_snakes()
 {
-    pattern_register("snakes", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){1});
+    pattern_register("snakes", executor, data_creator, data_destroyer, frame_allocator, frame_creator, frame_destroyer, (PatternOptions){1});
 }

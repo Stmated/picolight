@@ -37,7 +37,8 @@ typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
 // TODO: Create a new FrameDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
-typedef void *(*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr);
+typedef void *(*PatternFrameDataAllocator)(uint16_t len, uint32_t t, void *dataPtr);
+typedef void *(*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr, void *framePtr);
 typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 
 typedef void *(*PatternRegistrator)(void);
@@ -59,6 +60,7 @@ typedef struct PatternModule
     PatternExecutor executor;
     PatternDataCreator creator;
     PatternDataDestroyer destroyer;
+    PatternFrameDataAllocator frameAllocator;
     PatternFrameDataCreator frameCreator;
     PatternFrameDataDestroyer frameDestroyer;
     PatternOptions options;
@@ -76,7 +78,7 @@ void pattern_frame_destroyer_default(void *data, void *framePtr);
 
 void pattern_find_and_register_patterns();
 
-void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer, PatternOptions options);
+void pattern_register(const char *name, PatternExecutor pattern, PatternDataCreator creator, PatternDataDestroyer destroyer, PatternFrameDataAllocator frameAllocator, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer, PatternOptions options);
 
 void pattern_register_test();
 void pattern_register_snake();
@@ -100,6 +102,7 @@ typedef struct GlobalState
 {
     int patternIndex;
     void *patternData;
+    void *frameData;
     bool disabled;
     int clickCount;
     bool clicking;

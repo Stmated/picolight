@@ -77,10 +77,21 @@ static PatternModule *pattern_get_next(PatternModule *prev, PatternModule *other
     return module;
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
+
+    frame->frame1 = data->pattern1->frameAllocator(len, t, data->data1);
+    frame->frame2 = data->pattern2->frameAllocator(len, t, data->data2);
+
+    return frame;
+}
+
+static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+{
+    data_struct *data = dataPtr;
+    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
 
     if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
@@ -118,8 +129,10 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr)
     // Set the progress so we can calculate the proper crossover
     //int age = t - data->updatedAt;
 
-    frame->frame1 = data->pattern1->frameCreator(len, t, data->data1);
-    frame->frame2 = data->pattern2->frameCreator(len, t, data->data2);
+    //frame->frame1 = data->pattern1->frameAllocator(len, t, data->data1);
+    data->pattern1->frameCreator(len, t, data->data1, frame->frame1);
+    //frame->frame2 = data->pattern2->frameAllocator(len, t, data->data2);
+    data->pattern2->frameCreator(len, t, data->data2, frame->frame2);
     frame->p = ((t - data->updatedAt) % data->period) / (float)data->period;
 
     return frame;
@@ -153,5 +166,5 @@ static RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_random()
 {
-    pattern_register("random", executor, data_creator, data_destroyer, frame_creator, frame_destroyer, (PatternOptions){0});
+    pattern_register("random", executor, data_creator, data_destroyer, frame_allocator, frame_creator, frame_destroyer, (PatternOptions){0});
 }
