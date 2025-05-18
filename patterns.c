@@ -13,6 +13,11 @@ void pattern_destroyer_default(void *dataPtr)
     }
 }
 
+void *pattern_frame_allocator_default(uint16_t len, uint32_t t, void *dataPtr)
+{
+    return NULL;
+}
+
 void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr)
 {
     return NULL;
@@ -109,7 +114,7 @@ void pattern_find_and_register_patterns()
 void pattern_register(
     const char *name, PatternExecutor executor,
     PatternDataCreator creator, PatternDataDestroyer destroyer,
-    PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer,
+    PatternFrameDataAllocator frameAllocator, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer,
     PatternOptions options)
 {
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
@@ -119,6 +124,7 @@ void pattern_register(
                             executor ? executor : pattern_default_executor,
                             creator ? creator : pattern_creator_default,
                             destroyer ? destroyer : pattern_destroyer_default,
+                            frameAllocator ? frameAllocator : pattern_frame_allocator_default,
                             frameCreator ? frameCreator : pattern_frame_creator_default,
                             frameDestroyer ? frameDestroyer : pattern_frame_destroyer_default,
                             options};
@@ -135,6 +141,11 @@ void pattern_execute(uint16_t len, uint32_t t)
     if (state.nextPatternIndex >= 0)
     {
         // Destroy/free any previous memory allocations
+        if (state.frameData)
+        {
+            pattern_get_by_index(state.patternIndex)->frameDestroyer(state.patternData, state.frameData);
+            state.frameData = NULL;
+        }
         if (state.patternData)
         {
             pattern_get_by_index(state.patternIndex)->destroyer(state.patternData);
@@ -152,15 +163,21 @@ void pattern_execute(uint16_t len, uint32_t t)
 
         state.nextPatternIndex = -1;
         state.nextIntensity = -1;
+
+        // We allocate the memory for the frame data right away, so we do not need to allocate/deallocate over and over.
+        state.frameData = newModule->frameAllocator(len, state.nextIntensity, state.patternData);
     }
 
     // Execute the current pattern inside state
     if (!state.disabled)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
-        void *framePtr = module->frameCreator(len, t, state.patternData);
 
-        ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, framePtr};
+        // TODO: Do not allocate the frame every time, it should be kept in the state!
+        //void *framePtr = module->frameAllocator(len, t, state.patternData);
+        module->frameCreator(len, t, state.patternData, state.frameData);
+
+        ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, state.frameData};
         while (args->i < len)
         {
             RgbwaColor rgbwa = module->executor(args);
@@ -169,7 +186,8 @@ void pattern_execute(uint16_t len, uint32_t t)
             args->i++;
         }
 
-        module->frameDestroyer(state.patternData, framePtr);
+        // TODO: Do not destroy the frame every time, it should be kept in the state!
+        //module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
