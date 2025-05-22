@@ -13,6 +13,11 @@
 #define MATH_RGBW_BY_COORDINATES
 #undef MATH_RGBW_BY_COORDINATES
 
+typedef uint16_t HSI_H_t;
+typedef float HSI_S_t;
+typedef float HSI_I_t;
+typedef float HSI_A_t;
+
 int randint(int n);
 
 int randint_weighted_towards_min(int min, int max, float weight);
@@ -22,13 +27,18 @@ int randint_weighted_towards_max(int min, int max, float weight);
 float math_shortest_hue_distance_lerp(float origin, float target, float t);
 int math_hue_lerp(float origin, float target, float t);
 
+float math_lerpf(float a, float b, float v);
+float math_lerp(int a, int b, float v);
+
+RgbwaColor math_rgbwa_lerp(RgbwaColor a, RgbwaColor b, float t);
+
 // TODO: Add blend mode, and maybe different blend progress between the different colors?
 HsiaColor math_average_hsia(HsiaColor *a, HsiaColor *b);
 HsiaColor math_average_hsia_lerp(HsiaColor *a, HsiaColor *b, float p);
 
 RgbwaColor math_average_rgbwa(RgbwaColor *a, RgbwaColor *b);
 
-RgbwaColor hsia2rgbwa(HsiaColor *hsi);
+RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A);
 
 void math_precompute();
 
@@ -37,10 +47,12 @@ void math_precompute();
 #define HSI_H_HALF 180
 
 #define HSI_S_MIN 0
-#define HSI_S_MAX 1
+#define HSI_S_HALF 0.5f
+#define HSI_S_MAX 1.0f
 
 #define HSI_I_MIN 0
-#define HSI_I_MAX 1
+#define HSI_I_HALF 0.5f
+#define HSI_I_MAX 1.0f
 
 #define DEG_TO_RAD(X) (M_PI * (X) / 180)
 

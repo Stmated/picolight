@@ -30,10 +30,12 @@ typedef struct RgbwaColor
     uint8_t a;
 } RgbwaColor;
 
-// TODO: Convert S and I into an uint8_t, with range being 0 to 255
+#define HSIA_S float
+
+// TODO: Convert S and I into an uint8_t, with range being 0 to 255.
+//       Also convert `h` into uint8_t -- we can live with a little loss in precision
 typedef struct HsiaColor
 {
-    // TODO: Change h into a float with 0..1 -- should normalize a lot of calculations? Or S and I to int?
     uint16_t h;
     float s;
     float i;

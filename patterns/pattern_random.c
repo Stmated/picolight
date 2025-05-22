@@ -18,6 +18,7 @@ typedef struct frame_struct
     void *frame1;
     void *frame2;
     float p;
+    float transition_percentage;
 
 } frame_struct;
 
@@ -40,8 +41,10 @@ static void *data_creator(uint16_t len, float intensity)
 {
     data_struct *data = calloc(1, sizeof(data_struct));
 
-    data->intensity = intensity;
-    data->period = randint_weighted_towards_min(10000, 60000, intensity);
+    int intIntensityMul = 1000;
+    int intIntesity = roundf(intensity * intIntensityMul);
+    data->intensity = randint_weighted_towards_max(MAX(100, intIntesity / 2), MAX(800, intensity * 2), intensity) / (float)intIntensityMul;
+    data->period = randint_weighted_towards_min(1000, 6000, intensity);
     data->updatedAt = 0;
 
     return data;
@@ -77,23 +80,17 @@ static PatternModule *pattern_get_next(PatternModule *prev, PatternModule *other
     return module;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-    data_struct *data = dataPtr;
-    frame_struct *frame = calloc(1, sizeof(frame_struct));
-
-    frame->frame1 = data->pattern1->frameAllocator(len, t, data->data1);
-    frame->frame2 = data->pattern2->frameAllocator(len, t, data->data2);
-
-    return frame;
+    return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
-    if (data->updatedAt == 0 || t > (data->updatedAt + data->period))
+    if (frame->frame1 == NULL || data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
         // It is time to move on to the next random mix.
         data->updatedAt = t;
@@ -121,21 +118,24 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
 
         printf("Going to '%s' and '%s'\n", data->pattern1->name, data->pattern2->name);
 
-        // Ugly workaround so progress goes 0->1,1->0, and so on.
-        // This way there should not be an instant JUMP when we switch to next pattern.
-        // data->base.progressReversed = !data->base.progressReversed;
+        frame->frame1 = data->pattern1->frameAllocator(len, data->data1);
+        frame->frame2 = data->pattern2->frameAllocator(len, data->data2);
     }
 
-    // Set the progress so we can calculate the proper crossover
-    //int age = t - data->updatedAt;
-
-    //frame->frame1 = data->pattern1->frameAllocator(len, t, data->data1);
-    data->pattern1->frameCreator(len, t, data->data1, frame->frame1);
-    //frame->frame2 = data->pattern2->frameAllocator(len, t, data->data2);
-    data->pattern2->frameCreator(len, t, data->data2, frame->frame2);
     frame->p = ((t - data->updatedAt) % data->period) / (float)data->period;
 
-    return frame;
+    data->pattern1->frameCreator(len, t, data->data1, frame->frame1);
+    if (frame->p >= 0.90f)
+    {
+        data->pattern2->frameCreator(len, t, data->data2, frame->frame2);
+
+
+        frame->transition_percentage = (frame->p - 0.90f) * 10.0f;
+    }
+    else
+    {
+        frame->transition_percentage = 0;
+    }
 }
 
 static void frame_destroyer(void *dataPtr, void *framePtr)
@@ -149,19 +149,23 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     free(framePtr);
 }
 
-static RgbwaColor executor(ExecutorArgs *args)
+static RgbwaColor executor(ExecutorArgs *restrict  args)
 {
-    data_struct *data = args->dataPtr;
-    frame_struct *frame = args->framePtr;
+    data_struct *restrict data = args->dataPtr;
+    frame_struct *restrict frame = args->framePtr;
 
-    RgbwaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
-    RgbwaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
+    if (frame->transition_percentage > 0)
+    {
+        RgbwaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
+        RgbwaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
 
-    a.a = a.a * (1 - frame->p);
-    b.a = b.a * frame->p;
-
-    // Now let's send the data to the original printer
-    return math_average_rgbwa(&a, &b);
+        //float v = (frame->p - 0.90f) * 10.0f;
+        return math_rgbwa_lerp(a, b, frame->transition_percentage);
+    }
+    else
+    {
+        return data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
+    }
 }
 
 void pattern_register_random()

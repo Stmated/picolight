@@ -1,11 +1,35 @@
 #define _USE_MATH_DEFINES
 #include "math.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef float (*easing)(float t);
 
+typedef struct {
+    easing in;
+    /**
+     * If NULL, then it will not be in InOut easing, it will only apply the In easing.
+     */
+    easing out;
+} EasingContext;
+typedef float (*easing_func)(EasingContext ctx, float t);
+typedef struct {
+    easing_func func;
+    EasingContext ctx;
+} CurriedEasing;
+
+//float invokeEasing(EasingContext ctx, float t);
+CurriedEasing getEasing(int index);
+
+/**
+ * Can give any offset and it will be used to fetch an easing
+ */
+CurriedEasing getRepeatingEasing(int offset);
+CurriedEasing getRepeatingInOutEasing(int offset);
+CurriedEasing createCurriedEasing(easing in, easing out, bool mod);
+
 int getEasingCount();
-//easing* getEasing(int index);
 float executeEasing(int index, float t);
 
 float None(float p);

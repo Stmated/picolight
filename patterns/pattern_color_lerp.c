@@ -8,9 +8,9 @@ typedef struct data_struct
     int speeds;
     int speedi;
 
-    int easing_h;
-    int easing_s;
-    int easing_i;
+    CurriedEasing easing_h;
+    CurriedEasing easing_s;
+    CurriedEasing easing_i;
 
     float sat_from;
     float sat_width;
@@ -34,9 +34,9 @@ static void *data_creator(uint16_t len, float intensity)
     data->speeds = 5000 + randint_weighted_towards_min(0, 20000, intensity);
     data->speedi = 5000 + randint_weighted_towards_min(0, 10000, intensity);
 
-    data->easing_h = randint(getEasingCount());
-    data->easing_s = randint(getEasingCount());
-    data->easing_i = randint(getEasingCount());
+    data->easing_h = getEasing(randint(getEasingCount()));
+    data->easing_s = getEasing(randint(getEasingCount()));
+    data->easing_i = getEasing(randint(getEasingCount()));
 
     float sat1 = 0.65 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
     float sat2 = 0.65 + (0.35 * (randint_weighted_towards_max(0, 100, intensity) / (float)100));
@@ -53,25 +53,23 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
     float ph = InOutLinear((t % data->speedh) / (float)data->speedh);
-    float ps = executeEasing(data->easing_s, (t % data->speeds) / (float)(data->speeds));
-    float pi = executeEasing(data->easing_i, (t % data->speedi) / (float)(data->speedi));
+    float ps = data->easing_s.func(data->easing_s.ctx, (t % data->speeds) / (float)(data->speeds));
+    float pi = data->easing_s.func(data->easing_i.ctx, (t % data->speedi) / (float)(data->speedi));
 
     int h = (int)(data->hue_start + (ph * data->hue_width)) % HSI_H_MAX;
-    HsiaColor hsia = (HsiaColor){h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width), 1};
-    frame->rgbwa = hsia2rgbwa(&hsia);
-
-    return frame;
+    //HsiaColor hsia = (HsiaColor){};
+    frame->rgbwa = hsia2rgbwa(h, data->sat_from + (ps * data->sat_width), data->brightness_from + (pi * data->brightness_width), 1);
 }
 
 void pattern_register_color_lerp()

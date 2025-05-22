@@ -94,6 +94,11 @@ int math_hue_lerp(float origin, float target, float t)
     return floorf(hue);
 }
 
+RgbwaColor math_rgbwa_lerp(RgbwaColor a, RgbwaColor b, float t)
+{
+    return (RgbwaColor){math_lerp(a.r, b.r, t), math_lerp(a.g, b.g, t), math_lerp(a.b, b.b, t), math_lerp(a.w, b.w, t), math_lerp(a.a, b.a, t)};
+}
+
 HsiaColor rgbw2hsia(RgbwColor c, float a)
 {
     double r = c.r / (double)255.0;
@@ -133,6 +138,23 @@ HsiaColor rgbw2hsia(RgbwColor c, float a)
     return (HsiaColor){(int)hue, fabs(saturation), intensity, a};
 }
 
+inline float math_lerpf(float a, float b, float v)
+{
+    // This has some loss of precision, but is faster than other lerps
+    return a + v * (b - a);
+}
+
+inline float math_lerp(int a, int b, float v)
+{
+    if (a == b)
+    {
+        return a;
+    }
+
+    // This has some loss of precision, but is faster than other lerps
+    return a + v * (b - a);
+}
+
 // TODO: There is a slight loss in precision from using this method! The RGB becomes ever so slightly off! Fix this!
 // Try and work with only HSIA if possible :(
 inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
@@ -146,8 +168,8 @@ inline HsiaColor math_average_hsia(HsiaColor *hsia_a, HsiaColor *hsia_b)
     // TODO: Can this be replaced with full ONLY HSI calculations?
     // Or even cooler:  https://en.wikipedia.org/wiki/CIECAM02
     //                  https://github.com/dannyvi/ciecam02
-    RgbwaColor ca = hsia2rgbwa(hsia_a);
-    RgbwaColor cb = hsia2rgbwa(hsia_b);
+    RgbwaColor ca = hsia2rgbwa(hsia_a->h, hsia_a->s, hsia_a->i, hsia_a->a);
+    RgbwaColor cb = hsia2rgbwa(hsia_b->h, hsia_b->s, hsia_b->i, hsia_b->a);
 
     int r = (int)((cb.r * hsia_b->a) + (ca.r * (1.0 - hsia_b->a)));
     int g = (int)((cb.g * hsia_b->a) + (ca.g * (1.0 - hsia_b->a)));
@@ -263,24 +285,24 @@ double rand_gaussian()
 }
 
 #ifndef MATH_RGBW_BY_COORDINATES
-RgbwaColor hsia2rgbwa(HsiaColor *hsia)
+RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A)
 {
     // TODO: How can this in *any* way be slower than the other method?!?!? Find out where the calculations lie, and try to go back to it! Or figure out something even faster!!
-    int H = hsia->h;
-    double S = hsia->s;
-    double I = hsia->i;
+    //HSI_H_t H = hsia->h;
+    //HSI_S_t S = hsia->s;
+    //HSI_I_t I = hsia->i;
 
 #ifdef MATH_PRECOMPUTE
-    double Z = lookup_z[H];
+    float Z = lookup_z[H];
 #else
-    double Z = 1 - fabs(fmod(H / (double)60, 2) - 1);
+    float Z = 1 - fabs(fmod(H / (float)60, 2) - 1);
 #endif
-    double C = (3 * I * S) / (1 + Z);
-    double X = C * Z;
+    float C = (3 * I * S) / (1 + Z);
+    float X = C * Z;
 
-    double R1;
-    double G1;
-    double B1;
+    float R1;
+    float G1;
+    float B1;
     if (H <= 60)
     {
         R1 = C;
@@ -325,13 +347,13 @@ RgbwaColor hsia2rgbwa(HsiaColor *hsia)
     }
 
     // Calculation rgb
-    double m = I * (1 - S);
-    double R = R1 + m;
-    double G = G1 + m;
-    double B = B1 + m;
+    float m = I * (1 - S);
+    float R = R1 + m;
+    float G = G1 + m;
+    float B = B1 + m;
 
     // Limit R, G, B to valid ranges (since not all HSI values are in gamut range):
-    double max_rgb = R;
+    float max_rgb = R;
     if (G > max_rgb)
     {
         max_rgb = G;
@@ -362,7 +384,7 @@ RgbwaColor hsia2rgbwa(HsiaColor *hsia)
         (int)round(255 * G),
         (int)round(255 * B),
         (int)(255 * ((float)((1 - S) * I))),
-        RGB_ALPHA_MAX * hsia->a};
+        RGB_ALPHA_MAX * A};
 }
 #else
 #ifdef MATH_PRECOMPUTE

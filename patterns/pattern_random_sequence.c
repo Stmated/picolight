@@ -73,17 +73,17 @@ static void data_destroyer(void *dataPtr)
     free(dataPtr);
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
-    int era = (int)floor(t / data->period);
+    int era = (int)floorf(t / (float) data->period);
     int timeIntoPeriod = t % data->period;
     frame->p = (timeIntoPeriod / (float)data->period);
 
@@ -112,7 +112,7 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
 
     data->era = era;
 
-    frame->frame = data->pattern->frameAllocator(len, t, data->data);
+    frame->frame = data->pattern->frameAllocator(len, data->data);
     data->pattern->frameCreator(len, t, data->data, frame->frame);
 
     if (timeIntoPeriod < 1000)
@@ -128,8 +128,6 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
     {
         frame->alpha = 1.0;
     }
-
-    return frame;
 }
 
 static void frame_destroyer(void *dataPtr, void *framePtr)

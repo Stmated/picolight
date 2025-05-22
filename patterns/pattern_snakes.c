@@ -42,27 +42,25 @@ static void data_destroyer(void *dataPtr)
     free(dataPtr);
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = calloc(1, sizeof(frame_struct));
-    frame->frame1 = data->snakeModule->frameAllocator(len, t, data->snake1data);
-    frame->frame2 = data->snakeModule->frameAllocator(len, t, data->snake2data);
-    frame->frame3 = data->snakeModule->frameAllocator(len, t, data->snake3data);
+    frame->frame1 = data->snakeModule->frameAllocator(len, data->snake1data);
+    frame->frame2 = data->snakeModule->frameAllocator(len, data->snake2data);
+    frame->frame3 = data->snakeModule->frameAllocator(len, data->snake3data);
 
     return frame;
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
-    frame->frame1 = data->snakeModule->frameCreator(len, t, data->snake1data, frame->frame1);
-    frame->frame2 = data->snakeModule->frameCreator(len, t, data->snake2data, frame->frame2);
-    frame->frame3 = data->snakeModule->frameCreator(len, t, data->snake3data, frame->frame3);
-
-    return frame;
+    data->snakeModule->frameCreator(len, t, data->snake1data, frame->frame1);
+    data->snakeModule->frameCreator(len, t, data->snake2data, frame->frame2);
+    data->snakeModule->frameCreator(len, t, data->snake3data, frame->frame3);
 }
 
 static void frame_destroyer(void *dataPtr, void *framePtr)

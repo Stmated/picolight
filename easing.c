@@ -1,4 +1,7 @@
 #include "easing.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 inline float None(float p) { return 1; }
 inline float Zero(float p) { return 0; }
@@ -42,7 +45,7 @@ inline float OutBack(float p)
 
 inline float InOutBack(float p) { return InOut(InBack, OutBack, p); }
 
-//const float r = 1 / 2.75;   // reciprocal
+// const float r = 1 / 2.75;   // reciprocal
 const float k1 = (1 / 2.75);         // 36.36%
 const float k2 = 2 * (1 / 2.75);     // 72.72%
 const float k3 = 1.5 * (1 / 2.75);   // 54.54%
@@ -127,13 +130,8 @@ const easing list_in[] = {
     InExponent2,
     InExponentE,
     InLog10,
-    // InOctic,
     InQuadratic,
     InQuartic,
-    // InQuintic,
-    // InSeptic,
-    // InSextic,
-    // Zero
 };
 
 const easing list_out[] = {
@@ -148,23 +146,84 @@ const easing list_out[] = {
     OutExponent2,
     OutExponentE,
     OutLog10,
-    // OutOctic,
     OutQuadratic,
     OutQuartic,
-    // OutQuintic,
-    // OutSeptic,
-    // OutSextic,
-    // Zero
 };
 
 const int list_in_size = (sizeof list_in / sizeof list_in[0]);
 const int list_out_size = (sizeof list_out / sizeof list_out[0]);
+const int easing_count = list_in_size * list_out_size;
 
 int getEasingCount()
 {
-    return list_in_size * list_out_size;
+    return easing_count;
 }
 
+float invokeEasing(EasingContext context, float t)
+{
+    return InOut(context.in, context.out, t);
+}
+
+/**
+ * Will take any `t` and normalize it to be between 0..1
+ */
+float invokeOverflowingEasing(EasingContext context, float t)
+{
+    if (context.out == NULL)
+    {
+        return context.in(fmodf(t, 1));
+    }
+    else
+    {
+        return InOut(context.in, context.out, fmodf(t, 1));
+    }
+}
+
+CurriedEasing createCurriedEasing(easing in, easing out, bool mod)
+{
+    EasingContext ctx;
+    ctx.in = in;
+    ctx.out = out;
+
+    CurriedEasing easing;
+    easing.func = mod ? invokeOverflowingEasing : invokeEasing;
+    easing.ctx = ctx;
+
+    return easing;
+}
+
+CurriedEasing getSpecificEasing(int inIndex, int outIndex, bool mod)
+{
+    return createCurriedEasing(list_in[inIndex], (outIndex == -1) ? NULL : list_out[outIndex], mod);
+}
+
+CurriedEasing getEasing(int index)
+{
+    int inIndex = ((int)floor(index / list_in_size)) % list_in_size;
+    int outIndex = index % list_out_size;
+
+    return getSpecificEasing(inIndex, outIndex, false);
+}
+
+CurriedEasing getRepeatingEasing(int offset)
+{
+    return getSpecificEasing(offset % list_in_size, -1, true);
+}
+
+CurriedEasing getRepeatingInOutEasing(int offset)
+{
+    int inIndex = ((int)floor(offset / list_in_size)) % list_in_size;
+    int outIndex = offset % list_out_size;
+
+    return getSpecificEasing(inIndex, outIndex, true);
+}
+
+// TODO: Might need to do some optimizations to use pointers? So that we don't always send the context as value!
+//          Should be safe to make the `invoke` functions take a pointer to the context instead!
+
+/**
+ * Prefer to use `getEasing` and `invokeEasing` instead, so we only do some calculations once
+ */
 float executeEasing(int index, float t)
 {
     // TODO: This is too slow. Need a way to not do the division

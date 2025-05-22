@@ -37,12 +37,12 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
@@ -58,12 +58,14 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
     HsiaColor hsia = data->colors[era % BUCKET_SIZE_COLORS];
     if (p > 0.5)
     {
-        hsia = (HsiaColor){hsia.h, hsia.s, hsia.i * eased_p, hsia.a};
+        //hsia = (HsiaColor){hsia.h, hsia.s, hsia.i * eased_p, hsia.a};
+
+        frame->rgbwa = hsia2rgbwa(hsia.h, hsia.s, hsia.i * eased_p, hsia.a);
     }
-
-    frame->rgbwa = hsia2rgbwa(&hsia);
-
-    return frame;
+    else
+    {
+        frame->rgbwa = hsia2rgbwa(hsia.h, hsia.s, hsia.i, hsia.a);
+    }
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)

@@ -8,6 +8,7 @@
 #undef PERFORMANCE_STATS
 #define PERFORMANCE_SAMPLES 100
 #define NANO_IN_SECOND 1000000000.0
+#define LED_COUNT 100
 
 GlobalState state;
 
@@ -57,15 +58,18 @@ void core1_entry()
 inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinIndex)
 {
     uint32_t time = get_running_ms();
-    //uint32_t time_elapsed = (time - time_start);
-    //uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
+    
+    if (state.withOffset)
+    {
+        uint32_t time_elapsed = (time - time_start);
+        uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
 
-    //if (state.withOffset)
-    //{
-    //    time_dilated += (pinIndex * 123456);
-    //}
+        time_dilated += (pinIndex * 123456);
 
-    pattern_execute(LED_COUNT, time);
+        pattern_execute(LED_COUNT, time_dilated);
+    } else {
+        pattern_execute(LED_COUNT, time);
+    }
 }
 
 int main()
@@ -73,7 +77,7 @@ int main()
     picolight_boot(LED_COUNT);
 
     state.patternIndex = 0;
-    state.speed = 1;
+    state.speed = 3;
     state.withOffset = false;
     state.nextPatternIndex = 0;
     state.nextIntensity = 0.4;
@@ -129,7 +133,7 @@ int main()
 
             // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
             //sleep_us(150); // minimum is 50us, but need safety margins
-            sleep_us(300); // minimum is 50us, but need safety margins
+            sleep_us(150); // minimum is 50us, but need safety margins
 
 #ifdef PERFORMANCE_STATS
             uint64_t after = get_running_us();

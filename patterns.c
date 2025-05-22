@@ -13,14 +13,14 @@ void pattern_destroyer_default(void *dataPtr)
     }
 }
 
-void *pattern_frame_allocator_default(uint16_t len, uint32_t t, void *dataPtr)
+void *pattern_frame_allocator_default(uint16_t len, void *dataPtr)
 {
     return NULL;
 }
 
-void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr)
+void pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
-    return NULL;
+    
 }
 
 void pattern_frame_destroyer_default(void *dataPtr, void *framePtr)
@@ -54,24 +54,31 @@ PatternModule *pattern_get_by_name(const char *name)
     return NULL;
 }
 
-static inline RgbwColor to_rgbw(uint16_t index, RgbwaColor *c)
-{
-    static RgbwColor black_rgbw = (RgbwColor){0, 0, 0, 0};
+RgbwColor RGBW_BLACK = (RgbwColor){0, 0, 0, 0};
+RgbwaColor RGBWA_TRANSPARENT = (RgbwaColor){0, 0, 0, 0, 0};
 
+static void to_rgbw(uint16_t index, uint32_t t, RgbwaColor *c)
+{
     if (c->a < 15)
     {
-        return black_rgbw;
+        // TODO: Make memset work, should be faster?
+        //memset(&c, 0, sizeof(RgbwColor));
+
+        c->r = 0;
+        c->g = 0;
+        c->b = 0;
+        c->w = 0;
     }
     else
     {
         if (c->a < ALPHA_NEGLIGIBLE_MAX)
         {
-            double a = (c->a / (double)RGB_ALPHA_MAX);
-            return (RgbwColor){c->r * a, c->g * a, c->b * a, c->w * a};
+            uint8_t alpha = c->a;
+            c->r = ((uint16_t)c->r * alpha) >> 8;
+            c->g = ((uint16_t)c->g * alpha) >> 8;
+            c->b = ((uint16_t)c->b * alpha) >> 8;
+            c->w = ((uint16_t)c->w * alpha) >> 8;
         }
-
-        // TODO: Skip the moving, just return the RGBWA instead. How?
-        return (RgbwColor){c->r, c->g, c->b, c->w};
     }
 }
 
@@ -86,12 +93,14 @@ static inline RgbwaColor pattern_default_executor(ExecutorArgs *args)
 void pattern_find_and_register_patterns()
 {
     //pattern_register_random_sequence();
-    //pattern_register_random();
+    pattern_register_random();
 
     // OK:
-    pattern_register_hue_lerp();
+    //pattern_register_hue_lerp();
     //pattern_register_knightrider();
     //pattern_register_color_lerp();
+    pattern_register_rainbow_splash();
+    //pattern_register_rainbow_wave();
     //pattern_register_snake();
     //pattern_register_snakes();
     //pattern_register_firework();
@@ -101,6 +110,11 @@ void pattern_find_and_register_patterns()
     //pattern_register_meteor();
 
     //pattern_register_test();
+
+    // TODO:
+    // rainbow wave
+    // rainbow pulse
+    // -- copy ideas from the Moonlander, add as many as possible :)
 
     // WEIRD:
 
@@ -117,6 +131,12 @@ void pattern_register(
     PatternFrameDataAllocator frameAllocator, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer,
     PatternOptions options)
 {
+    if (state.modules != NULL) {
+
+        // Free the previous modules array, or we'd leak.
+        //free(state.modules);
+    }
+
     PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
     memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
@@ -136,8 +156,6 @@ void pattern_register(
 
 void pattern_execute(uint16_t len, uint32_t t)
 {
-    static RgbwColor black_rgbw = (RgbwColor){0, 0, 0, 0};
-
     if (state.nextPatternIndex >= 0)
     {
         // Destroy/free any previous memory allocations
@@ -165,7 +183,7 @@ void pattern_execute(uint16_t len, uint32_t t)
         state.nextIntensity = -1;
 
         // We allocate the memory for the frame data right away, so we do not need to allocate/deallocate over and over.
-        state.frameData = newModule->frameAllocator(len, state.nextIntensity, state.patternData);
+        state.frameData = newModule->frameAllocator(len, state.patternData);
     }
 
     // Execute the current pattern inside state
@@ -173,27 +191,23 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
 
-        // TODO: Do not allocate the frame every time, it should be kept in the state!
-        //void *framePtr = module->frameAllocator(len, t, state.patternData);
         module->frameCreator(len, t, state.patternData, state.frameData);
 
         ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, state.frameData};
         while (args->i < len)
         {
             RgbwaColor rgbwa = module->executor(args);
-            RgbwColor rgbw = to_rgbw(args->i, &rgbwa);
-            put_pixel(args->i, len, &rgbw);
+
+            to_rgbw(args->i, t, &rgbwa);
+            put_pixel(args->i, len, (const RgbwColor*) &rgbwa);
             args->i++;
         }
-
-        // TODO: Do not destroy the frame every time, it should be kept in the state!
-        //module->frameDestroyer(state.patternData, framePtr);
     }
     else
     {
         for (uint16_t i = 0; i < len; i++)
         {
-            put_pixel(i, len, &black_rgbw);
+            put_pixel(i, len, &RGBW_BLACK);
         }
     }
 }

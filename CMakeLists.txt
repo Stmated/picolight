@@ -6,6 +6,10 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(PICO_DEOPTIMIZED_DEBUG 1)
+endif()
+
 if(OPTION_ENVIRONMENT_LOCAL)
     # Set some stuff if running locally?
 else()
@@ -35,8 +39,6 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 include(pico_sdk_import.cmake)
 
 project(picolight C CXX ASM)
-
-
 
 #if(OPTION_ENVIRONMENT_LOCAL)
 #    set(CMAKE_BUILD_TYPE Debug)
@@ -69,6 +71,7 @@ set (SRC_LIST
     patterns/pattern_fade_between.c
     patterns/pattern_color_lerp.c
     patterns/pattern_hue_lerp.c
+    patterns/pattern_rainbow_splash.c
     patterns/pattern_rainbow_wave.c
     patterns/pattern_random.c
     patterns/pattern_random_sequence.c

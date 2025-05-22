@@ -11,34 +11,34 @@
 
 struct Printer;
 
-//typedef void (*PrinterFunction)(uint16_t index, HsiaColor *c, struct Printer *printer);
-
 // TODO: Add a way of being able to send different color-spaces to the printer, and they are propagated upwards.
 //       This way we can send RGBW directly if that is all we need, and skip any translation from HSIA to RGBW
 //       Could theoretically add more obscure color spaces then, like CIECAM02
 
-#define COLOR_TRANSPARENT (HsiaColor) {0, 0, 0, 0}
-#define COLOR_WHITE (HsiaColor) {0, 0, 1, 1}
-#define COLOR_BLACK (HsiaColor) {0, 0, 0, 1}
+#ifndef DEFAULT_COLORS
+#define DEFAULT_COLORS
+extern RgbwColor RGBW_BLACK;
+extern RgbwaColor RGBWA_TRANSPARENT;
+#endif
 
 typedef struct ExecutorArgs
 {
     uint16_t i;
-    void *dataPtr;
-    void *framePtr;
+    void *restrict dataPtr;
+    void *restrict framePtr;
 } ExecutorArgs;
 
 // TODO: Make it possible for Executor to take "offset" and "len" -- so we can execute one pixel at a time, and avoid saving a pixel buffer if merging patterns
 //          Or do a few pixels at a time, in different threads or whatnot.
 //          Need a new concept for a data structure to speed things up, like a "FrameData" -- so we have that and a "PatternData"
 //          We must have this, otherwise we'd need to do some calculations commons to a frame way too often
-typedef RgbwaColor (*PatternExecutor)(ExecutorArgs *args);
+typedef RgbwaColor (*PatternExecutor)(ExecutorArgs *restrict args);
 typedef void *(*PatternDataCreator)(uint16_t len, float intensity);
 typedef void (*PatternDataDestroyer)(void *dataPtr);
 
 // TODO: Create a new FrameDataUpdater instead of always creating and destroying. Faster to update than to alloc and free every frame.
-typedef void *(*PatternFrameDataAllocator)(uint16_t len, uint32_t t, void *dataPtr);
-typedef void *(*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr, void *framePtr);
+typedef void *(*PatternFrameDataAllocator)(uint16_t len, void *dataPtr);
+typedef void (*PatternFrameDataCreator)(uint16_t len, uint32_t t, void *dataPtr, void *framePtr);
 typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 
 typedef void *(*PatternRegistrator)(void);
@@ -72,9 +72,8 @@ PatternModule *pattern_get_by_name(const char* name);
 void *pattern_creator_default(uint16_t len, float intensity);
 void pattern_destroyer_default(void *data);
 
-void *pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr);
+void pattern_frame_creator_default(uint16_t len, uint32_t t, void *dataPtr, void *framePtr);
 void pattern_frame_destroyer_default(void *data, void *framePtr);
-//HsiaColor pattern_executor_default(uint16_t i, void *dataPtr, void *framePtr);
 
 void pattern_find_and_register_patterns();
 
@@ -85,6 +84,7 @@ void pattern_register_snake();
 void pattern_register_fade_between();
 void pattern_register_color_lerp();
 void pattern_register_hue_lerp();
+void pattern_register_rainbow_splash();
 void pattern_register_rainbow_wave();
 void pattern_register_snakes();
 void pattern_register_sparkle();

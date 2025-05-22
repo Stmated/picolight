@@ -41,6 +41,20 @@
     "raspberry-pi-pico.ninjaPath": "${HOME}/.pico-sdk/ninja/v1.12.1/ninja",
     "files.associations": {
         "stdlib.h": "c",
-        "pico.h": "c"
+        "pico.h": "c",
+        "compare": "c",
+        "functional": "c",
+        "type_traits": "c",
+        "format": "c",
+        "cstdlib": "c",
+        "memory_resource": "c",
+        "memory": "c",
+        "variant": "c",
+        "cstdint": "c",
+        "string.h": "c",
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "math.h": "c",
+        "patterns.h": "c"
     }
 }

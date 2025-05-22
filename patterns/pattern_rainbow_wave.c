@@ -2,67 +2,50 @@
 
 typedef struct data_struct
 {
-    int easing;
-    int endless;
+    CurriedEasing easing;
     uint32_t period;
     float hsi_s;
     float hsi_i;
+    float huePerLed;
 } data_struct;
 
 typedef struct frame_struct
 {
-    int hueOffset;
-    float huePerLed;
+    float hueOffset;
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
     data_struct *data = calloc(1, sizeof(data_struct));
 
-    data->easing = randint(getEasingCount());
     if (randint(1000) > 500)
     {
-        if (randint(1000) > 500)
-        {
-            data->endless = 1;
-        }
-        else
-        {
-            // Reverse direction
-            data->endless = -1;
-        }
+        data->easing = getRepeatingEasing(rand());
     }
+    else
+    {
+        data->easing = getRepeatingInOutEasing(rand());
+    }
+
     data->period = randint_weighted_towards_min(1000, 30000, intensity);
     data->hsi_s = 0.9 + (0.1 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
     data->hsi_i = 0.2 + (0.3 * (randint_weighted_towards_max(0, 1000, intensity) / (float)1000));
+    data->huePerLed = (HSI_H_MAX / (float)len);
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
-    float p;
-    if (data->endless != 0)
-    {
-        // p is total progress for an endless looping, never stopping.
-        p = data->endless * (t / (float)data->period);
-    }
-    else
-    {
-        p = executeEasing(data->easing, (t % data->period) / (float)data->period);
-    }
-
-    frame->huePerLed = (HSI_H_MAX / (float)len);
-    frame->hueOffset = ((int)roundf(HSI_H_MAX * p)) % HSI_H_MAX;
-
-    return frame;
+    float p = data->easing.func(data->easing.ctx, t / (float)data->period);
+    frame->hueOffset = HSI_H_MAX * p;
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)
@@ -70,14 +53,9 @@ static inline RgbwaColor executor(ExecutorArgs *args)
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
-    uint16_t rowHueOffset = (uint16_t)roundf(frame->huePerLed * args->i);
-    int32_t h = (rowHueOffset + frame->hueOffset);
-    if (h < 0)
-    {
-        h = HSI_H_MAX - h;
-    }
+    uint16_t h = ((uint32_t) ((data->huePerLed * args->i) + frame->hueOffset)) % HSI_H_MAX;
 
-    return hsia2rgbwa(&(HsiaColor){h % HSI_H_MAX, data->hsi_s, data->hsi_i, 1});
+    return hsia2rgbwa(h, data->hsi_s, data->hsi_i, 1);
 }
 
 void pattern_register_rainbow_wave()

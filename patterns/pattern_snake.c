@@ -2,82 +2,82 @@
 
 typedef struct data_struct
 {
-    int easing;
-    // int hue;
-    int period;
-    double width;
-    // bool affectSaturation;
-    //double edgeHarshness;
-    // float saturation;
-    // float brightness;
+    CurriedEasing easing;
+    uint32_t period;
+    float width;
 
     RgbwaColor color;
 
-    int offset;
+    uint32_t offset;
 } data_struct;
 
 typedef struct frame_struct
 {
-    float t_into_period;
-    float p;
+    float head_index;
 } frame_struct;
 
-static void *data_creator(uint16_t len, float intensity)
+static RgbwaColor getNewColor(float intensity)
 {
-    data_struct *data = calloc(1, sizeof(data_struct));
-
-    data->easing = randint(getEasingCount());
-
     HsiaColor hsia = (HsiaColor){
         randint(360),
         randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000,
         randint_weighted_towards_max(500, 1000, intensity) / (float)1000,
         1};
-    data->color = (RgbwaColor)hsia2rgbwa(&hsia);
 
-    // data->hue = ;
-    // data->saturation = ;
-    // data->affectSaturation = randint_weighted_towards_min(0, 1000, intensity) > 500;
-    // data->brightness = ;
+    return (RgbwaColor)hsia2rgbwa(hsia.h, hsia.s, hsia.i, hsia.a);
+}
 
-    data->width = randint_weighted_towards_min(MAX(3, len / 32), MAX(4, len / 8), intensity);
-    data->period = randint_weighted_towards_min(2000, 30000, intensity);
+static void *data_creator(uint16_t len, float intensity)
+{
+    data_struct *data = calloc(1, sizeof(data_struct));
+
+    data->easing = getEasing(randint(getEasingCount()));
+    data->color = getNewColor(intensity);
+
+    int width_min = MAX(3, len / 32.0);
+    int width_max = width_min + MAX(2, len / 12.0);
+
+    data->width = randint_weighted_towards_min(width_min, width_max, intensity);
+    data->period = randint_weighted_towards_min(4000, 45000, intensity);
     data->offset = randint(data->period * 3);
-    //data->edgeHarshness = randint_weighted_towards_max(1, 100, intensity / (float)4);
 
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-    //frame_struct *frame = 
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
-    frame->t_into_period = (((t + data->offset) % data->period) / (float)data->period);
-    frame->p = len * executeEasing(data->easing, frame->t_into_period);
+    frame_struct *frame = framePtr;
 
-    return frame;
+    float percentage_into_period = (((t + data->offset) % data->period) / (float)data->period);
+    
+    // Set index of the snake head
+    frame->head_index = len * data->easing.func(data->easing.ctx, percentage_into_period);
 }
+
+//const RgbwaColor RGBWA_TRANSPARENT = (RgbwaColor){0, 0, 0, 0, 0};
 
 static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
-    float distance = fabsf(args->i - frame->p);
+
+    // TODO: "Darken" the HSIA here, instead of only relying on the alpha -- or perhaps we need to improve the alpha rendering?
+    float distance = fabsf(args->i - frame->head_index);
 
     if (distance <= data->width)
     {
-        //return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - pow(distance / data->width, data->edgeHarshness))};
-        return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, RGB_ALPHA_MAX * (1 - (distance / data->width))};
+        uint8_t a = RGB_ALPHA_MAX * (1 - (distance / data->width));
+        return (RgbwaColor){data->color.r, data->color.g, data->color.b, data->color.w, a};
     }
     else
     {
-        return (RgbwaColor){0, 0, 0, 0, 0};
+        return RGBWA_TRANSPARENT; // (RgbwaColor){0, 0, 0, 0, 0};
     }
 }
 

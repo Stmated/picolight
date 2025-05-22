@@ -36,15 +36,15 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
     int colorIndex1 = (t / data->time_per_color) % 10;
     int colorIndex2 = (colorIndex1 + 1) % 10;
@@ -55,14 +55,12 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
     float pOfColor = ((t % data->time_per_color) / (float) data->time_per_color);
     int hue = math_hue_lerp(hsi_from.h, hsi_to.h, pOfColor);
 
-    frame->rgbwa = hsia2rgbwa(&(HsiaColor) {
+    frame->rgbwa = hsia2rgbwa(
         hue,
         hsi_from.s,
         hsi_from.i,
         hsi_from.a
-    });
-
-    return frame;
+    );
 }
 
 void pattern_register_fade_between()

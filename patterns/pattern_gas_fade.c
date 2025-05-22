@@ -21,14 +21,14 @@ typedef struct frame_struct
 
 static int set_fire(data_struct *data)
 {
-    data->color_bag[0] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0.0});
-    data->color_bag[1] = hsia2rgbwa(&(HsiaColor){12, 0, 0, 0});
-    data->color_bag[2] = hsia2rgbwa(&(HsiaColor){12, 0.84, 0.61, 1});
-    data->color_bag[3] = hsia2rgbwa(&(HsiaColor){26, 0.87, 0.63, 1});
-    data->color_bag[4] = hsia2rgbwa(&(HsiaColor){50, 0.95, 0.65, 1});
-    data->color_bag[5] = hsia2rgbwa(&(HsiaColor){55, 0.75, 0.75, 1});
-    data->color_bag[6] = hsia2rgbwa(&(HsiaColor){55, 0, 1, 1});
-    data->color_bag[7] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 1});
+    data->color_bag[0] = hsia2rgbwa(0, 0, 0, 0.0);
+    data->color_bag[1] = hsia2rgbwa(12, 0, 0, 0);
+    data->color_bag[2] = hsia2rgbwa(12, 0.84, 0.61, 1);
+    data->color_bag[3] = hsia2rgbwa(26, 0.87, 0.63, 1);
+    data->color_bag[4] = hsia2rgbwa(50, 0.95, 0.65, 1);
+    data->color_bag[5] = hsia2rgbwa(55, 0.75, 0.75, 1);
+    data->color_bag[6] = hsia2rgbwa(55, 0, 1, 1);
+    data->color_bag[7] = hsia2rgbwa(0, 0, 1, 1);
 
     for (int i = 0; i < 8; i++)
     {
@@ -40,14 +40,14 @@ static int set_fire(data_struct *data)
 
 static int set_grayscale(data_struct *data)
 {
-    data->color_bag[0] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0.0});
-    data->color_bag[1] = hsia2rgbwa(&(HsiaColor){0, 0, 0, 0});
-    data->color_bag[2] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.2});
-    data->color_bag[3] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.4});
-    data->color_bag[4] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.6});
-    data->color_bag[5] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.8});
-    data->color_bag[6] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 0.9});
-    data->color_bag[7] = hsia2rgbwa(&(HsiaColor){0, 0, 1, 1});
+    data->color_bag[0] = hsia2rgbwa(0, 0, 0, 0.0);
+    data->color_bag[1] = hsia2rgbwa(0, 0, 0, 0);
+    data->color_bag[2] = hsia2rgbwa(0, 0, 1, 0.2);
+    data->color_bag[3] = hsia2rgbwa(0, 0, 1, 0.4);
+    data->color_bag[4] = hsia2rgbwa(0, 0, 1, 0.6);
+    data->color_bag[5] = hsia2rgbwa(0, 0, 1, 0.8);
+    data->color_bag[6] = hsia2rgbwa(0, 0, 1, 0.9);
+    data->color_bag[7] = hsia2rgbwa(0, 0, 1, 1);
 
     return 8;
 }
@@ -132,20 +132,18 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
 
     // The offset should be in integral steps according to the length, to avoid flicker
     frame->offset = (-1 * (t / 1000.0)) * 10.0;
-
-    return frame;
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)

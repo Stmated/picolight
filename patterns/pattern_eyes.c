@@ -95,12 +95,12 @@ typedef struct frame_struct
     float eye_width;
 } frame_struct;
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
@@ -154,8 +154,6 @@ static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *frameP
 
     HsiaColor c = data->eye_colors[era % BUCKET_SIZE_EYES_COLORS];
     frame->c = (HsiaColor){c.h, c.s, c.i, alpha};
-
-    return frame;
 }
 
 /**
@@ -175,7 +173,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
     if (closestDistance <= frame->eye_width)
     {
-        return hsia2rgbwa(&(HsiaColor){frame->c.h, frame->c.s, frame->c.i, frame->c.a * (1 - (closestDistance / frame->eye_width))});
+        return hsia2rgbwa(frame->c.h, frame->c.s, frame->c.i, frame->c.a * (1 - (closestDistance / frame->eye_width)));
     }
 
     return (RgbwaColor){0, 0, 0, 0, 0};

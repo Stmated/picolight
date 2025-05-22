@@ -1,10 +1,7 @@
 #include "environment_pico.h"
 
-inline void put_pixel(uint16_t index, uint16_t len, RgbwColor *c)
+inline void put_pixel(uint16_t index, uint16_t len, const RgbwColor *c)
 {
-    // TODO: Remake this so that we point to a reference to a method instead, and switch it once we move into a new pixel area! To avoid branching.
-    // TODO: Will this branching slow down the processing? Branching == bad, no? Need performance tests!
-
     // TODO: Add dithering
 
     if (isRgbw(index))

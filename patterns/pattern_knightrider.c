@@ -29,20 +29,18 @@ static void *data_creator(uint16_t len, float intensity)
     return data;
 }
 
-static void *frame_allocator(uint16_t len, uint32_t t, void *dataPtr)
+static void *frame_allocator(uint16_t len, void *dataPtr)
 {
     return calloc(1, sizeof(frame_struct));
 }
 
-static void *frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
+static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
 
     frame->p = (t % data->period) / (float)data->period;
     frame->headIndex = len * InOutLinear(frame->p);
-
-    return frame;
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)
