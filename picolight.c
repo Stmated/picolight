@@ -57,18 +57,18 @@ void core1_entry()
 
 inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinIndex)
 {
-    uint32_t time = get_running_ms();
+    uint32_t time_us = get_running_us();
     
     if (state.withOffset)
     {
-        uint32_t time_elapsed = (time - time_start);
+        uint32_t time_elapsed = (time_us - time_start);
         uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
 
         time_dilated += (pinIndex * 123456);
 
         pattern_execute(LED_COUNT, time_dilated);
     } else {
-        pattern_execute(LED_COUNT, time);
+        pattern_execute(LED_COUNT, time_us);
     }
 }
 
@@ -92,7 +92,7 @@ int main()
     launch_thread(core1_entry);
     picolight_post_boot();
 
-    uint32_t time_start = get_running_ms();
+    uint64_t time_start_us = get_running_us();
 
     pattern_find_and_register_patterns();
     math_precompute();
@@ -108,7 +108,7 @@ int main()
             {
                 int pin = PIN_TX[pinIndex];
                 program_init(offset, pin);
-                execute_for_led_pin(time_start, offset, pinIndex);
+                execute_for_led_pin(time_start_us, offset, pinIndex);
 
                 // We sleep less between each program, the more programs we have. How to sleep less than 1?
                 // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
@@ -129,11 +129,10 @@ int main()
             uint64_t before = get_running_us();
 #endif
 
-            execute_for_led_pin(time_start, offset, 0);
+            execute_for_led_pin(time_start_us, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
-            //sleep_us(150); // minimum is 50us, but need safety margins
-            sleep_us(150); // minimum is 50us, but need safety margins
+            sleep_us(300); // minimum is 50us, but need safety margins
 
 #ifdef PERFORMANCE_STATS
             uint64_t after = get_running_us();

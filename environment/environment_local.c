@@ -11,7 +11,7 @@ const int spacing = 0;
 
 FILE *imageFile = NULL;
 
-void put_pixel(uint16_t index, uint16_t len, const RgbwColor *c)
+void put_pixel(const uint16_t index, const uint16_t len, const uint64_t t_us, const uint32_t dt_us, const RgbwaColor *restrict c)
 {
     int widthInBytes = width * BYTES_PER_PIXEL;
     int paddingSize = (4 - (widthInBytes) % 4) % 4;

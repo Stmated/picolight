@@ -21,7 +21,7 @@ typedef struct frame_struct
 static void *data_creator(uint16_t len, float intensity)
 {
     data_struct *data = malloc(sizeof(data_struct));
-    data->period = randint_weighted_towards_min(5000, 7000, intensity);
+    data->period = randint_weighted_towards_min(2500, 5000, intensity);
     data->width = randint_weighted_towards_max(8, len / (float)20, intensity);
 
     for (int i = 0; i < BUCKET_SIZE_MIDDLE; i++)
@@ -39,13 +39,13 @@ static void *data_creator(uint16_t len, float intensity)
 
 static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-    return calloc(1, sizeof(frame_struct));
+    return malloc(sizeof(frame_struct));
 }
 
 static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
     data_struct *data = dataPtr;
-    frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+    frame_struct *frame = framePtr;
 
     int era = floorf(t / (float)data->period);
 
@@ -54,12 +54,9 @@ static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePt
     frame->width = data->width * eased_p;
     frame->middle = data->width + fmodf(data->middles[era % BUCKET_SIZE_MIDDLE] + (34.5 * (float)era), len - (data->width * 2));
 
-    // HsiaColor hsia = (HsiaColor){fmodf(47.37 * era, 360), 1, 1};
     HsiaColor hsia = data->colors[era % BUCKET_SIZE_COLORS];
     if (p > 0.5)
     {
-        //hsia = (HsiaColor){hsia.h, hsia.s, hsia.i * eased_p, hsia.a};
-
         frame->rgbwa = hsia2rgbwa(hsia.h, hsia.s, hsia.i * eased_p, hsia.a);
     }
     else
@@ -81,7 +78,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
         return (RgbwaColor){frame->rgbwa.r, frame->rgbwa.g, frame->rgbwa.b, frame->rgbwa.w, alpha};
     }
 
-    return (RgbwaColor){0, 0, 0, 0, 0};
+    return RGBWA_TRANSPARENT;
 }
 
 void pattern_register_firework()

@@ -2,32 +2,46 @@
 
 typedef struct data_struct
 {
-    CurriedEasing easing;
+    CurriedEasing easing_hue;
     CurriedEasing easing_width;
-    int period;
+    float period;
     float width;
     float inv_width;
+    uint8_t hue_offset;
+    float hue_speed_multiplier;
 
 } data_struct;
 
 typedef struct frame_struct
 {
-    uint16_t hue;
+    uint8_t hue;
     uint16_t index_center;
-    float strength;
-    float period_percentage;
+    uint8_t strength;
 
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *data = calloc(1, sizeof(data_struct));
+    data_struct *data = malloc(sizeof(data_struct));
 
-    data->period = (float) randint_weighted_towards_min(3000, 10000, intensity);
-    data->width = (float) randint_weighted_towards_min(MAX(4, len / 10.0f), MAX(8, len / 3.0f), intensity);
+    data->period = (float)randint_weighted_towards_min(3000, 10000, intensity);
+
+    data->width = (float)randint_weighted_towards_max(MAX(4, len / 10.0f), MAX(8, len / 3.0f), intensity);
+    data->hue_speed_multiplier = randint_weighted_towards_max(10, 100, intensity / 2.0f) / 10.0f;
+    data->hue_offset = randint(255);
+    
     data->inv_width = 1.0f / data->width;
 
-    data->easing = getRepeatingInOutEasing(rand());
+    if (rand() > RAND_MAX / 2.0f)
+    {
+        data->easing_hue = getRepeatingInOutEasing(rand());
+    }
+    else
+    {
+        data->easing_hue = getRepeatingEasing(rand());
+    }
+
+    //data->easing_hue = getRepeatingEasing(rand());
     data->easing_width = getRepeatingInOutEasing(rand());
 
     return data;
@@ -35,7 +49,7 @@ static void *data_creator(uint16_t len, float intensity)
 
 static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-    return calloc(1, sizeof(frame_struct));
+    return malloc(sizeof(frame_struct));
 }
 
 static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
@@ -43,15 +57,13 @@ static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePt
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    float p = t / (float) data->period;
+    float p = t / data->period;
 
-    frame->period_percentage = (t % data->period) / (float) data->period;
-    
-    frame->hue = HSI_H_MAX * data->easing.func(data->easing.ctx, p);
+    frame->hue = (data->hue_offset + (uint16_t) (255 * data->easing_hue.func(data->easing_hue.ctx, p * data->hue_speed_multiplier))) % 255;
 
     unsigned int seed = (unsigned int)floorf(p) * 2654435761u;
     frame->index_center = data->width + floorf((rand_r(&seed) / (RAND_MAX + 1.0f)) * (len - (data->width * 2)));
-    frame->strength = data->easing_width.func(data->easing_width.ctx, frame->period_percentage);
+    frame->strength = 255 * data->easing_width.func(data->easing_width.ctx, p);
 }
 
 static inline RgbwaColor executor(ExecutorArgs *restrict args)
@@ -59,18 +71,19 @@ static inline RgbwaColor executor(ExecutorArgs *restrict args)
     data_struct *restrict data = args->dataPtr;
     frame_struct *restrict frame = args->framePtr;
 
-    float distance = fabsf(frame->index_center - args->i);
+    uint16_t distance_from_center = abs(frame->index_center - args->i);
 
-    if (distance <= data->width)
+    if (distance_from_center <= data->width)
     {
-        // TODO: Possible to speed this up? Perhaps by doing all math using integers?
-        float distance_percentage = 1 - (distance * data->inv_width);
+        uint8_t distance_from_center_as_1byte = (1 - (distance_from_center * data->inv_width)) * 255;
 
-        uint16_t hue = ((uint16_t)(distance_percentage * HSI_H_MAX) + frame->hue) % HSI_H_MAX;
-        float hsia_i = frame->strength * distance_percentage * HSI_I_HALF;
-        float hsia_a = frame->strength * distance_percentage;
+        uint8_t hue = (distance_from_center_as_1byte + frame->hue) % 255;
 
-        return hsia2rgbwa(hue, HSI_S_MAX, hsia_i, hsia_a);
+        uint16_t weighted_dp = frame->strength * distance_from_center_as_1byte;
+        uint8_t hsia_i = weighted_dp >> 9; // ~half as strong
+        uint8_t hsia_a = weighted_dp >> 8; // full
+
+        return int8_hsia2rgbwa(hue, 255, hsia_i, hsia_a);
     }
 
     return RGBWA_TRANSPARENT;

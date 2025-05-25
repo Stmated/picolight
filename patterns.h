@@ -15,11 +15,8 @@ struct Printer;
 //       This way we can send RGBW directly if that is all we need, and skip any translation from HSIA to RGBW
 //       Could theoretically add more obscure color spaces then, like CIECAM02
 
-#ifndef DEFAULT_COLORS
-#define DEFAULT_COLORS
 extern RgbwColor RGBW_BLACK;
 extern RgbwaColor RGBWA_TRANSPARENT;
-#endif
 
 typedef struct ExecutorArgs
 {
@@ -44,7 +41,7 @@ typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 typedef void *(*PatternRegistrator)(void);
 
 int getPatternCount();
-void pattern_execute(uint16_t len, uint32_t t);
+void pattern_execute(uint16_t len, uint64_t t);
 void pattern_update_data(uint16_t len, int patternIndex, float intensity);
 
 typedef struct PatternOptions

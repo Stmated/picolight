@@ -40,11 +40,14 @@ RgbwaColor math_average_rgbwa(RgbwaColor *a, RgbwaColor *b);
 
 RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A);
 
+RgbwaColor int8_hsia2rgbwa(uint8_t H, uint8_t S, uint8_t I, uint8_t A);
+
 void math_precompute();
 
 #define HSI_H_MIN 0
 #define HSI_H_MAX 360
 #define HSI_H_HALF 180
+#define HSI_H_QUARTER 90
 
 #define HSI_S_MIN 0
 #define HSI_S_HALF 0.5f
@@ -53,6 +56,11 @@ void math_precompute();
 #define HSI_I_MIN 0
 #define HSI_I_HALF 0.5f
 #define HSI_I_MAX 1.0f
+
+#define HSI_A_MAX 1.0f
+
+#define HSI_I_NEGLIGIBLE 0.05f
+#define HSI_A_NEGLIGIBLE 0.05f
 
 #define DEG_TO_RAD(X) (M_PI * (X) / 180)
 

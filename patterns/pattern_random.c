@@ -2,11 +2,8 @@
 
 typedef struct data_struct
 {
-    void *data1;
-    void *data2;
-    PatternModule *pattern1;
-    PatternModule *pattern2;
-    float pattern2alpha;
+    void *data;
+    PatternModule *pattern;
     int period;
     uint32_t updatedAt;
     float intensity;
@@ -15,10 +12,9 @@ typedef struct data_struct
 
 typedef struct frame_struct
 {
-    void *frame1;
-    void *frame2;
+    void *frame;
     float p;
-    float transition_percentage;
+    float alpha;
 
 } frame_struct;
 
@@ -26,12 +22,10 @@ static void data_destroyer(void *dataPtr)
 {
     data_struct *data = dataPtr;
 
-    if (data->data1)
+    if (data->data)
     {
-        data->pattern1->destroyer(data->data1);
-        data->data1 = NULL;
-        data->pattern2->destroyer(data->data2);
-        data->data2 = NULL;
+        data->pattern->destroyer(data->data);
+        data->data = NULL;
     }
 
     free(dataPtr);
@@ -44,7 +38,7 @@ static void *data_creator(uint16_t len, float intensity)
     int intIntensityMul = 1000;
     int intIntesity = roundf(intensity * intIntensityMul);
     data->intensity = randint_weighted_towards_max(MAX(100, intIntesity / 2), MAX(800, intensity * 2), intensity) / (float)intIntensityMul;
-    data->period = randint_weighted_towards_min(1000, 6000, intensity);
+    data->period = randint_weighted_towards_min(5000, 60000, intensity);
     data->updatedAt = 0;
 
     return data;
@@ -90,51 +84,44 @@ static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePt
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    if (frame->frame1 == NULL || data->updatedAt == 0 || t > (data->updatedAt + data->period))
+    if (data->data == NULL || data->updatedAt == 0 || t > (data->updatedAt + data->period))
     {
         // It is time to move on to the next random mix.
         data->updatedAt = t;
+        PatternModule *next = pattern_get_next(data->pattern, NULL);
 
-        if (!data->pattern2)
+        if (frame->frame)
         {
-            // This is the first time. So assign pattern 2, which will be moved to 1 straight away.
-            data->pattern2 = pattern_get_next(NULL, NULL);
-            data->data2 = data->pattern2->creator(len, data->intensity);
+            data->pattern->frameDestroyer(data->data, frame->frame);
+            frame->frame = NULL;
         }
 
-        if (data->data1)
+        if (data->data)
         {
-            data->pattern1->destroyer(data->data1);
-            data->data1 = NULL;
+            data->pattern->destroyer(data->data);
+            data->data = NULL;
         }
 
-        PatternModule *next = pattern_get_next(data->pattern2, data->pattern1);
+        data->pattern = next;
 
-        data->data1 = data->data2;
-        data->pattern1 = data->pattern2;
-
-        data->pattern2 = next;
-        data->data2 = data->pattern2->creator(len, data->intensity);
-
-        printf("Going to '%s' and '%s'\n", data->pattern1->name, data->pattern2->name);
-
-        frame->frame1 = data->pattern1->frameAllocator(len, data->data1);
-        frame->frame2 = data->pattern2->frameAllocator(len, data->data2);
+        data->data = data->pattern->creator(len, data->intensity);
+        frame->frame = data->pattern->frameAllocator(len, data->data);
     }
 
     frame->p = ((t - data->updatedAt) % data->period) / (float)data->period;
 
-    data->pattern1->frameCreator(len, t, data->data1, frame->frame1);
+    data->pattern->frameCreator(len, t, data->data, frame->frame);
     if (frame->p >= 0.90f)
     {
-        data->pattern2->frameCreator(len, t, data->data2, frame->frame2);
-
-
-        frame->transition_percentage = (frame->p - 0.90f) * 10.0f;
+        frame->alpha = 1 - ((frame->p - 0.90f) * 10.0f);
+    }
+    else if (frame->p <= 0.10f)
+    {
+        frame->alpha = frame->p * 10.0f;
     }
     else
     {
-        frame->transition_percentage = 0;
+        frame->alpha = 1.0f;
     }
 }
 
@@ -143,8 +130,7 @@ static void frame_destroyer(void *dataPtr, void *framePtr)
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    data->pattern1->frameDestroyer(data->data1, frame->frame1);
-    data->pattern2->frameDestroyer(data->data2, frame->frame2);
+    data->pattern->frameDestroyer(data->data, frame->frame);
 
     free(framePtr);
 }
@@ -154,18 +140,14 @@ static RgbwaColor executor(ExecutorArgs *restrict  args)
     data_struct *restrict data = args->dataPtr;
     frame_struct *restrict frame = args->framePtr;
 
-    if (frame->transition_percentage > 0)
-    {
-        RgbwaColor a = data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
-        RgbwaColor b = data->pattern2->executor(&(ExecutorArgs){args->i, data->data2, frame->frame2});
+    RgbwaColor c = data->pattern->executor(&(ExecutorArgs){args->i, data->data, frame->frame});
 
-        //float v = (frame->p - 0.90f) * 10.0f;
-        return math_rgbwa_lerp(a, b, frame->transition_percentage);
-    }
-    else
+    if (frame->alpha < 1)
     {
-        return data->pattern1->executor(&(ExecutorArgs){args->i, data->data1, frame->frame1});
+        return (RgbwaColor) {c.r, c.g, c.b, c.w, c.a * frame->alpha};
     }
+
+    return c;
 }
 
 void pattern_register_random()

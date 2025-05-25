@@ -11,6 +11,7 @@
 
 #define CHANNEL_MAX 255
 #define RGB_ALPHA_MAX CHANNEL_MAX
+#define ALPHA_NEGLIGIBLE_MIN 10
 #define ALPHA_NEGLIGIBLE_MAX 245
 
 typedef struct RgbwColor
@@ -29,6 +30,12 @@ typedef struct RgbwaColor
     uint8_t w;
     uint8_t a;
 } RgbwaColor;
+
+#ifndef DEFAULT_COLORS
+#define DEFAULT_COLORS
+extern RgbwColor RGBW_BLACK;
+extern RgbwaColor RGBWA_TRANSPARENT;
+#endif
 
 #define HSIA_S float
 

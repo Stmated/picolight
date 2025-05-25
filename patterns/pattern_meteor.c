@@ -1,106 +1,56 @@
 #include "../patterns.h"
 
-// If larger size, more random falloff, but nobody would ever notice the repetitiveness.
-#define RANDOM_FALLOFF_BUCKET_SIZE 20
-
-// If larger size, more time until starting points repeat, but nobody would ever notice.
-#define RANDOM_START_BUCKET_SIZE 10
-// Use start bucket size as base, but offset, to create faked randomness (the will very rarely sync up)
-#define RANDOM_END_BUCKET_SIZE (RANDOM_START_BUCKET_SIZE + 3)
-
 typedef struct data_struct
 {
-  HsiaColor color;
-  float tail_length;
-  int period;
-  float weights[RANDOM_FALLOFF_BUCKET_SIZE];
-
-  // The starting point of a meteor.
-  // It will be on this index that the meteor appears,
-  int starts[RANDOM_START_BUCKET_SIZE];
-  int ends[RANDOM_END_BUCKET_SIZE];
+  HsiaColor color_head;
+  HsiaColor color_tail;
+  uint32_t period;
 
 } data_struct;
 
 typedef struct frame_struct
 {
-  float progress_raw;
   float progress;
+  float start_index;
   float head_index;
-  int start_index;
-  int end_index;
+  float tail_length;
+  unsigned int seed;
+
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
   data_struct *data = malloc(sizeof(data_struct));
 
-  data->color = (HsiaColor){0, 0, 1, 1};
-  data->period = randint_weighted_towards_min(5000, 30000, intensity);
-  data->tail_length = len / 2.0;
-
-  for (int i = 0; i < RANDOM_FALLOFF_BUCKET_SIZE; i++)
-  {
-    data->weights[i] = randint(1000) / (float)1000.0;
-  }
-
-  // TODO: This should have some sanity checks, so we can make sure the meteor at least lives longer than X pixels.
-  //       Right now the meteor could spawn at index 3 on a downward path. So we see it for only 3 pixels. Yikes.
-  for (int i = 0; i < RANDOM_START_BUCKET_SIZE; i++)
-  {
-    data->starts[i] = randint(len);
-  }
-
-  // The end could possibly never be reached, since it can be before the start.
-  // This is as intended, since the meteor should sometimes fly outside of bounds.
-  for (int i = 0; i < RANDOM_END_BUCKET_SIZE; i++)
-  {
-    data->ends[i] = randint(len);
-  }
+  data->color_head = (HsiaColor){0, 0, 1, 1};
+  data->color_tail = (HsiaColor){0, 0, 1, 1};
+  data->period = randint_weighted_towards_min(2000, 10000, intensity);
 
   return data;
 }
 
 static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-  return calloc(1, sizeof(frame_struct));
+  return malloc(sizeof(frame_struct));
 }
 
 static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
 {
   data_struct *data = dataPtr;
-  frame_struct *frame = framePtr; // calloc(1, sizeof(frame_struct));
+  frame_struct *frame = framePtr;
 
-  frame->progress_raw = (t % data->period) / (float)data->period;
-  frame->progress = InOutLinear(frame->progress_raw);
+  uint32_t era = (t / data->period);
+  frame->progress = InLinear((t % data->period) / (float)data->period);
+
+  // Set the new seed once every frame
+  // NOTE: Makes it very important `rand_r` is called the same number of times for all pixels in the same order.
+  frame->seed = era;
+  float margin = (len * 0.10f);
+  frame->start_index = margin + (rand_r(&frame->seed) / (RAND_MAX + 1.0f)) * (len - margin - margin);
+  frame->tail_length = (len / 2.0f) + ((rand_r(&frame->seed) / (RAND_MAX + 1.0f)) * (len / 2.0f));
 
   // We fake the head index, to be able to go outside of bounds: [-tail..(len + tail)]
-  frame->head_index = ((len + (data->tail_length * 2)) * frame->progress) - data->tail_length;
-
-  const int era = floor(t / data->period);
-  frame->start_index = data->starts[era % RANDOM_START_BUCKET_SIZE];
-  frame->end_index = data->ends[era % RANDOM_END_BUCKET_SIZE];
-}
-
-static inline RgbwaColor executor_lit(ExecutorArgs *args, float distance)
-{
-  data_struct *data = args->dataPtr;
-
-  // The falloff per distance should be different for each pixel index.
-  // This way it will feel like the sparkle is falling of with a glitter.
-  // The weight will be a [0..1] float, and should exponentially, but initially weakly, impact fading.
-  float weight = data->weights[args->i % RANDOM_FALLOFF_BUCKET_SIZE];
-  float weightedDistance = powf(distance, 1 + (0.05 * weight));
-  float alpha = MAX(0, 1 - (weightedDistance / data->tail_length));
-  if (distance > 1)
-  {
-
-    // Comet head should be slightly brighter than the tail. So weaken anything further than 1 pixel.
-    alpha = alpha * 0.6;
-  }
-
-  return (RgbwaColor){alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX, alpha * RGB_ALPHA_MAX};
-  // hsia2rgbwa(&(HsiaColor){0, 0, 1, alpha});
+  frame->head_index = frame->start_index + (frame->progress * frame->tail_length);
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)
@@ -108,24 +58,32 @@ static inline RgbwaColor executor(ExecutorArgs *args)
   data_struct *data = args->dataPtr;
   frame_struct *frame = args->framePtr;
 
-  float rawDistance = (args->i - frame->head_index);
-  float distance = fabs(rawDistance);
+  float distance = fabs(args->i - frame->head_index);
 
-  if (distance < data->tail_length)
+  int v_a = rand_r(&frame->seed);
+  int v_r = rand_r(&frame->seed);
+  int v_g = rand_r(&frame->seed);
+  int v_b = rand_r(&frame->seed);
+
+  float r_offset = 0.7f + ((v_r / (RAND_MAX + 1.0f)) * 0.3f);
+  float g_offset = 0.7f + ((v_g / (RAND_MAX + 1.0f)) * 0.3f);
+  float b_offset = 0.7f + ((v_b / (RAND_MAX + 1.0f)) * 0.3f);
+
+  if (distance < 0.75)
   {
-    if (frame->progress_raw < 0.5 && rawDistance < 0 && args->i >= frame->start_index && args->i <= frame->end_index)
-    {
-      // We're going upwards
-      return executor_lit(args, distance);
-    }
-    else if (frame->progress_raw >= 0.5 && rawDistance > 0 && args->i <= frame->start_index && args->i >= frame->end_index)
-    {
-      // We're going downwards
-      return executor_lit(args, distance);
-    }
+    float current = CHANNEL_MAX * (1 - distance) * (1 - frame->progress);
+    return (RgbwaColor){current * r_offset, current * g_offset, current * b_offset, 0, RGB_ALPHA_MAX};
+  }
+  else if (frame->head_index > frame->start_index && args->i >= frame->start_index && args->i < frame->head_index)
+  {
+    float starting_alpha = (RGB_ALPHA_MAX * 0.10f) + ((v_a / (RAND_MAX + 1.0f)) * (RGB_ALPHA_MAX * 0.5f));
+    float distance_multiplier = (1 - (distance / frame->tail_length));
+    uint8_t current_alpha = starting_alpha * (1 - frame->progress) * distance_multiplier * distance_multiplier * distance_multiplier * distance_multiplier * distance_multiplier;
+
+    return (RgbwaColor){current_alpha * r_offset, current_alpha * g_offset, current_alpha * b_offset, 0, RGB_ALPHA_MAX};
   }
 
-  return (RgbwaColor){0, 0, 0, 0, 0};
+  return RGBWA_TRANSPARENT;
 }
 
 void pattern_register_meteor()

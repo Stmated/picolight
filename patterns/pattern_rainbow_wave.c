@@ -4,19 +4,19 @@ typedef struct data_struct
 {
     CurriedEasing easing;
     uint32_t period;
-    float hsi_s;
-    float hsi_i;
-    float huePerLed;
+    uint8_t hsi_s;
+    uint8_t hsi_i;
+    float hue_per_led;
 } data_struct;
 
 typedef struct frame_struct
 {
-    float hueOffset;
+    uint8_t hue_offset;
 } frame_struct;
 
 static void *data_creator(uint16_t len, float intensity)
 {
-    data_struct *data = calloc(1, sizeof(data_struct));
+    data_struct *data = malloc(sizeof(data_struct));
 
     if (randint(1000) > 500)
     {
@@ -28,15 +28,15 @@ static void *data_creator(uint16_t len, float intensity)
     }
 
     data->period = randint_weighted_towards_min(1000, 30000, intensity);
-    data->hsi_s = 0.9 + (0.1 * (randint_weighted_towards_max(100, 1000, intensity) / (float)1000));
-    data->hsi_i = 0.2 + (0.3 * (randint_weighted_towards_max(0, 1000, intensity) / (float)1000));
-    data->huePerLed = (HSI_H_MAX / (float)len);
+    data->hsi_s = (255 * 0.9) + randint_weighted_towards_max(0, 255 * 0.1, intensity);
+    data->hsi_i = (255 * 0.2) + randint_weighted_towards_max(0, 255 * 0.3, intensity);
+    data->hue_per_led = randint_weighted_towards_min((255 / (float)len) / 3, (255 / (float)len) * 2, intensity);
     return data;
 }
 
 static void *frame_allocator(uint16_t len, void *dataPtr)
 {
-    return calloc(1, sizeof(frame_struct));
+    return malloc(sizeof(frame_struct));
 }
 
 static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePtr)
@@ -44,8 +44,7 @@ static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePt
     data_struct *data = dataPtr;
     frame_struct *frame = framePtr;
 
-    float p = data->easing.func(data->easing.ctx, t / (float)data->period);
-    frame->hueOffset = HSI_H_MAX * p;
+    frame->hue_offset = 255 * data->easing.func(data->easing.ctx, t / (float)data->period);
 }
 
 static inline RgbwaColor executor(ExecutorArgs *args)
@@ -53,9 +52,9 @@ static inline RgbwaColor executor(ExecutorArgs *args)
     data_struct *data = args->dataPtr;
     frame_struct *frame = args->framePtr;
 
-    uint16_t h = ((uint32_t) ((data->huePerLed * args->i) + frame->hueOffset)) % HSI_H_MAX;
+    uint16_t h = ((uint32_t) ((data->hue_per_led * args->i) + frame->hue_offset)) % 255;
 
-    return hsia2rgbwa(h, data->hsi_s, data->hsi_i, 1);
+    return int8_hsia2rgbwa(h, data->hsi_s, data->hsi_i, 255);
 }
 
 void pattern_register_rainbow_wave()

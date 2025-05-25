@@ -4,7 +4,7 @@
 #include "../options.h"
 #include "../led_math.h"
 
-void put_pixel(uint16_t index, uint16_t len, const RgbwColor *c);
+void put_pixel(const uint16_t index, const uint16_t len, const uint64_t t_us, const uint32_t dt_us, const RgbwaColor *restrict c);
 
 void init_pin_button(int gpio);
 

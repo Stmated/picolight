@@ -54,33 +54,8 @@ PatternModule *pattern_get_by_name(const char *name)
     return NULL;
 }
 
-RgbwColor RGBW_BLACK = (RgbwColor){0, 0, 0, 0};
+RgbwaColor RGBWA_BLACK = (RgbwaColor){0, 0, 0, 0, 1};
 RgbwaColor RGBWA_TRANSPARENT = (RgbwaColor){0, 0, 0, 0, 0};
-
-static void to_rgbw(uint16_t index, uint32_t t, RgbwaColor *c)
-{
-    if (c->a < 15)
-    {
-        // TODO: Make memset work, should be faster?
-        //memset(&c, 0, sizeof(RgbwColor));
-
-        c->r = 0;
-        c->g = 0;
-        c->b = 0;
-        c->w = 0;
-    }
-    else
-    {
-        if (c->a < ALPHA_NEGLIGIBLE_MAX)
-        {
-            uint8_t alpha = c->a;
-            c->r = ((uint16_t)c->r * alpha) >> 8;
-            c->g = ((uint16_t)c->g * alpha) >> 8;
-            c->b = ((uint16_t)c->b * alpha) >> 8;
-            c->w = ((uint16_t)c->w * alpha) >> 8;
-        }
-    }
-}
 
 static inline RgbwaColor pattern_default_executor(ExecutorArgs *args)
 {
@@ -96,18 +71,18 @@ void pattern_find_and_register_patterns()
     pattern_register_random();
 
     // OK:
-    //pattern_register_hue_lerp();
-    //pattern_register_knightrider();
-    //pattern_register_color_lerp();
+    pattern_register_hue_lerp();
+    pattern_register_knightrider();
+    pattern_register_color_lerp();
     pattern_register_rainbow_splash();
-    //pattern_register_rainbow_wave();
-    //pattern_register_snake();
-    //pattern_register_snakes();
-    //pattern_register_firework();
-    //pattern_register_fade_between();
-    //pattern_register_strobe();
-    //pattern_register_sparkle();
-    //pattern_register_meteor();
+    pattern_register_rainbow_wave();
+    pattern_register_snake();
+    pattern_register_snakes();
+    pattern_register_firework();
+    pattern_register_fade_between();
+    pattern_register_strobe();
+    pattern_register_sparkle();
+    pattern_register_meteor();
 
     //pattern_register_test();
 
@@ -131,14 +106,15 @@ void pattern_register(
     PatternFrameDataAllocator frameAllocator, PatternFrameDataCreator frameCreator, PatternFrameDataDestroyer frameDestroyer,
     PatternOptions options)
 {
+    
+    PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
+    memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
+
     if (state.modules != NULL) {
 
         // Free the previous modules array, or we'd leak.
-        //free(state.modules);
+        free(state.modules);
     }
-
-    PatternModule *array_new = calloc(state.modules_size + 1, sizeof(PatternModule));
-    memcpy(array_new, state.modules, state.modules_size * sizeof(PatternModule));
 
     PatternModule module = {name,
                             executor ? executor : pattern_default_executor,
@@ -154,8 +130,13 @@ void pattern_register(
     state.modules_size++;
 }
 
-void pattern_execute(uint16_t len, uint32_t t)
+void pattern_execute(uint16_t len, uint64_t t_us)
 {
+    static uint32_t previous_t_us = -1;
+    uint32_t delta_t_us = (previous_t_us == -1) ? 0 : (t_us - previous_t_us);
+
+    uint32_t t_ms = t_us / 1000;
+
     if (state.nextPatternIndex >= 0)
     {
         // Destroy/free any previous memory allocations
@@ -191,15 +172,13 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         PatternModule *module = pattern_get_by_index(state.patternIndex);
 
-        module->frameCreator(len, t, state.patternData, state.frameData);
+        module->frameCreator(len, t_ms, state.patternData, state.frameData);
 
         ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, state.frameData};
         while (args->i < len)
         {
             RgbwaColor rgbwa = module->executor(args);
-
-            to_rgbw(args->i, t, &rgbwa);
-            put_pixel(args->i, len, (const RgbwColor*) &rgbwa);
+            put_pixel(args->i, len, t_us, delta_t_us, &rgbwa);
             args->i++;
         }
     }
@@ -207,7 +186,9 @@ void pattern_execute(uint16_t len, uint32_t t)
     {
         for (uint16_t i = 0; i < len; i++)
         {
-            put_pixel(i, len, &RGBW_BLACK);
+            put_pixel(i, len, t_us, delta_t_us, &RGBWA_BLACK);
         }
     }
+
+    previous_t_us = t_us;
 }

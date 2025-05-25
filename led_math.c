@@ -284,13 +284,127 @@ double rand_gaussian()
     return sqrt(-2.0 * log(a)) * cos(2 * M_PI * b);
 }
 
+// Helper: clamp a value to 0..255
+uint8_t clamp8(int16_t x)
+{
+    if (x < 0)
+    {
+        return 0;
+    }
+    else if (x > 255)
+    {
+        return 255;
+    }
+    else
+    {
+        return x;
+    }
+}
+
+static const uint8_t z_lut[256] = {
+    0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 84, 90,
+    96, 102, 108, 114, 120, 126, 132, 138, 144, 150, 156, 162, 168, 174, 180, 186,
+    192, 198, 204, 210, 216, 222, 228, 234, 240, 246, 252, 255, 249, 243, 237, 231,
+    225, 219, 213, 207, 201, 195, 189, 183, 177, 171, 165, 159, 153, 147, 141, 135,
+    129, 123, 117, 111, 105, 99, 93, 87, 81, 75, 69, 63, 57, 51, 45, 39,
+    33, 27, 21, 15, 9, 3, 3, 9, 15, 21, 27, 33, 39, 45, 51, 57,
+    63, 69, 75, 81, 87, 93, 99, 105, 111, 117, 123, 129, 135, 141, 147, 153,
+    159, 165, 171, 177, 183, 189, 195, 201, 207, 213, 219, 225, 231, 237, 243, 249,
+    255, 249, 243, 237, 231, 225, 219, 213, 207, 201, 195, 189, 183, 177, 171, 165,
+    159, 153, 147, 141, 135, 129, 123, 117, 111, 105, 99, 93, 87, 81, 75, 69,
+    63, 57, 51, 45, 39, 33, 27, 21, 15, 9, 3, 3, 9, 15, 21, 27,
+    33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99, 105, 111, 117, 123,
+    129, 135, 141, 147, 153, 159, 165, 171, 177, 183, 189, 195, 201, 207, 213, 219,
+    225, 231, 237, 243, 249, 255, 252, 246, 240, 234, 228, 222, 216, 210, 204, 198,
+    192, 186, 180, 174, 168, 162, 156, 150, 144, 138, 132, 126, 120, 114, 108, 102,
+    96, 90, 84, 78, 72, 66, 60, 54, 48, 42, 36, 30, 24, 18, 12, 6};
+
+RgbwaColor int8_hsia2rgbwa(uint8_t H, uint8_t S, uint8_t I, uint8_t A)
+{
+    if (I < 10 || A < 10)
+    {
+        return RGBWA_TRANSPARENT;
+    }
+
+    // Calculate whiteness (desaturation)
+    uint8_t W = (uint16_t)(I * (255 - S)) >> 8; // (1 - S) * I
+
+    // C = 3 * I * S / (255 + Z)
+    // Approximate Z by remapping hue sector into [0..255]
+    // We'll use a simplified approach: assume Z = 1.0 (i.e., C = I * S)
+    uint16_t Z = z_lut[H]; // ((uint16_t)H_sector * 6);  // scale back up to 0..255
+    uint16_t C = (3 * (uint16_t)I * S) >> 8;
+    uint16_t X = ((C * Z) >> 8);
+
+    uint16_t R1 = 0, G1 = 0, B1 = 0;
+    if (H < 43)
+    {
+        R1 = C;
+        G1 = X;
+        B1 = 0;
+    }
+    else if (H < 85)
+    {
+        R1 = X;
+        G1 = C;
+        B1 = 0;
+    }
+    else if (H < 128)
+    {
+        R1 = 0;
+        G1 = C;
+        B1 = X;
+    }
+    else if (H < 170)
+    {
+        R1 = 0;
+        G1 = X;
+        B1 = C;
+    }
+    else if (H < 213)
+    {
+        R1 = X;
+        G1 = 0;
+        B1 = C;
+    }
+    else
+    {
+        R1 = C;
+        G1 = 0;
+        B1 = X;
+    }
+
+    // Add desaturation value `m = (1 - S) * I` directly
+    uint16_t m = ((uint16_t)(255 - S) * I) >> 8;
+
+    int16_t R = R1 + m;
+    int16_t G = G1 + m;
+    int16_t B = B1 + m;
+
+    // Normalize if any value exceeds 255
+    uint16_t max_rgb = MAX(R, MAX(G, B));
+    if (max_rgb > 255)
+    {
+        R = (R * 255) / max_rgb;
+        G = (G * 255) / max_rgb;
+        B = (B * 255) / max_rgb;
+    }
+
+    return (RgbwaColor){
+        clamp8(R),
+        clamp8(G),
+        clamp8(B),
+        W,
+        A};
+}
+
 #ifndef MATH_RGBW_BY_COORDINATES
 RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A)
 {
-    // TODO: How can this in *any* way be slower than the other method?!?!? Find out where the calculations lie, and try to go back to it! Or figure out something even faster!!
-    //HSI_H_t H = hsia->h;
-    //HSI_S_t S = hsia->s;
-    //HSI_I_t I = hsia->i;
+    if (I <= HSI_I_NEGLIGIBLE || A <= HSI_A_NEGLIGIBLE)
+    {
+        return RGBWA_TRANSPARENT;
+    }
 
 #ifdef MATH_PRECOMPUTE
     float Z = lookup_z[H];
@@ -364,14 +478,6 @@ RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A)
     }
 
     // These two both have their strong suits, but also clipping weaknesses.
-    /*
-    if (max_rgb > 1)
-    {
-        R = R / 3; // R / max_rgb;
-        G = G / 3; // G / max_rgb;
-        B = B / 3; // B / max_rgb;
-    }
-    */
     if (max_rgb > 1)
     {
         R = R / max_rgb;

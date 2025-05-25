@@ -1,16 +1,56 @@
 #include "environment_pico.h"
 
-inline void put_pixel(uint16_t index, uint16_t len, const RgbwColor *c)
-{
-    // TODO: Add dithering
+uint8_t premul_lut[256][256];
 
+inline void put_pixel(const uint16_t index, const uint16_t len, const uint64_t t_us, const uint32_t dt_us, const RgbwaColor *restrict c)
+{
+    if (c->a < ALPHA_NEGLIGIBLE_MIN)
+    {
+        pio_sm_put_blocking(pio0, 0, 0);
+    }
+    else
+    {
+        uint32_t r;
+        uint32_t g;
+        uint32_t b;
+        if (c->a < ALPHA_NEGLIGIBLE_MAX)
+        {
+            uint8_t a = c->a;
+
+            r = premul_lut[c->r][a];
+            g = premul_lut[c->g][a];
+            b = premul_lut[c->b][a];
+
+            // TODO: Should add time-based dithering here
+            //          - But seems the only stable way is to add a pixel buffer (which goes against the idea of the project...)
+        }
+        else
+        {
+            r = c->r;
+            g = c->g;
+            b = c->b;
+        }
+
+        if (c->w != 0)
+        {
+            // Distribute white component evenly to R, G, B
+            // Scale it down slightly to preserve color balance (e.g., 2/3 strength)
+            // Fast approximation: (w * 170) >> 8  ≈ w * 2/3
+            uint8_t w_contrib = (c->w * 170) >> 8;
+
+            // Saturated add
+            r = MIN(255, r + w_contrib);
+            g = MIN(255, g + w_contrib);
+            b = MIN(255, b + w_contrib);
+        }
+
+        uint32_t packed = (g << 24) | (r << 16) | (b << 8);
+        pio_sm_put_blocking(pio0, 0, packed);
+    }
+
+    /*
     if (isRgbw(index))
     {
-        // A hack to make this as fast as possible. Will only work on certain platforms!
-        // Will convert the RGBWColor with its 4 8bit fields into one 32bit integer.
-        // (More specifically the fields are saved in GRBW order, as the LEDs require)
-        //pio_sm_put_blocking(pio0, 0, *(uint32_t *)c);
-
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->g) << 24u);
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->r) << 24u);
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->b) << 24u);
@@ -22,6 +62,7 @@ inline void put_pixel(uint16_t index, uint16_t len, const RgbwColor *c)
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->r) << 24u);
         pio_sm_put_blocking(pio0, 0, ((uint32_t)c->b) << 24u);
     }
+    */
 }
 
 void put_pin(int gpio, bool value)
@@ -73,6 +114,15 @@ uint64_t get_running_us()
 
 void picolight_boot(int led_count)
 {
+    // TODO: Check how to store this on the flash and read that memory on demand? Is that slow or fast?
+    for (int val = 0; val < 256; val++)
+    {
+        for (int alpha = 0; alpha < 256; alpha++)
+        {
+            premul_lut[val][alpha] = (val * alpha) >> 8;
+        }
+    }
+
     gpio_init(25);
     gpio_set_dir(25, GPIO_OUT);
 

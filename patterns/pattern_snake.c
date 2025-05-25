@@ -19,9 +19,9 @@ typedef struct frame_struct
 static RgbwaColor getNewColor(float intensity)
 {
     HsiaColor hsia = (HsiaColor){
-        randint(360),
+        randint(HSI_H_MAX),
         randint_weighted_towards_max(800, 1000, intensity * 4) / (float)1000,
-        randint_weighted_towards_max(500, 1000, intensity) / (float)1000,
+        randint_weighted_towards_max(200, 750, intensity) / (float)1000,
         1};
 
     return (RgbwaColor)hsia2rgbwa(hsia.h, hsia.s, hsia.i, hsia.a);
@@ -60,8 +60,6 @@ static void frame_creator(uint16_t len, uint32_t t, void *dataPtr, void *framePt
     frame->head_index = len * data->easing.func(data->easing.ctx, percentage_into_period);
 }
 
-//const RgbwaColor RGBWA_TRANSPARENT = (RgbwaColor){0, 0, 0, 0, 0};
-
 static inline RgbwaColor executor(ExecutorArgs *args)
 {
     data_struct *data = args->dataPtr;
@@ -77,7 +75,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
     }
     else
     {
-        return RGBWA_TRANSPARENT; // (RgbwaColor){0, 0, 0, 0, 0};
+        return RGBWA_TRANSPARENT;
     }
 }
 
