@@ -2,8 +2,8 @@
 #ifndef PICOL_TYPES
 #define PICOL_TYPES
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // TODO:
 // Use uint_least8_t or uint_fast8_t ?
@@ -31,14 +31,6 @@ typedef struct RgbwaColor
     uint8_t a;
 } RgbwaColor;
 
-#ifndef DEFAULT_COLORS
-#define DEFAULT_COLORS
-extern RgbwColor RGBW_BLACK;
-extern RgbwaColor RGBWA_TRANSPARENT;
-#endif
-
-#define HSIA_S float
-
 // TODO: Convert S and I into an uint8_t, with range being 0 to 255.
 //       Also convert `h` into uint8_t -- we can live with a little loss in precision
 typedef struct HsiaColor
@@ -49,7 +41,9 @@ typedef struct HsiaColor
     float a;
 } HsiaColor;
 
-extern HsiaColor transparent;
-extern HsiaColor white;
+extern const RgbwaColor *restrict RGBWA_BLACK;
+extern const RgbwaColor *restrict RGBWA_TRANSPARENT;
+
+#define HSIA_S float
 
 #endif

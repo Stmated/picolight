@@ -1,5 +1,3 @@
-#include "environment.h"
-
 #include "pico.h"
 #include "pico/time.h"
 
@@ -9,17 +7,24 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pico/multicore.h"
+#include "pico/sem.h"
 
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
 #include "hardware/adc.h"
 #include "hardware/pwm.h"
+#include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "ws2812.pio.h"
 
 #include "pico/stdlib.h"
 #include <hardware/flash.h>
 #include <hardware/sync.h>
+
+#include "environment.h"
+#include "../global.h"
+
+//#include "../types.h"
 
 #define FLASH_TARGET_PAGE_COUNT (1) // Number of pages
 #define FLASH_TARGET_SIZE (FLASH_PAGE_SIZE * FLASH_TARGET_PAGE_COUNT) // 256k per page

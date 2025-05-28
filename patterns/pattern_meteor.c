@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 typedef struct data_struct
 {
@@ -83,7 +83,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
     return (RgbwaColor){current_alpha * r_offset, current_alpha * g_offset, current_alpha * b_offset, 0, RGB_ALPHA_MAX};
   }
 
-  return RGBWA_TRANSPARENT;
+  return *RGBWA_TRANSPARENT;
 }
 
 void pattern_register_meteor()

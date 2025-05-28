@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 typedef struct data_struct
 {

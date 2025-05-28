@@ -1,17 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <malloc.h>
 
 #include "actions.h"
+#include "storage.h"
+#include "environment/environment.h"
+
+#include "global.h"
+#include "pico/time.h"
 
 #define PERFORMANCE_STATS true
 #undef PERFORMANCE_STATS
 #define PERFORMANCE_SAMPLES 100
 #define NANO_IN_SECOND 1000000000.0
-#define LED_COUNT 100
 
 GlobalState state;
 
+/*
 void core1_entry()
 {
     uint32_t firstMs = get_running_ms();
@@ -54,6 +60,83 @@ void core1_entry()
         sleep_ms(10);
     }
 }
+*/
+
+uint32_t getTotalHeap(void) {
+   extern char __StackLimit, __bss_end__;
+   return &__StackLimit  - &__bss_end__;
+}
+
+static alarm_id_t debounce_store_state_alarm_id; // handle for the delay alert
+volatile bool should_store_state = false;
+
+static int64_t debounce_store_state(alarm_id_t id, void *user_data)
+{
+    should_store_state = true;
+    return 0;
+}
+
+void pattern_execute(uint16_t len, uint64_t t_us)
+{
+    static uint32_t previous_t_us = -1;
+    uint32_t delta_t_us = (previous_t_us == -1) ? 0 : (t_us - previous_t_us);
+
+    uint32_t t_ms = t_us / 1000;
+
+    if (state.nextPatternIndex >= 0)
+    {
+        // Destroy/free any previous memory allocations
+        if (state.frameData)
+        {
+            pattern_get_by_index(state.patternIndex)->frameDestroyer(state.patternData, state.frameData);
+            state.frameData = NULL;
+        }
+        if (state.patternData)
+        {
+            pattern_get_by_index(state.patternIndex)->destroyer(state.patternData);
+            state.patternData = NULL;
+        }
+
+        // Create the new pattern data
+        PatternModule *newModule = pattern_get_by_index(state.nextPatternIndex);
+
+        void *data = newModule->creator(len, state.intensity);
+
+        // Set to the new (or same) pattern index, and new data
+        state.patternIndex = state.nextPatternIndex;
+        state.patternData = data;
+
+        state.nextPatternIndex = -1;
+
+        // We allocate the memory for the frame data right away, so we do not need to allocate/deallocate over and over.
+        state.frameData = newModule->frameAllocator(len, state.patternData);
+
+        // Settings have changed, so we store them after a set time.
+        if (debounce_store_state_alarm_id != 0)
+        {
+            // Cancel any already running alarm
+            cancel_alarm(debounce_store_state_alarm_id);
+        }
+
+        // Wait a certain time and then store the state. Avoid doing it often since it hurts the flash memory.
+        debounce_store_state_alarm_id = add_alarm_in_ms(30000, debounce_store_state, NULL, false);
+    }
+
+    // Execute the current pattern inside state.
+    PatternModule *module = pattern_get_by_index(state.patternIndex);
+
+    module->frameCreator(len, t_ms, state.patternData, state.frameData);
+
+    ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, state.frameData};
+    while (args->i < len)
+    {
+        RgbwaColor rgbwa = module->executor(args);
+        put_pixel(args->i, len, t_us, delta_t_us, &rgbwa);
+        args->i++;
+    }
+
+    previous_t_us = t_us;
+}
 
 inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinIndex)
 {
@@ -66,37 +149,51 @@ inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinI
 
         time_dilated += (pinIndex * 123456);
 
-        pattern_execute(LED_COUNT, time_dilated);
+        pattern_execute(state.ledCount, time_dilated);
     } else {
-        pattern_execute(LED_COUNT, time_us);
+        pattern_execute(state.ledCount, time_us);
     }
 }
 
 int main()
 {
-    picolight_boot(LED_COUNT);
+    // We assume 100 lights as default
+    state.ledCount = 100;
+
+    picolight_boot(state.ledCount);
 
     state.patternIndex = 0;
     state.speed = 3;
     state.withOffset = false;
     state.nextPatternIndex = 0;
-    state.nextIntensity = 0.4;
+    state.nextLedCount = -1;
+    state.intensity = 0.4;
+    state.buffer_invalidated = false;
 
-    for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_END; i++)
+    state_load();
+
+    // Starting at PIN 4 (from upper left of card): 4 pins, 1 ground, then 4 more pins
+    /*
+    for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_START + getButtonCount(); i++)
     {
         init_pin_button(i);
     }
+    */
+
+    registerCallbacks();
 
     int offset = get_pio_offset();
 
-    launch_thread(core1_entry);
-    picolight_post_boot();
+    // TODO: Make use of the 2nd core in the future, perhaps calculating every Nth pixel, and then joining with a semaphore
+    //launch_thread(core1_entry);
+
+    picolight_post_boot(offset);
 
     uint64_t time_start_us = get_running_us();
 
     pattern_find_and_register_patterns();
     math_precompute();
-    state.nextPatternIndex = 0;
+    //state.nextPatternIndex = 0;
 
     register_action_listeners();
 
@@ -125,6 +222,12 @@ int main()
 #endif
         while (1)
         {
+            if (should_store_state)
+            {
+                should_store_state = false;
+                state_store();
+            }
+
 #ifdef PERFORMANCE_STATS
             uint64_t before = get_running_us();
 #endif
@@ -132,7 +235,7 @@ int main()
             execute_for_led_pin(time_start_us, offset, 0);
 
             // TODO: We should never sleep; we should instead process pre-frame and only wait if we're done too early
-            sleep_us(300); // minimum is 50us, but need safety margins
+            //sleep_us(300); // minimum is 50us, but need safety margins
 
 #ifdef PERFORMANCE_STATS
             uint64_t after = get_running_us();

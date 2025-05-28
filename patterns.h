@@ -1,22 +1,18 @@
+#pragma once
+#ifndef PICOL_PATTERNS
+#define PICOL_PATTERNS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
 
-#include "global.h"
-#include "environment/environment.h"
-#include "easing.h"
-#include "options.h"
-
-struct Printer;
+#include "types.h"
 
 // TODO: Add a way of being able to send different color-spaces to the printer, and they are propagated upwards.
 //       This way we can send RGBW directly if that is all we need, and skip any translation from HSIA to RGBW
 //       Could theoretically add more obscure color spaces then, like CIECAM02
-
-extern RgbwColor RGBW_BLACK;
-extern RgbwaColor RGBWA_TRANSPARENT;
 
 typedef struct ExecutorArgs
 {
@@ -41,7 +37,7 @@ typedef void (*PatternFrameDataDestroyer)(void *dataPtr, void *framePtr);
 typedef void *(*PatternRegistrator)(void);
 
 int getPatternCount();
-void pattern_execute(uint16_t len, uint64_t t);
+//void pattern_execute(uint16_t len, uint64_t t);
 void pattern_update_data(uint16_t len, int patternIndex, float intensity);
 
 typedef struct PatternOptions
@@ -95,21 +91,4 @@ void pattern_register_eyes();
 void pattern_register_random();
 void pattern_register_random_sequence();
 
-typedef struct GlobalState
-{
-    int patternIndex;
-    void *patternData;
-    void *frameData;
-    bool disabled;
-    int clickCount;
-    bool clicking;
-    float speed;
-    bool withOffset;
-
-    int nextPatternIndex;
-    float nextIntensity;
-    PatternModule *modules;
-    int modules_size;
-} GlobalState;
-
-extern GlobalState state;
+#endif

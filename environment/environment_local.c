@@ -201,7 +201,7 @@ void picolight_boot(int led_count)
     fclose(imageFile);
 }
 
-void picolight_post_boot()
+void picolight_post_boot(uint32_t offset)
 {
 }
 

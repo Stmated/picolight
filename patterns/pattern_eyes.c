@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 #define BUCKET_SIZE_ACTION 20
 #define BUCKET_SIZE_PERIOD_HIDDEN 3

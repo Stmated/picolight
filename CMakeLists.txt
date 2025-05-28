@@ -49,7 +49,10 @@ project(picolight C CXX ASM)
 
 set (SRC_LIST
     global.h
+    environment/environment.h
+    environment/environment.c
     types.h
+    types.c
     storage.h
     storage.c
     led_math.h
@@ -65,6 +68,7 @@ set (SRC_LIST
     patterns.h
     math/simplerandom.h
     math/simplerandom.c
+    
     
     # Figure out how to include these dynamically
     patterns/pattern_snake.c
@@ -128,6 +132,7 @@ else()
         hardware_pio
         hardware_adc
         hardware_pwm
+        hardware_dma
         hardware_flash
         hardware_sync
         pico_multicore

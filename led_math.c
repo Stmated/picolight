@@ -323,7 +323,7 @@ RgbwaColor int8_hsia2rgbwa(uint8_t H, uint8_t S, uint8_t I, uint8_t A)
 {
     if (I < 10 || A < 10)
     {
-        return RGBWA_TRANSPARENT;
+        return *RGBWA_TRANSPARENT;
     }
 
     // Calculate whiteness (desaturation)
@@ -399,11 +399,15 @@ RgbwaColor int8_hsia2rgbwa(uint8_t H, uint8_t S, uint8_t I, uint8_t A)
 }
 
 #ifndef MATH_RGBW_BY_COORDINATES
+
+/**
+ * TODO: Remove this and `lookup_z` and instead use the int8_-version
+ */
 RgbwaColor hsia2rgbwa(HSI_H_t H, HSI_S_t S, HSI_I_t I, HSI_A_t A)
 {
     if (I <= HSI_I_NEGLIGIBLE || A <= HSI_A_NEGLIGIBLE)
     {
-        return RGBWA_TRANSPARENT;
+        return *RGBWA_TRANSPARENT;
     }
 
 #ifdef MATH_PRECOMPUTE

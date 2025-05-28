@@ -1,8 +1,12 @@
 #pragma once
+#ifndef PICOL_LED_MATH
+#define PICOL_LED_MATH
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
-#include "global.h"
+
+//#include "global.h"
 #include "types.h"
 
 // Disable this define if you do not want to waste memory on 
@@ -98,3 +102,5 @@ void math_precompute();
 #define ChannelBlend_Phoenix(A,B)    ((uint8)(min(A,B) - max(A,B) + 255))
 #define ChannelBlend_Alpha(A,B,O)    ((uint8)(O * A + (1 - O) * B))
 #define ChannelBlend_AlphaF(A,B,F,O) (ChannelBlend_Alpha(F(A,B),A,O))
+
+#endif

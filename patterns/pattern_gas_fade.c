@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 #define BUCKET_SIZE_COLORS 25
 

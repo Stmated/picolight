@@ -1,4 +1,5 @@
-#include "patterns.h"
+//#include "patterns.h"
+#include "global.h"
 
 void *pattern_creator_default(uint16_t len, float intensity)
 {
@@ -54,9 +55,6 @@ PatternModule *pattern_get_by_name(const char *name)
     return NULL;
 }
 
-RgbwaColor RGBWA_BLACK = (RgbwaColor){0, 0, 0, 0, 1};
-RgbwaColor RGBWA_TRANSPARENT = (RgbwaColor){0, 0, 0, 0, 0};
-
 static inline RgbwaColor pattern_default_executor(ExecutorArgs *args)
 {
     // The default executor just takes the frame pointer and converts it into a color.
@@ -76,8 +74,9 @@ void pattern_find_and_register_patterns()
     pattern_register_color_lerp();
     pattern_register_rainbow_splash();
     pattern_register_rainbow_wave();
-    pattern_register_snake();
     pattern_register_snakes();
+    pattern_register_snake();
+    
     pattern_register_firework();
     pattern_register_fade_between();
     pattern_register_strobe();
@@ -130,65 +129,4 @@ void pattern_register(
     state.modules_size++;
 }
 
-void pattern_execute(uint16_t len, uint64_t t_us)
-{
-    static uint32_t previous_t_us = -1;
-    uint32_t delta_t_us = (previous_t_us == -1) ? 0 : (t_us - previous_t_us);
 
-    uint32_t t_ms = t_us / 1000;
-
-    if (state.nextPatternIndex >= 0)
-    {
-        // Destroy/free any previous memory allocations
-        if (state.frameData)
-        {
-            pattern_get_by_index(state.patternIndex)->frameDestroyer(state.patternData, state.frameData);
-            state.frameData = NULL;
-        }
-        if (state.patternData)
-        {
-            pattern_get_by_index(state.patternIndex)->destroyer(state.patternData);
-            state.patternData = NULL;
-        }
-
-        // Create the new pattern data
-        PatternModule *newModule = pattern_get_by_index(state.nextPatternIndex);
-
-        void *data = newModule->creator(len, state.nextIntensity);
-
-        // Set to the new (or same) pattern index, and new data
-        state.patternIndex = state.nextPatternIndex;
-        state.patternData = data;
-
-        state.nextPatternIndex = -1;
-        state.nextIntensity = -1;
-
-        // We allocate the memory for the frame data right away, so we do not need to allocate/deallocate over and over.
-        state.frameData = newModule->frameAllocator(len, state.patternData);
-    }
-
-    // Execute the current pattern inside state
-    if (!state.disabled)
-    {
-        PatternModule *module = pattern_get_by_index(state.patternIndex);
-
-        module->frameCreator(len, t_ms, state.patternData, state.frameData);
-
-        ExecutorArgs *args = &(ExecutorArgs){0, state.patternData, state.frameData};
-        while (args->i < len)
-        {
-            RgbwaColor rgbwa = module->executor(args);
-            put_pixel(args->i, len, t_us, delta_t_us, &rgbwa);
-            args->i++;
-        }
-    }
-    else
-    {
-        for (uint16_t i = 0; i < len; i++)
-        {
-            put_pixel(i, len, t_us, delta_t_us, &RGBWA_BLACK);
-        }
-    }
-
-    previous_t_us = t_us;
-}

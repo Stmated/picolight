@@ -1,5 +1,5 @@
-#include "../patterns.h"
-#include <float.h>
+#include "pattern.h"
+#include "../environment/environment.h"
 
 typedef struct data_struct
 {
@@ -181,7 +181,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
     */
     else
     {
-        return RGBWA_TRANSPARENT;
+        return *RGBWA_TRANSPARENT;
 
         // RgbwaColor c1 = {0, 1, 1, 1, RGB_ALPHA_MAX};
         // RgbwaColor c2 = {120, 1, 1, 0, RGB_ALPHA_MAX * 0.5};

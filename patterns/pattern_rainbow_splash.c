@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 typedef struct data_struct
 {
@@ -86,7 +86,7 @@ static inline RgbwaColor executor(ExecutorArgs *restrict args)
         return int8_hsia2rgbwa(hue, 255, hsia_i, hsia_a);
     }
 
-    return RGBWA_TRANSPARENT;
+    return *RGBWA_TRANSPARENT;
 }
 
 /**

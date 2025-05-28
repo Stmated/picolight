@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 #define BUCKET_SIZE_MIDDLE 10
 #define BUCKET_SIZE_COLORS 10
@@ -78,7 +78,7 @@ static inline RgbwaColor executor(ExecutorArgs *args)
         return (RgbwaColor){frame->rgbwa.r, frame->rgbwa.g, frame->rgbwa.b, frame->rgbwa.w, alpha};
     }
 
-    return RGBWA_TRANSPARENT;
+    return *RGBWA_TRANSPARENT;
 }
 
 void pattern_register_firework()

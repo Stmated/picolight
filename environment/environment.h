@@ -1,8 +1,10 @@
+#pragma once
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "../options.h"
 #include "../led_math.h"
+#include "../types.h"
 
 void put_pixel(const uint16_t index, const uint16_t len, const uint64_t t_us, const uint32_t dt_us, const RgbwaColor *restrict c);
 
@@ -20,7 +22,7 @@ void sleep_us(uint64_t us);
 
 void picolight_boot(int led_count);
 
-void picolight_post_boot();
+void picolight_post_boot(uint32_t offset);
 
 uint32_t get_running_ms();
 

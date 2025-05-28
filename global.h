@@ -1,20 +1,39 @@
+#pragma once
 #ifndef PICOL_GLOBAL
 #define PICOL_GLOBAL
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "patterns.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-static const int PIN_TX[] = {21}; //, 21, 20, 19 };
+static const int PIN_TX[] = {21};
 
-#define PIN_BUTTONS_START 2
-#define PIN_BUTTONS_END 15
-#define PIN_BUTTONS_COUNT (PIN_BUTTONS_END - PIN_BUTTONS_START)
+typedef struct GlobalState
+{
+    int patternIndex;
+    void *patternData;
+    void *frameData;
+
+    float speed;
+    bool withOffset;
+
+    int nextPatternIndex;
+    float intensity;
+    PatternModule *modules;
+    int modules_size;
+
+    int ledCount;
+    int nextLedCount;
+
+    uint8_t* buffer;
+    bool buffer_invalidated;
+} GlobalState;
+
+extern GlobalState state;
 
 #endif

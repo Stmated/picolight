@@ -1,4 +1,4 @@
-#include "../patterns.h"
+#include "pattern.h"
 
 typedef struct data_struct
 {
@@ -59,5 +59,5 @@ static inline RgbwaColor executor(ExecutorArgs *args)
 
 void pattern_register_sparkle()
 {
-    pattern_register("sparkle", executor, data_creator, data_destroyer, NULL, NULL, NULL, (PatternOptions){0.5});
+    pattern_register("sparkle", executor, data_creator, data_destroyer, NULL, NULL, NULL, (PatternOptions){0.25});
 }

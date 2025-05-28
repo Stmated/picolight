@@ -1,8 +1,11 @@
-#define _USE_MATH_DEFINES
-#include "math.h"
+#pragma once
+#ifndef PICOL_EASING
+#define PICOL_EASING
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 typedef float (*easing)(float t);
 
@@ -102,3 +105,5 @@ float InOutLog10(float p);
 float OutSquareRoot(float p);
 float InSquareRoot(float p);
 float InOutSquareRoot(float p);
+
+#endif
