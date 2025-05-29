@@ -17,51 +17,6 @@
 
 GlobalState state;
 
-/*
-void core1_entry()
-{
-    uint32_t firstMs = get_running_ms();
-
-    uint32_t downMs[PIN_BUTTONS_COUNT];
-    uint32_t upMs[PIN_BUTTONS_COUNT];
-    bool lastState[PIN_BUTTONS_COUNT];
-
-    for (int i = 0; i < PIN_BUTTONS_COUNT; i++)
-    {
-        downMs[i] = firstMs;
-        upMs[i] = firstMs;
-        lastState[i] = get_pin(PIN_BUTTONS_START + i);
-    }
-
-    bool upValue = lastState[0];
-
-    while (1)
-    {
-        // We only check for new actions every X milliseconds
-        uint32_t nowMs = get_running_ms();
-        for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_END; i++)
-        {
-            bool currentState = get_pin(i);
-            bool previousState = lastState[i - PIN_BUTTONS_START];
-            bool isDown = (currentState != upValue);
-
-            executeButton(i, isDown, nowMs - downMs[i - PIN_BUTTONS_START], nowMs - upMs[i - PIN_BUTTONS_START]);
-
-            if (isDown)
-            {
-                downMs[i - PIN_BUTTONS_START] = nowMs;
-            }
-            else
-            {
-                upMs[i - PIN_BUTTONS_START] = nowMs;
-            }
-        }
-
-        sleep_ms(10);
-    }
-}
-*/
-
 uint32_t getTotalHeap(void) {
    extern char __StackLimit, __bss_end__;
    return &__StackLimit  - &__bss_end__;
@@ -140,14 +95,17 @@ void pattern_execute(uint16_t len, uint64_t t_us)
 
 inline static void execute_for_led_pin(uint32_t time_start, int offset, int pinIndex)
 {
-    uint32_t time_us = get_running_us();
+    uint64_t time_us = get_running_us();
     
-    if (state.withOffset)
+    if (state.speed < 0.8 || state.speed > 1.2)
     {
-        uint32_t time_elapsed = (time_us - time_start);
-        uint32_t time_dilated = (time_start + (time_elapsed * state.speed));
+        uint64_t time_elapsed = (time_us - time_start);
+        uint64_t time_dilated = (time_start + (time_elapsed * state.speed));
 
-        time_dilated += (pinIndex * 123456);
+        if (pinIndex >= 1)
+        {
+            time_dilated += (pinIndex * 123456);
+        }
 
         pattern_execute(state.ledCount, time_dilated);
     } else {
@@ -163,22 +121,13 @@ int main()
     picolight_boot(state.ledCount);
 
     state.patternIndex = 0;
-    state.speed = 3;
-    state.withOffset = false;
+    state.speed = 1;
     state.nextPatternIndex = 0;
     state.nextLedCount = -1;
     state.intensity = 0.4;
     state.buffer_invalidated = false;
 
     state_load();
-
-    // Starting at PIN 4 (from upper left of card): 4 pins, 1 ground, then 4 more pins
-    /*
-    for (int i = PIN_BUTTONS_START; i < PIN_BUTTONS_START + getButtonCount(); i++)
-    {
-        init_pin_button(i);
-    }
-    */
 
     registerCallbacks();
 
@@ -193,7 +142,6 @@ int main()
 
     pattern_find_and_register_patterns();
     math_precompute();
-    //state.nextPatternIndex = 0;
 
     register_action_listeners();
 

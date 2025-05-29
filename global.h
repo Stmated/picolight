@@ -20,7 +20,7 @@ typedef struct GlobalState
     void *frameData;
 
     float speed;
-    bool withOffset;
+    //bool withOffset;
 
     int nextPatternIndex;
     float intensity;

@@ -33,11 +33,6 @@ void button_increment_speed()
     state.nextPatternIndex = state.patternIndex;
 }
 
-void button_toggle_offset()
-{
-    state.withOffset = !state.withOffset;
-}
-
 void intensity_increase()
 {
     state.intensity = state.intensity + 0.1;
@@ -64,8 +59,7 @@ void length_increment()
 
 void reset()
 {
-    state.withOffset = false;
-    state.speed = 3;
+    state.speed = 1;
     state.intensity = 0.5;
     state.nextPatternIndex = 0;
 }
@@ -102,8 +96,7 @@ void button_callback(uint gpio, uint32_t events)
         else if (gpio == 8) length_decrement();
         else if (gpio == 9) length_increment();
         // gnd
-        else if (gpio == 10) button_toggle_offset();
-        else if (gpio == 11) reset();
+        else if (gpio == 10) reset();
     }
 }
 

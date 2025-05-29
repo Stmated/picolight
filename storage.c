@@ -54,11 +54,9 @@ bool state_store()
         .pattern_index = state.patternIndex,
         .intensity = state.intensity,
         .speed = state.speed,
-        .with_offset = state.withOffset,
     };
 
     // Copy to temporary buffer (must be 4 KB since we must erase full sector)
-    //uint8_t buffer[FLASH_SECTOR_SIZE] = {0};
     void *res1 = memset(buffer, 0, FLASH_SECTOR_SIZE);
     void *res2 = memcpy(buffer, &persisted_state, sizeof(save_state_t));
 
@@ -67,8 +65,8 @@ bool state_store()
 
     uint32_t target_offset = (new_version % 2) == 0 ? SLOT1_OFFSET : SLOT0_OFFSET;
 
-    flash_range_erase(target_offset, FLASH_SECTOR_SIZE);           // erase 4KB
-    flash_range_program(target_offset, buffer, FLASH_SECTOR_SIZE); // program 4KB
+    flash_range_erase(target_offset, FLASH_SECTOR_SIZE);
+    flash_range_program(target_offset, buffer, FLASH_SECTOR_SIZE);
 
     restore_interrupts(ints);
 
@@ -88,7 +86,6 @@ bool state_load()
     state.nextPatternIndex = flash_save->pattern_index % getPatternCount(); // Could in theory be out of bounds from code changes.
     state.intensity = flash_save->intensity;
     state.speed = flash_save->speed;
-    state.withOffset = flash_save->with_offset;
 
     return true;
 }

@@ -9,7 +9,7 @@ typedef struct {
     int pattern_index;
     float intensity;
     float speed;
-    bool with_offset;
+    bool unused_with_offset;
 
 } __attribute__((packed, aligned(4))) save_state_t;
 

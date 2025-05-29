@@ -38,7 +38,7 @@ static void *data_creator(uint16_t len, float intensity)
     int intIntensityMul = 1000;
     int intIntesity = roundf(intensity * intIntensityMul);
     data->intensity = randint_weighted_towards_max(MAX(100, intIntesity / 2), MAX(800, intensity * 2), intensity) / (float)intIntensityMul;
-    data->period = randint_weighted_towards_min(5000, 60000, intensity);
+    data->period = randint_weighted_towards_min(15000, 60000, intensity);
     data->updatedAt = 0;
 
     return data;
